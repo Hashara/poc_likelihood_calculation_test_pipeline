@@ -44,7 +44,7 @@ pipeline {
     stages{
         stage('Copy scripts'){
             steps{
-                scripts{
+                script{
                     sh "pwd"
                     sh "scp -r scripts/* ${NCI_ALIAS}:${WORKING_DIR}"
                 }
