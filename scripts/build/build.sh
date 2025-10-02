@@ -46,7 +46,7 @@ fi
 ##############################
 if [ "$OPENACC_V100" == true ] || [ "$OPENACC_A100" == true ]; then
     echo "Cloning poc repository"
-    git clone https://github.com/Hashara/poc-gpu-likelihood-calculation.git
+    git clone --branch $POC_GIT_BRANCH --single-branch https://github.com/Hashara/poc-gpu-likelihood-calculation.git
 fi
 
 if [ "$OPENACC_V100" = true ]; then
