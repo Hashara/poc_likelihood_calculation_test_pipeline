@@ -73,6 +73,16 @@ pipeline {
                 }
             }
         }
+        stage("Pause of check builds"){
+            when {
+                expression { return params.BUILD == true }
+            }
+            steps{
+                script{
+                    input message: 'Have you checked the build logs and are happy to proceed?', ok: 'Yes, proceed'
+                }
+            }
+        }
         stage('run tests'){
             steps{
                 script{
