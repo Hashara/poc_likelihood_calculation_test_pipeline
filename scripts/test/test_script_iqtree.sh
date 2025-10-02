@@ -37,7 +37,8 @@ for i in $(seq 1 $iter); do
                 if [ "$AA_or_DNA" = "AA" ]; then
                     echo "Using amino acid data"
                     $executable_path -s alignment_${length}_aa.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} -m Poisson  -blfix
-                if [ "$AA_or_DNA" = "DNA" ]; then
+
+                elif [ "$AA_or_DNA" = "DNA" ]; then
                     echo "Using DNA data"
                     $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} -m JC  -blfix
 
