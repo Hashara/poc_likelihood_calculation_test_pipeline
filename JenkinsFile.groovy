@@ -46,7 +46,7 @@ pipeline {
             steps{
                 script{
                     sh "pwd"
-                    sh "scp -r scripts/* ${NCI_ALIAS}:${WORKING_DIR}"
+                    sh "scp -r scripts/* ${NCI_ALIAS}:${WORKDIR}"
                 }
             }
         }
