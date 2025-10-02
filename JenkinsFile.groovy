@@ -42,7 +42,7 @@ pipeline {
     }
 
     stages{
-        stages('Copy scripts'){
+        stage('Copy scripts'){
             steps{
                 scripts{
                     sh "pwd"
@@ -50,7 +50,7 @@ pipeline {
                 }
             }
         }
-        stages('Build'){
+        stage('Build'){
             when {
                 expression { return params.BUILD == true }
             }
@@ -73,7 +73,7 @@ pipeline {
                 }
             }
         }
-        stages('run tests'){
+        stage('run tests'){
             steps{
                 script{
                     // args of the run script
