@@ -23,18 +23,18 @@ for data_type in "${data_types[@]}"; do
     if [ "$OPENACC_V100" = true ]; then
 
         qsub -Pdx61 -lwalltime=00:05:00,ncpus=16,ngpus=1,mem=64GB,jobfs=10GB,wd -qgpuvolta -N test_v100 \
-              -vARG1="$DATASET_DIR",ARG2="$UNIQUE_NAME",ARG3="$WD",ARG4="$data_type",ARG5="V100" "$WD"/scripts/test/test_script_poc.sh
+              -vARG1="$DATASET_DIR",ARG2="$UNIQUE_NAME",ARG3="$WD",ARG4="$data_type",ARG5="V100" "$WD"/test/test_script_poc.sh
     fi
 
     if [ "$OPENACC_A100" = true ]; then
 
        qsub -Pdx61 -lwalltime=00:05:00,ncpus=16,ngpus=1,mem=64GB,jobfs=10GB,wd -qdgxa100 -N test_a100 \
-              -vARG1="$DATASET_DIR",ARG2="$UNIQUE_NAME",ARG3="$WD",ARG4="$data_type",ARG5="A100" "$WD"/scripts/test/test_script_poc.sh
+              -vARG1="$DATASET_DIR",ARG2="$UNIQUE_NAME",ARG3="$WD",ARG4="$data_type",ARG5="A100" "$WD"/test/test_script_poc.sh
 
     fi
 
     if [ "$IQTREE" = true ]; then
        qsub -Pdx61 -lwalltime=00:05:00,ncpus=16,ngpus=1,mem=64GB,jobfs=10GB,wd -N test_iqtree \
-              -vARG1="$DATASET_DIR",ARG2="$UNIQUE_NAME",ARG3="$WD",ARG4="$data_type" "$WD"/scripts/test/test_script_iqtree.sh
+              -vARG1="$DATASET_DIR",ARG2="$UNIQUE_NAME",ARG3="$WD",ARG4="$data_type" "$WD"/test/test_script_iqtree.sh
     fi
 done

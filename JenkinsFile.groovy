@@ -67,7 +67,7 @@ pipeline {
                     ssh ${NCI_ALIAS} << EOF
                     cd ${WORKDIR}
                     echo "Building..."
-                    sh ${WORKDIR}/scripts/build/build.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${POC_GIT_BRANCH}
+                    sh ${WORKDIR}/build/build.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${POC_GIT_BRANCH}
     
                     """
                 }
@@ -90,7 +90,7 @@ pipeline {
                     ssh ${NCI_ALIAS} << EOF
                     cd ${WORKDIR}
                     echo "Running..."
-                    sh ${WORKDIR}/scripts/qsub/qsub_script.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA}
+                    sh ${WORKDIR}/qsub/qsub_script.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA}
     
                     """
                 }
