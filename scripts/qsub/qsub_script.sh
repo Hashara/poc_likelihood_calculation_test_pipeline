@@ -33,7 +33,7 @@ for data_type in "${data_types[@]}"; do
     fi
 
     if [ "$IQTREE" = true ]; then
-       qsub -Pdx61 -lwalltime=00:05:00,ncpus=1,mem=20GB,jobfs=10GB,wd -qnormal -N test_iqtree \
+       qsub -Pdx61 -lwalltime=00:10:00,ncpus=1,mem=20GB,jobfs=10GB,wd -qnormal -N test_iqtree \
               -vARG1="$DATASET_DIR",ARG2="$UNIQUE_NAME",ARG3="$WD",ARG4="$data_type" "$WD"/test/test_script_iqtree.sh
     fi
 done
