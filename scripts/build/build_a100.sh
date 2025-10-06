@@ -25,5 +25,5 @@ cd ..
 mkdir -p "$WD/openacc_transpose_a100"
 cd "$WD/openacc_transpose_a100" || { echo "Failed to change directory to openacc_transpose_a100"; exit 1; }
 # for transposed rate matrix version
-cmake -DCMAKE_CXX_FLAGS="$LDFLAGS $CPPFLAGS" -DUSE_OPENACC=ON -DTRANSPOSED_RATE_MATRIX=ON $code_dir
+cmake -DCMAKE_CXX_FLAGS="$LDFLAGS $CPPFLAGS" -DUSE_OPENACC=ON -DTRANSPOSED_RATE_MATRIX=ON -DTARGET_A100=ON $code_dir
 make -j
