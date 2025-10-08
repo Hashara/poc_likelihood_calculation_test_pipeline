@@ -21,6 +21,7 @@ pipeline {
         booleanParam(name: 'IQTREE', defaultValue: true, description: 'Run IQ-TREE')
         booleanParam(name: 'OpenACC_V100', defaultValue: false, description: 'Use OpenACC for V100 GPUs')
         booleanParam(name: 'OpenACC_A100', defaultValue: false, description: 'Use OpenACC for A100 GPUs')
+        string(name: 'FACTOR',defaultValue: "1", description: "memory/time multipler")
 
         string(name: 'RUN_ALIASES', defaultValue: 'run', description: 'Unique name for this run')
 
@@ -42,6 +43,7 @@ pipeline {
         OpenACC_V100 = "${params.OpenACC_V100}"
         OpenACC_A100 = "${params.OpenACC_A100}"
         LENGTH="${params.LENGTH}"
+        FACTOR="${params.FACTOR}"
     }
 
     stages{
@@ -103,7 +105,7 @@ pipeline {
                     ssh ${NCI_ALIAS} << EOF
                     cd ${WORKDIR}
                     echo "Running..."
-                    sh ${WORKDIR}/qsub/qsub_script.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH}
+                    sh ${WORKDIR}/qsub/qsub_script.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR}
     
                     """
                 }
