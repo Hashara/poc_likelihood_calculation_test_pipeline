@@ -6,7 +6,7 @@ WD=$ARG3
 AA_or_DNA=$ARG4
 
 
-lengths=(1000000)
+length=$ARG5
 
 executable_type=("iqtree")
 
@@ -24,7 +24,7 @@ for i in $(seq 1 $iter); do
 
     echo "Current directory: $(pwd)"
 
-    for length in "${lengths[@]}"; do
+#    for length in "${lengths[@]}"; do
         echo "Running likelihood for length: $length taxa: $taxa_size"
 
         #loop through each executable type
@@ -52,7 +52,7 @@ for i in $(seq 1 $iter); do
                 echo "Executable not found: $executable_path"
             fi
 
-        done
+#        done
 
     done
 

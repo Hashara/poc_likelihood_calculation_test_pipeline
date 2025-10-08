@@ -6,6 +6,7 @@ pipeline {
         booleanParam(name: 'AA', defaultValue: true, description: 'Include AA analysis')
 
         string(name: 'WORKDIR', defaultValue: '/path/to/workdir', description: 'Working directory')
+        string(name: 'LENGTH', defaultValue: '1000000', description: 'alignment length')
 
         string(name: 'NCI_ALIAS', defaultValue: 'nci_gadi', description: 'ssh alias, if you do not have one, create one')
 
@@ -22,6 +23,7 @@ pipeline {
         booleanParam(name: 'OpenACC_A100', defaultValue: false, description: 'Use OpenACC for A100 GPUs')
 
         string(name: 'RUN_ALIASES', defaultValue: 'run', description: 'Unique name for this run')
+
     }
 
     environment {
@@ -39,6 +41,7 @@ pipeline {
         IQTREE = "${params.IQTREE}"
         OpenACC_V100 = "${params.OpenACC_V100}"
         OpenACC_A100 = "${params.OpenACC_A100}"
+        LENGTH="${params.LENGTH}"
     }
 
     stages{
@@ -100,7 +103,7 @@ pipeline {
                     ssh ${NCI_ALIAS} << EOF
                     cd ${WORKDIR}
                     echo "Running..."
-                    sh ${WORKDIR}/qsub/qsub_script.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA}
+                    sh ${WORKDIR}/qsub/qsub_script.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH}
     
                     """
                 }

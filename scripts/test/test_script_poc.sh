@@ -7,7 +7,7 @@ WD=$ARG3
 AA_or_DNA=$ARG4
 A_or_V100=$ARG5
 
-lengths=(1000000)
+length=$ARG6
 
 executable_type=()
 if [ "$A_or_V100" = "A100" ]; then
@@ -32,7 +32,7 @@ for i in $(seq 1 $iter); do
 
         echo "Current directory: $(pwd)"
 
-        for length in "${lengths[@]}"; do
+#        for length in "${lengths[@]}"; do
             echo "Running likelihood for length: $length taxa: $taxa_size"
 
             #loop through each executable type
@@ -60,7 +60,7 @@ for i in $(seq 1 $iter); do
 
             done
 
-        done
+#        done
 
 
     cd - || { echo "Failed to return to previous directory"; exit 1; }
