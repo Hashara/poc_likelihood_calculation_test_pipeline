@@ -50,7 +50,7 @@ for data_type in "${data_types[@]}"; do
 
     if [ "$OPENACC_A100" = true ]; then
       memory=$(echo "$factor * 0.5 * 64" | bc)
-       qsub -Pdx61 -lwalltime=$wall_time,ncpus=16,ngpus=1,mem="${memory}GB",jobfs=10GB,wd -qdgxa100 -N test_a100 \
+       qsub -Pdx61 -lwalltime=$wall_time,ncpus=16,ngpus=1,mem="64GB",jobfs=10GB,wd -qdgxa100 -N test_a100 \
               -vARG1="$DATASET_DIR",ARG2="$UNIQUE_NAME",ARG3="$WD",ARG4="$data_type",ARG5="A100",ARG6="$length" "$WD"/test/test_script_poc.sh
     fi
 
