@@ -78,7 +78,7 @@ if [ "$OPENACC_V100" = true ]; then
 
 fi
 
-if [ "$OPENACC_V100" = true ]; then
+if [ "$OPENACC_A100" = true ]; then
     echo "Building OpenACC A100 version"
 
     qsub -Pdx61 -lwalltime=00:05:00,ncpus=16,ngpus=1,mem=64GB,jobfs=10GB,wd -qdgxa100 -N build_a100 -vARG1="$WD/build",ARG2="$WD/build/poc-gpu-likelihood-calculation" $WD/build/build_a100.sh
