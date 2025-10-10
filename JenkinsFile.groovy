@@ -23,6 +23,8 @@ pipeline {
         booleanParam(name: 'OpenACC_A100', defaultValue: false, description: 'Use OpenACC for A100 GPUs')
         string(name: 'FACTOR',defaultValue: "1", description: "memory/time multipler")
 
+        string(name: 'REPETITIONS', defaultValue: '1', description: 'Number of repetitions of each analysis')
+
         string(name: 'RUN_ALIASES', defaultValue: 'run', description: 'Unique name for this run')
 
     }
@@ -44,6 +46,7 @@ pipeline {
         OpenACC_A100 = "${params.OpenACC_A100}"
         LENGTH="${params.LENGTH}"
         FACTOR="${params.FACTOR}"
+        REPETITIONS = "${params.REPETITIONS}"
     }
 
     stages{
@@ -105,7 +108,7 @@ pipeline {
                     ssh ${NCI_ALIAS} << EOF
                     cd ${WORKDIR}
                     echo "Running..."
-                    sh ${WORKDIR}/qsub/qsub_script.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR}
+                    sh ${WORKDIR}/qsub/qsub_script.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS}
     
                     """
                 }
