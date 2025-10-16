@@ -89,7 +89,6 @@ pipeline {
             }
             steps{
                 script{
-                    sh "scp scripts/profile_build.sh ${NCI_ALIAS}:${WORKDIR}/scripts/"
                     sh """
                     ssh ${NCI_ALIAS} << EOF
                     cd ${WORKDIR}
