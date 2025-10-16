@@ -115,7 +115,6 @@ pipeline {
             }
             steps{
                 script{
-                    sh "scp scripts/profile.sh ${NCI_ALIAS}:${WORKDIR}/scripts/"
                     sh """
                     ssh ${NCI_ALIAS} << EOF
                     cd ${WORKDIR}
