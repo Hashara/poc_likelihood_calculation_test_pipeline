@@ -93,7 +93,7 @@ pipeline {
                     ssh ${NCI_ALIAS} << EOF
                     cd ${WORKDIR}
                     echo "Profiling builds..."
-                    sh ${WORKDIR}/profile/profile_build.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${POC_GIT_BRANCH}
+                    sh ${WORKDIR}/build/profile_build.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${POC_GIT_BRANCH}
     
                     """
                 }
