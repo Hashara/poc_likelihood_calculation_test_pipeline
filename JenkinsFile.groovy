@@ -24,6 +24,7 @@ pipeline {
         string(name: 'FACTOR',defaultValue: "1", description: "memory/time multipler")
 
         string(name: 'REPETITIONS', defaultValue: '1', description: 'Number of repetitions of each analysis')
+        booleanParam(name: 'PROFILE', defaultValue: false, description: 'Profile runs with nsight')
 
         string(name: 'RUN_ALIASES', defaultValue: 'run', description: 'Unique name for this run')
 
@@ -47,6 +48,7 @@ pipeline {
         LENGTH="${params.LENGTH}"
         FACTOR="${params.FACTOR}"
         REPETITIONS = "${params.REPETITIONS}"
+        PROFILE = "${params.PROFILE}"
     }
 
     stages{
@@ -81,6 +83,23 @@ pipeline {
                 }
             }
         }
+        stage('Profile builds'){
+            when {
+                expression { return params.BUILD == true && params.PROFILE == true }
+            }
+            steps{
+                script{
+                    sh "scp scripts/profile_build.sh ${NCI_ALIAS}:${WORKDIR}/scripts/"
+                    sh """
+                    ssh ${NCI_ALIAS} << EOF
+                    cd ${WORKDIR}
+                    echo "Profiling builds..."
+                    sh ${WORKDIR}/scripts/profile_build.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${POC_GIT_BRANCH}
+    
+                    """
+                }
+            }
+        }
         stage("Pause of check builds"){
             when {
                 expression { return params.BUILD == true }
@@ -91,7 +110,27 @@ pipeline {
                 }
             }
         }
+        stage('Profiling'){
+            when {
+                expression { return params.PROFILE == true }
+            }
+            steps{
+                script{
+                    sh "scp scripts/profile.sh ${NCI_ALIAS}:${WORKDIR}/scripts/"
+                    sh """
+                    ssh ${NCI_ALIAS} << EOF
+                    cd ${WORKDIR}
+                    echo "Profiling..."
+                    sh ${WORKDIR}/scripts/profile.sh ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR}
+    
+                    """
+                }
+            }
+        }
         stage('run tests'){
+            when {
+                expression { return params.PROFILE == false}
+            }
             steps{
                 script{
                     // args of the run script
