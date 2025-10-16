@@ -5,6 +5,7 @@ OPENACC_V100=$2
 OPENACC_A100=$3
 WD=$4
 POC_GIT_BRANCH=$5
+suffix="_profile"
 
 cd $WD || { echo "Failed to change directory to $WD"; exit 1; }
 mkdir -p build
@@ -18,8 +19,8 @@ fi
 
 if [ "$OPENACC_V100" = true ]; then
     echo "Building OpenACC V100 version"
-    mkdir -p "openacc_v100"
-    cd "openacc_v100" || { echo "Failed to change directory to openacc_v100"; exit 1; }
+    mkdir -p "openacc_v100${suffix}"
+    cd "openacc_v100${suffix}" || { echo "Failed to change directory to openacc_v100"; exit 1; }
 
     module load nvhpc-compilers/24.7
 
@@ -37,8 +38,8 @@ if [ "$OPENACC_V100" = true ]; then
     make -j
 
     cd ..
-    mkdir -p "openacc_transpose_v100"
-    cd "openacc_transpose_v100" || { echo "Failed to change directory to openacc_transpose_v100"; exit 1; }
+    mkdir -p "openacc_transpose_v100${suffix}"
+    cd "openacc_transpose_v100$suffix" || { echo "Failed to change directory to openacc_transpose_v100"; exit 1; }
     # for transposed rate matrix version
     cmake -DCMAKE_CXX_FLAGS="$LDFLAGS $CPPFLAGS" -DUSE_OPENACC=ON -DTRANSPOSED_RATE_MATRIX=ON -DPROFILE=ON ../poc-gpu-likelihood-calculation
     make -j
