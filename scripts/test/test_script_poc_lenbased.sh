@@ -47,10 +47,10 @@ for length in "${lengths[@]}"; do
                     echo "Running test for length: $length with $type"
                     if [ "$AA_or_DNA" = "AA" ]; then
                         echo "Using amino acid data"
-                        $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --seqtype AA -prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type}.txt
+                        $executable_path -s alignment_${length}.phy -te tree.full.treefile --seqtype AA -prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type}.txt
                     elif [ "$AA_or_DNA" = "DNA" ]; then
                         echo "Using DNA data"
-                        $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile -prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_dna_${type}.txt
+                        $executable_path -s alignment_${length}.phy -te tree.full.treefile -prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_dna_${type}.txt
                     fi
 
                     if [ $? -ne 0 ]; then
