@@ -7,6 +7,7 @@ pipeline {
 
         string(name: 'WORKDIR', defaultValue: '/path/to/workdir', description: 'Working directory')
         string(name: 'LENGTH', defaultValue: '1000000', description: 'alignment length')
+        booleanParam(name: 'LEN_BASED', defaultValue: false, description: 'Use length based datasets')
 
         string(name: 'NCI_ALIAS', defaultValue: 'nci_gadi', description: 'ssh alias, if you do not have one, create one')
 
@@ -49,6 +50,7 @@ pipeline {
         FACTOR="${params.FACTOR}"
         REPETITIONS = "${params.REPETITIONS}"
         PROFILE = "${params.PROFILE}"
+        LEN_BASED = "${params.LEN_BASED}"
     }
 
     stages{
@@ -131,23 +133,44 @@ pipeline {
             }
             steps{
                 script{
-                    // args of the run script
-                    /*IQTREE=$1 # boolean for whether to build IQTREE
-                    OPENACC_V100=$2
-                    OPENACC_A100=$3
-                    WD=$4
-                    DATASET_DIR=$5
-                    UNIQUE_NAME=$6
-                    AA=$7
-                    DNA=$8*/
-                    echo "Running ...."
-                    sh """
-                    ssh ${NCI_ALIAS} << EOF
-                    cd ${WORKDIR}
-                    echo "Running..."
-                    sh ${WORKDIR}/qsub/qsub_script.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS}
-    
-                    """
+                    if (params.LEN_BASED) {
+                        // args of the run script
+                        /*IQTREE=$1 # boolean for whether to build IQTREE
+                            OPENACC_V100=$2
+                            OPENACC_A100=$3
+                            WD=$4
+                            DATASET_DIR=$5
+                            UNIQUE_NAME=$6
+                            AA=$7
+                            DNA=$8*/
+                        echo "Running ...."
+                        sh """
+                        ssh ${NCI_ALIAS} << EOF
+                        cd ${WORKDIR}
+                        echo "Running..."
+                        sh ${WORKDIR}/qsub/qsub_script_lenbased.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS}
+        
+                        """
+                    } else {
+                        // args of the run script
+                        /*IQTREE=$1 # boolean for whether to build IQTREE
+                            OPENACC_V100=$2
+                            OPENACC_A100=$3
+                            WD=$4
+                            DATASET_DIR=$5
+                            UNIQUE_NAME=$6
+                            AA=$7
+                            DNA=$8*/
+                            echo "Running ...."
+                            sh """
+                        ssh ${NCI_ALIAS} << EOF
+                        cd ${WORKDIR}
+                        echo "Running..."
+                        sh ${WORKDIR}/qsub/qsub_script.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS}
+        
+                        """
+                    }
+
                 }
             }
         }
