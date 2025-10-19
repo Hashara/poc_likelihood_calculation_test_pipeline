@@ -8,17 +8,20 @@ AA_or_DNA=$ARG4
 A_or_V100=$ARG5
 
 length=$ARG6
+ex_type=""
 
 executable_type=()
 if [ "$A_or_V100" = "A100" ]; then
     echo "Using A100 build"
 #    executable_type=("openacc_a100" "openacc_transpose_a100")
     executable_type=("openacc_a100_profile")
+    ex_type="a100"
 
 else
     echo "Using V100 build"
 #    executable_type=("openacc_v100" "openacc_transpose_v100")
     executable_type=("openacc_v100_profile")
+    ex_type="v100"
 fi
 
 
@@ -48,10 +51,10 @@ for i in $(seq 1 $iter); do
                     echo "Running test for length: $length with $type"
                     if [ "$AA_or_DNA" = "AA" ]; then
                         echo "Using amino acid data"
-                        nsys profile --trace=cuda,openacc,nvtx --stats=true -o profile_report $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --seqtype AA -prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type}.txt
+                        nsys profile --trace=cuda,openacc,nvtx --stats=true -o profile_report_${ex_type}} $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --seqtype AA -prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type}.txt
                     elif [ "$AA_or_DNA" = "DNA" ]; then
                         echo "Using DNA data"
-                        nsys profile --trace=cuda,openacc,nvtx --stats=true -o profile_report $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile -prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_dna_${type}.txt
+                        nsys profile --trace=cuda,openacc,nvtx --stats=true -o profile_report_${ex_type}} $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile -prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_dna_${type}.txt
                     fi
 
                     if [ $? -ne 0 ]; then
