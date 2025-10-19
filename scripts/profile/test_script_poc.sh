@@ -13,12 +13,12 @@ executable_type=()
 if [ "$A_or_V100" = "A100" ]; then
     echo "Using A100 build"
 #    executable_type=("openacc_a100" "openacc_transpose_a100")
-    executable_type=("openacc_a100")
+    executable_type=("openacc_a100_profile")
 
 else
     echo "Using V100 build"
 #    executable_type=("openacc_v100" "openacc_transpose_v100")
-    executable_type=("openacc_v100")
+    executable_type=("openacc_v100_profile")
 fi
 
 

@@ -35,14 +35,14 @@ if [ "$OPENACC_V100" = true ]; then
     export CPPFLAGS="-I/apps/nvidia-hpc-sdk/24.7/Linux_x86_64/24.7/compilers/include"
 
     cmake -DCMAKE_CXX_FLAGS="$LDFLAGS $CPPFLAGS" -DUSE_OPENACC=ON -DPROFILE=ON ../poc-gpu-likelihood-calculation
-    make -j
+    make VERBOSE=1 -j
 
     cd ..
-    mkdir -p "openacc_transpose_v100${suffix}"
-    cd "openacc_transpose_v100$suffix" || { echo "Failed to change directory to openacc_transpose_v100"; exit 1; }
-    # for transposed rate matrix version
-    cmake -DCMAKE_CXX_FLAGS="$LDFLAGS $CPPFLAGS" -DUSE_OPENACC=ON -DTRANSPOSED_RATE_MATRIX=ON -DPROFILE=ON ../poc-gpu-likelihood-calculation
-    make VERBOSE=1 -j
+#   mkdir -p "openacc_transpose_v100${suffix}"
+#    cd "openacc_transpose_v100$suffix" || { echo "Failed to change directory to openacc_transpose_v100"; exit 1; }
+#    # for transposed rate matrix version
+#    cmake -DCMAKE_CXX_FLAGS="$LDFLAGS $CPPFLAGS" -DUSE_OPENACC=ON -DTRANSPOSED_RATE_MATRIX=ON -DPROFILE=ON ../poc-gpu-likelihood-calculation
+#    make VERBO SE=1 -j
 
 fi
 
