@@ -23,8 +23,8 @@ if [ "$DNA" = true ]; then
 fi
 
 base_walltime="00:05:00"
-if [ "$OPENACC_V100" = true ] || [ "$OPENACC_V100" = true ]; then
-  base_walltime="00:05:00"
+if [ "$OPENACC_V100" = true ] || [ "$OPENACC_A100" = true ]; then
+  base_walltime="00:20:00"
 else
   base_walltime="00:10:00"
 fi
