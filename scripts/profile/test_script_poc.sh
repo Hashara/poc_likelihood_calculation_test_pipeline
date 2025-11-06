@@ -55,7 +55,7 @@ for i in $(seq 1 $iter); do
                         ncu --set full -f -o ncu_report_${ex_type} $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --seqtype AA -prefix outputncu_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type}.txt
                     elif [ "$AA_or_DNA" = "DNA" ]; then
                         echo "Using DNA data"
-                        nsys profile --trace=cuda,openacc,nvtx --stats=true -o profile_report_${ex_type} $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile -prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_dna_${type}.txt
+                        nsys profile --trace=cuda,openacc,nvtx --gpu-metrics-device=all --cuda-memory-usage=true --stats=true -o profile_report_${ex_type} $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile -prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_dna_${type}.txt
                         ncu --set full -f -o ncu_report_${ex_type} $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile -prefix outputncu_${UNIQUE_NAME}_${taxa_size}_${length}_dna_${type}.txt
                     fi
 
