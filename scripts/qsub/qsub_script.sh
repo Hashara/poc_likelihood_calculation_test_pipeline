@@ -67,7 +67,7 @@ for r in $(seq 1 $repeat); do
       fi
 
       if [ "$IQTREE_OPENMP" = true ]; then
-          memory=$((factor * IQTREE_THREADS * 20))
+          memory=$((factor * IQTREE_THREADS * 4))
          qsub -Pdx61 -lwalltime=$wall_time,ncpus=$IQTREE_THREADS,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree_omp \
                 -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length",ARG6="$IQTREE_THREADS" "$WD"/test/test_script_iqtree_omp.sh
       fi
