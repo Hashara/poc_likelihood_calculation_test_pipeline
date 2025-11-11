@@ -20,6 +20,8 @@ pipeline {
         booleanParam(name: 'BUILD', defaultValue: false, description: 'Build if not present')
 
         booleanParam(name: 'IQTREE', defaultValue: true, description: 'Run IQ-TREE')
+        booleanParam(name: 'IQTREE_OPENMP', defaultValue: false, description: 'Use OpenMP version of IQ-TREE')
+        string(name: 'IQTREE_THREADS', defaultValue: '1', description: 'Number of threads for IQ-TREE')
         booleanParam(name: 'OpenACC_V100', defaultValue: false, description: 'Use OpenACC for V100 GPUs')
         booleanParam(name: 'OpenACC_A100', defaultValue: false, description: 'Use OpenACC for A100 GPUs')
         string(name: 'FACTOR',defaultValue: "1", description: "memory/time multipler")
@@ -44,6 +46,10 @@ pipeline {
         DNA = "${params.DNA}"
         AA = "${params.AA}"
         IQTREE = "${params.IQTREE}"
+
+        IQTREE_OPENMP = "${params.IQTREE_OPENMP}"
+        IQTREE_THREADS = "${params.IQTREE_THREADS}"
+
         OpenACC_V100 = "${params.OpenACC_V100}"
         OpenACC_A100 = "${params.OpenACC_A100}"
         LENGTH="${params.LENGTH}"
@@ -166,7 +172,7 @@ pipeline {
                         ssh ${NCI_ALIAS} << EOF
                         cd ${WORKDIR}
                         echo "Running..."
-                        sh ${WORKDIR}/qsub/qsub_script.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS}
+                        sh ${WORKDIR}/qsub/qsub_script.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS}
         
                         """
                     }
