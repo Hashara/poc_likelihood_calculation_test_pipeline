@@ -25,7 +25,7 @@ else
 fi
 
 
-iter=10
+iter=1
 module load nvhpc-profilers/22.11
 
 for i in $(seq 1 $iter); do
