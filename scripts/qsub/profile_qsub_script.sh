@@ -24,7 +24,7 @@ fi
 
 base_walltime="00:05:00"
 if [ "$OPENACC_V100" = true ] || [ "$OPENACC_A100" = true ]; then
-  base_walltime="01:20:00"
+  base_walltime="02:20:00"
 else
   base_walltime="00:10:00"
 fi
