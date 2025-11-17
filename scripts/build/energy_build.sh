@@ -23,7 +23,7 @@ if [ "$OPENACC_V100" = true ]; then
     cd "openacc_v100${suffix}" || { echo "Failed to change directory to openacc_v100"; exit 1; }
 
     module load nvhpc-compilers/24.7
-    module load forge
+    module load linaro-forge/24.0.2
 
     export OMPI_CC=nvc
     export OMPI_CXX=nvc++

@@ -8,7 +8,7 @@ mkdir -p "$WD/openacc_a100${suffix}"
 cd "$WD/openacc_a100${suffix}" || { echo "Failed to change directory to openacc_a100"; exit 1; }
 
 module load nvhpc-compilers/24.7
-module load forge
+module load linaro-forge/24.0.2
 
 
 export OMPI_CC=nvc
