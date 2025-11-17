@@ -26,7 +26,7 @@ fi
 
 echo "Starting energy measurement profiling..."
 iter=1
-module load nvhpc-profilers/22.11
+module load linaro-forge/24.0.2
 
 for i in $(seq 1 $iter); do
     TAXA_DIR="${DATASET_DIR}/tree_${i}"
