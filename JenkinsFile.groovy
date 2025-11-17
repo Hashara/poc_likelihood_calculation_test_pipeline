@@ -28,7 +28,7 @@ pipeline {
 
         string(name: 'REPETITIONS', defaultValue: '1', description: 'Number of repetitions of each analysis')
         booleanParam(name: 'PROFILE', defaultValue: false, description: 'Profile runs with nsight')
-
+        booleanParam(name: 'ENERGY_PROFILE', defaultValue: false, description: 'Profile energy consumption with forge')
         string(name: 'RUN_ALIASES', defaultValue: 'run', description: 'Unique name for this run')
 
     }
@@ -56,6 +56,7 @@ pipeline {
         FACTOR="${params.FACTOR}"
         REPETITIONS = "${params.REPETITIONS}"
         PROFILE = "${params.PROFILE}"
+        ENERGY_PROFILE = "${params.ENERGY_PROFILE}"
         LEN_BASED = "${params.LEN_BASED}"
     }
 
@@ -107,6 +108,22 @@ pipeline {
                 }
             }
         }
+        stage('Energy profile build'){
+            when {
+                expression { return params.BUILD == true && params.ENERGY_PROFILE == true }
+            }
+            steps{
+                script{
+                    sh """
+                    ssh ${NCI_ALIAS} << EOF
+                    cd ${WORKDIR}
+                    echo "Energy profiling builds..."
+                    sh ${WORKDIR}/build/energy_build.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${POC_GIT_BRANCH}
+    
+                    """
+                }
+            }
+        }
         stage("Pause of check builds"){
             when {
                 expression { return params.BUILD == true }
@@ -133,9 +150,25 @@ pipeline {
                 }
             }
         }
+        stage('Energy profiling'){
+            when {
+                expression { return params.ENERGY_PROFILE == true }
+            }
+            steps{
+                script{
+                    sh """
+                    ssh ${NCI_ALIAS} << EOF
+                    cd ${WORKDIR}
+                    echo "Energy profiling..."
+                    sh ${WORKDIR}/qsub/energy_measure_qsub_script.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS}
+    
+                    """
+                }
+            }
+        }
         stage('run tests'){
             when {
-                expression { return params.PROFILE == false}
+                expression { return params.PROFILE == false && params.ENERGY_PROFILE == false  }
             }
             steps{
                 script{

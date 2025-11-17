@@ -24,7 +24,7 @@ else
     ex_type="v100"
 fi
 
-
+echo "Starting energy measurement profiling..."
 iter=1
 module load nvhpc-profilers/22.11
 
