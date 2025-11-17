@@ -14,6 +14,9 @@ length=$9
 factor=${10}
 repeat=${11}
 
+IQTREE_OPENMP=${12}
+IQTREE_THREADS=${13}
+
 data_types=()
 if [ "$AA" = true ]; then
     data_types+=("AA")
@@ -56,5 +59,17 @@ for r in $(seq 1 $repeat); do
          qsub -Pdx61 -lwalltime=$wall_time,ncpus=16,ngpus=1,mem="64GB",jobfs=10GB,wd -qdgxa100 -N test_a100 \
                 -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="A100",ARG6="$length" "$WD"/energy_measure/test_script_poc.sh
       fi
+
+            if [ "$IQTREE" = true ]; then
+                memory=$((factor * 1 * 20))
+               qsub -Pdx61 -lwalltime=$wall_time,ncpus=1,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree \
+                      -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length" "$WD"/energy_measure/test_script_iqtree.sh
+            fi
+
+            if [ "$IQTREE_OPENMP" = true ]; then
+                memory=$((factor * IQTREE_THREADS * 4))
+               qsub -Pdx61 -lwalltime=$wall_time,ncpus=$IQTREE_THREADS,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree_omp \
+                      -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length",ARG6="$IQTREE_THREADS" "$WD"/energy_measure/test_script_iqtree_omp.sh
+            fi
   done
 done
