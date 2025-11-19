@@ -8,6 +8,13 @@ AA_or_DNA=$ARG4
 
 length=$ARG5
 IQTREE_THREADS=$ARG6
+AUTO=$ARG4
+
+if [ "$AUTO" == "true" ]; then
+    IQTREE_THREADS="AUTO"
+    echo "Auto opertation for IQ-TREE threads enabled."
+fi
+
 
 executable_type=("iqtree")
 
