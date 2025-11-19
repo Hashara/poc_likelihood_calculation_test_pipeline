@@ -189,7 +189,7 @@ pipeline {
                         ssh ${NCI_ALIAS} << EOF
                         cd ${WORKDIR}
                         echo "Running..."
-                        sh ${WORKDIR}/qsub/qsub_script_lenbased.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS}
+                        sh ${WORKDIR}/qsub/qsub_script_lenbased.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO}
         
                         """
                     } else {
