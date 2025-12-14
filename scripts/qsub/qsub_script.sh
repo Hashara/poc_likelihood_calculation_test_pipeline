@@ -18,6 +18,8 @@ IQTREE_OPENMP=${12}
 IQTREE_THREADS=${13}
 IQTREE_AUTO=${14}
 
+PROJECT_NAME=${15}
+
 data_types=()
 if [ "$AA" = true ]; then
     data_types+=("AA")
@@ -51,25 +53,25 @@ for r in $(seq 1 $repeat); do
   for data_type in "${data_types[@]}"; do
       if [ "$OPENACC_V100" = true ]; then
         memory=$((factor * 1 * 48))
-          qsub -Pdx61 -lwalltime=$wall_time,ncpus=12,ngpus=1,mem="${memory}GB",jobfs=10GB,wd -qgpuvolta -N test_v100 \
+          qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=12,ngpus=1,mem="${memory}GB",jobfs=10GB,wd -qgpuvolta -N test_v100 \
                 -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="V100",ARG6="$length" "$WD"/test/test_script_poc.sh
       fi
 
       if [ "$OPENACC_A100" = true ]; then
         memory=$(echo "$factor * 0.5 * 64" | bc)
-         qsub -Pdx61 -lwalltime=$wall_time,ncpus=16,ngpus=1,mem="64GB",jobfs=10GB,wd -qdgxa100 -N test_a100 \
+         qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=16,ngpus=1,mem="64GB",jobfs=10GB,wd -qdgxa100 -N test_a100 \
                 -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="A100",ARG6="$length" "$WD"/test/test_script_poc.sh
       fi
 
       if [ "$IQTREE" = true ]; then
           memory=$((factor * 1 * 20))
-         qsub -Pdx61 -lwalltime=$wall_time,ncpus=1,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree \
+         qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=1,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree \
                 -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length" "$WD"/test/test_script_iqtree.sh
       fi
 
       if [ "$IQTREE_OPENMP" = true ]; then
           memory=$((factor * IQTREE_THREADS * 4))
-         qsub -Pdx61 -lwalltime=$wall_time,ncpus=$IQTREE_THREADS,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree_omp \
+         qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=$IQTREE_THREADS,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree_omp \
                 -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length",ARG6="$IQTREE_THREADS",ARG7="$IQTREE_AUTO" "$WD"/test/test_script_iqtree_omp.sh
       fi
   done

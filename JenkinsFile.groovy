@@ -6,6 +6,7 @@ pipeline {
         booleanParam(name: 'AA', defaultValue: true, description: 'Include AA analysis')
 
         string(name: 'WORKDIR', defaultValue: '/path/to/workdir', description: 'Working directory')
+        string(name: 'PROJECT_NAME', defaultValue: 'dx61', description: 'Project name')
         string(name: 'LENGTH', defaultValue: '1000000', description: 'alignment length')
         booleanParam(name: 'LEN_BASED', defaultValue: false, description: 'Use length based datasets')
 
@@ -39,6 +40,7 @@ pipeline {
         RUN_ALIASES = "${params.RUN_ALIASES}"
 
         WORKDIR = "${params.WORKDIR}"
+        PROJECT_NAME = "${params.PROJECT_NAME}"
 
         NCI_ALIAS = "${params.NCI_ALIAS}"
         POC_GIT_BRANCH = "${params.POC_GIT_BRANCH}"
@@ -88,7 +90,7 @@ pipeline {
                     ssh ${NCI_ALIAS} << EOF
                     cd ${WORKDIR}
                     echo "Building..."
-                    sh ${WORKDIR}/build/build.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${POC_GIT_BRANCH}
+                    sh ${WORKDIR}/build/build.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${POC_GIT_BRANCH} ${PROJECT_NAME}
     
                     """
                 }
@@ -104,7 +106,7 @@ pipeline {
                     ssh ${NCI_ALIAS} << EOF
                     cd ${WORKDIR}
                     echo "Profiling builds..."
-                    sh ${WORKDIR}/build/profile_build.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${POC_GIT_BRANCH}
+                    sh ${WORKDIR}/build/profile_build.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${POC_GIT_BRANCH} ${PROJECT_NAME}
     
                     """
                 }
@@ -120,7 +122,7 @@ pipeline {
                     ssh ${NCI_ALIAS} << EOF
                     cd ${WORKDIR}
                     echo "Energy profiling builds..."
-                    sh ${WORKDIR}/build/energy_build.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${POC_GIT_BRANCH}
+                    sh ${WORKDIR}/build/energy_build.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${POC_GIT_BRANCH} ${PROJECT_NAME}
     
                     """
                 }
@@ -146,7 +148,7 @@ pipeline {
                     ssh ${NCI_ALIAS} << EOF
                     cd ${WORKDIR}
                     echo "Profiling..."
-                    sh ${WORKDIR}/qsub/profile_qsub_script.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS}
+                    sh ${WORKDIR}/qsub/profile_qsub_script.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${PROJECT_NAME}
     
                     """
                 }
@@ -162,7 +164,7 @@ pipeline {
                     ssh ${NCI_ALIAS} << EOF
                     cd ${WORKDIR}
                     echo "Energy profiling..."
-                    sh ${WORKDIR}/qsub/energy_measure_qsub_script.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS}
+                    sh ${WORKDIR}/qsub/energy_measure_qsub_script.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${PROJECT_NAME}
     
                     """
                 }
@@ -189,7 +191,7 @@ pipeline {
                         ssh ${NCI_ALIAS} << EOF
                         cd ${WORKDIR}
                         echo "Running..."
-                        sh ${WORKDIR}/qsub/qsub_script_lenbased.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO}
+                        sh ${WORKDIR}/qsub/qsub_script_lenbased.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME}
         
                         """
                     } else {
@@ -207,7 +209,7 @@ pipeline {
                         ssh ${NCI_ALIAS} << EOF
                         cd ${WORKDIR}
                         echo "Running..."
-                        sh ${WORKDIR}/qsub/qsub_script.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO}
+                        sh ${WORKDIR}/qsub/qsub_script.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME}
         
                         """
                     }
