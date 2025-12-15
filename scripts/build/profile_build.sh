@@ -6,6 +6,7 @@ OPENACC_A100=$3
 WD=$4
 POC_GIT_BRANCH=$5
 suffix="_profile"
+PROJECT_NAME=$6
 
 cd $WD || { echo "Failed to change directory to $WD"; exit 1; }
 mkdir -p build
@@ -49,7 +50,7 @@ fi
 if [ "$OPENACC_A100" = true ]; then
     echo "Building OpenACC A100 version"
 
-    qsub -Pdx61 -lwalltime=00:05:00,ncpus=16,ngpus=1,mem=64GB,jobfs=10GB,wd -qdgxa100 -N build_a100 -vARG1="$WD/build",ARG2="$WD/build/poc-gpu-likelihood-calculation" $WD/build/profile_build_a100.sh
+    qsub -P${PROJECT_NAME} -lwalltime=00:05:00,ncpus=16,ngpus=1,mem=64GB,jobfs=10GB,wd -qdgxa100 -N build_a100 -vARG1="$WD/build",ARG2="$WD/build/poc-gpu-likelihood-calculation" $WD/build/profile_build_a100.sh
 
 
 
