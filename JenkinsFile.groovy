@@ -14,6 +14,7 @@ pipeline {
 
         string(name: "POC_GIT_BRANCH", defaultValue: "main", description: "Branch of the POC repo to use")
 
+        string(name: 'TYPE', defaultValue: 'OpenACC', description: 'Type of execution: OpenACC, cuBLAS, CPU')
 
         // dataset path
         string(name: 'DATASET_PATH', defaultValue: '/path/to/dataset', description: 'Path to the dataset')
@@ -44,6 +45,8 @@ pipeline {
 
         NCI_ALIAS = "${params.NCI_ALIAS}"
         POC_GIT_BRANCH = "${params.POC_GIT_BRANCH}"
+
+        TYPE = "${params.TYPE}"
 
         BUILD = "${params.BUILD}"
         DNA = "${params.DNA}"
@@ -90,7 +93,7 @@ pipeline {
                     ssh ${NCI_ALIAS} << EOF
                     cd ${WORKDIR}
                     echo "Building..."
-                    sh ${WORKDIR}/build/build.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${POC_GIT_BRANCH} ${PROJECT_NAME}
+                    sh ${WORKDIR}/build/build.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${POC_GIT_BRANCH} ${PROJECT_NAME} ${TYPE}
     
                     """
                 }
