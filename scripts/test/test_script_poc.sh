@@ -9,16 +9,26 @@ A_or_V100=$ARG5
 
 length=$ARG6
 
+TYPE=$ARG7
+
 executable_type=()
 if [ "$A_or_V100" = "A100" ]; then
     echo "Using A100 build"
 #    executable_type=("openacc_a100" "openacc_transpose_a100")
-    executable_type=("openacc_a100")
+    if [ "$TYPE" == "OpenACC"]; then
+      executable_type=("openacc_a100")
+    elif [ "$TYPE" == "cuBLAS"]; then
+      executable_type=("cublas_a100")
+    fi
 
 else
     echo "Using V100 build"
 #    executable_type=("openacc_v100" "openacc_transpose_v100")
-    executable_type=("openacc_v100")
+    if [ "$TYPE" == "OpenACC"]; then
+      executable_type=("openacc_v100")
+    elif [ "$TYPE" == "cuBLAS"]; then
+      executable_type=("cublas_v100")
+    fi
 fi
 
 

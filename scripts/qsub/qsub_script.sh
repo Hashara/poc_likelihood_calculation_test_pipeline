@@ -20,6 +20,8 @@ IQTREE_AUTO=${14}
 
 PROJECT_NAME=${15}
 
+TYPE=${16}
+
 data_types=()
 if [ "$AA" = true ]; then
     data_types+=("AA")
