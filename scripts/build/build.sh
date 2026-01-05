@@ -53,7 +53,7 @@ fi
 
 if [ "$GPU_V100" == true ]; then
 
-    if  [ "$TYPE" == "OpenACC "]; then
+    if  [ "$TYPE" == "OpenACC " ]; then
       echo "Building OpenACC V100 version"
       mkdir -p "openacc_v100"
       cd "openacc_v100" || { echo "Failed to change directory to openacc_v100"; exit 1; }
