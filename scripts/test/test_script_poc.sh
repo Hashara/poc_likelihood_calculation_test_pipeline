@@ -24,6 +24,7 @@ if [ "$A_or_V100" = "A100" ]; then
 else
     echo "Using V100 build"
 #    executable_type=("openacc_v100" "openacc_transpose_v100")
+    echo "TYPE: $TYPE"
     if [ "$TYPE" == "OpenACC" ]; then
       echo "Using OpenACC executable"
       executable_type=("openacc_v100")
