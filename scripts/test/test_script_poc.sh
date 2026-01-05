@@ -25,8 +25,10 @@ else
     echo "Using V100 build"
 #    executable_type=("openacc_v100" "openacc_transpose_v100")
     if [ "$TYPE" == "OpenACC" ]; then
+      echo "Using OpenACC executable"
       executable_type=("openacc_v100")
     elif [ "$TYPE" == "cuBLAS" ]; then
+      echo "Using cuBLAS executable"
       executable_type=("cublas_v100")
     fi
 fi
