@@ -31,6 +31,7 @@ else
     fi
 fi
 
+echo "executable_type: ${executable_type[@]}"
 
 iter=10
 
