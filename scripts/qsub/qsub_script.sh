@@ -56,13 +56,13 @@ for r in $(seq 1 $repeat); do
       if [ "$OPENACC_V100" = true ]; then
         memory=$((factor * 1 * 48))
           qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=12,ngpus=1,mem="${memory}GB",jobfs=10GB,wd -qgpuvolta -N test_v100 \
-                -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="V100",ARG6="$length" "$WD"/test/test_script_poc.sh
+                -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="V100",ARG6="$length",ARG7="$TYPE" "$WD"/test/test_script_poc.sh
       fi
 
       if [ "$OPENACC_A100" = true ]; then
         memory=$(echo "$factor * 0.5 * 64" | bc)
          qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=16,ngpus=1,mem="64GB",jobfs=10GB,wd -qdgxa100 -N test_a100 \
-                -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="A100",ARG6="$length" "$WD"/test/test_script_poc.sh
+                -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="A100",ARG6="$length",ARG7="$TYPE" "$WD"/test/test_script_poc.sh
       fi
 
       if [ "$IQTREE" = true ]; then
