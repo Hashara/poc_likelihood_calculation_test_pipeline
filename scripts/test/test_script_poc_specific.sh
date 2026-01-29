@@ -36,7 +36,7 @@ fi
 
 echo "executable_type: ${executable_type[@]}"
 
-iter=10
+iter=1
 
 for i in $(seq 1 $iter); do
     TAXA_DIR="${DATASET_DIR}/tree_${i}"

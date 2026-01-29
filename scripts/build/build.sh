@@ -1,11 +1,12 @@
 #!/bin/bash
 
 IQTREE=$1 # boolean for whether to build IQTREE
-OPENACC_V100=$2
-OPENACC_A100=$3
+GPU_V100=$2
+GPU_A100=$3
 WD=$4
 POC_GIT_BRANCH=$5
 PROJECT_NAME=$6
+TYPE=$7
 
 cd $WD || { echo "Failed to change directory to $WD"; exit 1; }
 mkdir -p build
@@ -45,30 +46,59 @@ if [ "$IQTREE" = true ]; then
 fi
 
 ##############################
-if [ "$OPENACC_V100" == true ] || [ "$OPENACC_A100" == true ]; then
+if [ "$GPU_V100" == true ] || [ "$GPU_A100" == true ]; then
     echo "Cloning poc repository"
     git clone --branch $POC_GIT_BRANCH --single-branch https://github.com/Hashara/poc-gpu-likelihood-calculation.git
 fi
 
-if [ "$OPENACC_V100" = true ]; then
-    echo "Building OpenACC V100 version"
-    mkdir -p "openacc_v100"
-    cd "openacc_v100" || { echo "Failed to change directory to openacc_v100"; exit 1; }
+if [ "$GPU_V100" == true ]; then
 
-    module load nvhpc-compilers/24.7
+    if  [ "$TYPE" == "OpenACC" ]; then
+      echo "Building OpenACC V100 version"
+      mkdir -p "openacc_v100"
+      cd "openacc_v100" || { echo "Failed to change directory to openacc_v100"; exit 1; }
 
-    export OMPI_CC=nvc
-    export OMPI_CXX=nvc++
 
-    export CC=nvc
-    export CXX=nvc++
-    export CUDACXX=nvcc
+      module load nvhpc-compilers/24.7
 
-    export LDFLAGS="-L/apps/nvidia-hpc-sdk/24.7/Linux_x86_64/24.7/compilers/lib"
-    export CPPFLAGS="-I/apps/nvidia-hpc-sdk/24.7/Linux_x86_64/24.7/compilers/include"
+      export OMPI_CC=nvc
+      export OMPI_CXX=nvc++
 
-    cmake -DCMAKE_CXX_FLAGS="$LDFLAGS $CPPFLAGS" -DUSE_OPENACC=ON ../poc-gpu-likelihood-calculation
-    make VERBOSE=1 -j
+      export CC=nvc
+      export CXX=nvc++
+      export CUDACXX=nvcc
+
+      export LDFLAGS="-L/apps/nvidia-hpc-sdk/24.7/Linux_x86_64/24.7/compilers/lib"
+      export CPPFLAGS="-I/apps/nvidia-hpc-sdk/24.7/Linux_x86_64/24.7/compilers/include"
+
+      cmake -DCMAKE_CXX_FLAGS="$LDFLAGS $CPPFLAGS" -DUSE_OPENACC=ON ../poc-gpu-likelihood-calculation
+      make VERBOSE=1 -j
+
+  elif [ "$TYPE" == "cuBLAS" ]; then
+
+      echo "Building cuBLAS V100 version"
+      mkdir -p "cublas_v100"
+      cd "cublas_v100" || { echo "Failed to change directory to cublas_v100"; exit 1; }
+
+      module load nvhpc-compilers/24.7 cuda/12.5.1
+
+      export OMPI_CC=nvc
+      export OMPI_CXX=nvc++
+
+      export CC=nvc
+      export CXX=nvc++
+      export CUDACXX=nvcc
+
+      export LDFLAGS="-L/apps/nvidia-hpc-sdk/24.7/Linux_x86_64/24.7/compilers/lib"
+      export CPPFLAGS="-I/apps/nvidia-hpc-sdk/24.7/Linux_x86_64/24.7/compilers/include"
+
+      cmake -DCMAKE_CXX_FLAGS="$LDFLAGS $CPPFLAGS" -DUSE_CUDA=ON -DUSE_CUBLAS=ON ../poc-gpu-likelihood-calculation
+      make VERBOSE=1 -j
+
+  else
+      echo "Unknown TYPE specified for GPU_V100 build: $TYPE"
+      exit 1
+  fi
 
 #    cd ..
 #    mkdir -p "openacc_transpose_v100"
@@ -79,11 +109,23 @@ if [ "$OPENACC_V100" = true ]; then
 
 fi
 
-if [ "$OPENACC_A100" = true ]; then
+if [ "$GPU_A100" = true ]; then
+  if [ "$TYPE" == "OpenACC" ]; then
+
     echo "Building OpenACC A100 version"
 
     qsub -P${PROJECT_NAME} -lwalltime=00:05:00,ncpus=16,ngpus=1,mem=64GB,jobfs=10GB,wd -qdgxa100 -N build_a100 -vARG1="$WD/build",ARG2="$WD/build/poc-gpu-likelihood-calculation" $WD/build/build_a100.sh
 
+  elif [ "$TYPE" == "cuBLAS" ]; then
+
+    echo "Building cuBLAS A100 version"
+
+    qsub -P${PROJECT_NAME} -lwalltime=00:05:00,ncpus=16,ngpus=1,mem=64GB,jobfs=10GB,wd -qdgxa100 -N build_cublas_a100 -vARG1="$WD/build",ARG2="$WD/build/poc-gpu-likelihood-calculation" $WD/build/cublas_build.sh
+
+  else
+      echo "Unknown TYPE specified for GPU_A100 build: $TYPE"
+      exit 1
+  fi
 
 
 fi
