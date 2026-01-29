@@ -9,6 +9,7 @@ pipeline {
         string(name: 'PROJECT_NAME', defaultValue: 'dx61', description: 'Project name')
         string(name: 'LENGTH', defaultValue: '1000000', description: 'alignment length')
         booleanParam(name: 'LEN_BASED', defaultValue: false, description: 'Use length based datasets')
+        booleanParam(name: 'SPECIFIC_TREE', defaultValue: false, description: 'Use a specific tree folder for testing')
 
         string(name: 'NCI_ALIAS', defaultValue: 'nci_gadi', description: 'ssh alias, if you do not have one, create one')
 
@@ -197,7 +198,17 @@ pipeline {
                         sh ${WORKDIR}/qsub/qsub_script_lenbased.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME}
         
                         """
-                    } else {
+                    } else if (params.SPECIFIC_TREE) {
+                        echo "Running ...."
+                        sh """
+                        ssh ${NCI_ALIAS} << EOF
+                        cd ${WORKDIR}
+                        echo "Running..."
+                        sh ${WORKDIR}/qsub/qsub_script.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${TYPE}
+        
+                        """
+                    }
+                    else {
                         // args of the run script
                         /*IQTREE=$1 # boolean for whether to build IQTREE
                             OPENACC_V100=$2
