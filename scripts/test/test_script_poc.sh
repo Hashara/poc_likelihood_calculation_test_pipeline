@@ -19,7 +19,7 @@ if [ "$GPU_TYPE" == "A100" ]; then
       executable_type=("openacc_a100")
     elif [ "$TYPE" == "cuBLAS" ]; then
       executable_type=("cublas_a100")
-
+    fi
 elif [ "$GPU_TYPE" == "V100" ]; then
     echo "Using V100 build"
 #    executable_type=("openacc_v100" "openacc_transpose_v100")
@@ -37,10 +37,10 @@ elif [ "$GPU_TYPE" == "H200" ]; then
      if [ "$TYPE" == "OpenACC" ]; then
         echo "Using OpenACC executable"
         executable_type=("openacc_h200")
-      elif [ "$TYPE" == "cuBLAS" ]; then
+    elif [ "$TYPE" == "cuBLAS" ]; then
         echo "Using cuBLAS executable"
         executable_type=("cublas_h200")
-      fi
+    fi
 fi
 
 echo "executable_type: ${executable_type[@]}"
