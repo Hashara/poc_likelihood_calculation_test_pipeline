@@ -7,6 +7,7 @@ WD=$4
 POC_GIT_BRANCH=$5
 PROJECT_NAME=$6
 TYPE=$7
+GPU_H200=$8
 
 cd $WD || { echo "Failed to change directory to $WD"; exit 1; }
 mkdir -p build
@@ -46,7 +47,7 @@ if [ "$IQTREE" = true ]; then
 fi
 
 ##############################
-if [ "$GPU_V100" == true ] || [ "$GPU_A100" == true ]; then
+if [ "$GPU_V100" == true ] || [ "$GPU_A100" == true ] || [ "$GPU_H200" == true ]; then
     echo "Cloning poc repository"
     git clone --branch $POC_GIT_BRANCH --single-branch https://github.com/Hashara/poc-gpu-likelihood-calculation.git
 fi
@@ -109,7 +110,7 @@ if [ "$GPU_V100" == true ]; then
 
 fi
 
-if [ "$GPU_A100" = true ]; then
+if [ "$GPU_A100" == true ]; then
   if [ "$TYPE" == "OpenACC" ]; then
 
     echo "Building OpenACC A100 version"
@@ -128,4 +129,23 @@ if [ "$GPU_A100" = true ]; then
   fi
 
 
+fi
+
+if [ "$GPU_H200" == true ]; then
+    if [ "$TYPE" == "OpenACC" ]; then
+
+      echo "Building OpenACC A100 version"
+
+      qsub -P${PROJECT_NAME} -lwalltime=00:05:00,ncpus=12,ngpus=1,mem=48GB,jobfs=10GB,wd -qgpuhopper -N build_h200 -vARG1="$WD/build",ARG2="$WD/build/poc-gpu-likelihood-calculation" $WD/build/build_h200.sh
+
+    elif [ "$TYPE" == "cuBLAS" ]; then
+
+      echo "Building cuBLAS A100 version"
+
+      qsub -P${PROJECT_NAME} -lwalltime=00:05:00,ncpus=12,ngpus=1,mem=48B,jobfs=10GB,wd -qgpuhopper -N build_cublas_h200 -vARG1="$WD/build",ARG2="$WD/build/poc-gpu-likelihood-calculation" $WD/build/cublas_build_h200.sh
+
+    else
+        echo "Unknown TYPE specified for GPU_A100 build: $TYPE"
+        exit 1
+    fi
 fi

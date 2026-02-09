@@ -26,8 +26,9 @@ pipeline {
         booleanParam(name: 'IQTREE_OPENMP', defaultValue: false, description: 'Use OpenMP version of IQ-TREE')
         string(name: 'IQTREE_THREADS', defaultValue: '1', description: 'Number of threads for IQ-TREE')
         string(name: 'AUTO', defaultValue: 'true', description: 'IQ-TREE auto number of threads')
-        booleanParam(name: 'OpenACC_V100', defaultValue: false, description: 'Use OpenACC for V100 GPUs')
-        booleanParam(name: 'OpenACC_A100', defaultValue: false, description: 'Use OpenACC for A100 GPUs')
+        booleanParam(name: 'V100', defaultValue: false, description: 'Use V100 GPUs')
+        booleanParam(name: 'A100', defaultValue: false, description: 'Use A100 GPUs')
+        booleanParam(name: 'H200', defaultValue: false, description: 'Use H200 GPUs' )
         string(name: 'FACTOR',defaultValue: "1", description: "memory/time multipler")
 
         string(name: 'REPETITIONS', defaultValue: '1', description: 'Number of repetitions of each analysis')
@@ -58,8 +59,9 @@ pipeline {
         IQTREE_THREADS = "${params.IQTREE_THREADS}"
         AUTO = "${params.AUTO}"
 
-        OpenACC_V100 = "${params.OpenACC_V100}"
-        OpenACC_A100 = "${params.OpenACC_A100}"
+        V100 = "${params.V100}"
+        A100 = "${params.A100}"
+        H200 = "${params.H200}"
         LENGTH="${params.LENGTH}"
         FACTOR="${params.FACTOR}"
         REPETITIONS = "${params.REPETITIONS}"
@@ -94,7 +96,7 @@ pipeline {
                     ssh ${NCI_ALIAS} << EOF
                     cd ${WORKDIR}
                     echo "Building..."
-                    sh ${WORKDIR}/build/build.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${POC_GIT_BRANCH} ${PROJECT_NAME} ${TYPE}
+                    sh ${WORKDIR}/build/build.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${POC_GIT_BRANCH} ${PROJECT_NAME} ${TYPE} ${H200}
     
                     """
                 }
@@ -110,7 +112,7 @@ pipeline {
                     ssh ${NCI_ALIAS} << EOF
                     cd ${WORKDIR}
                     echo "Profiling builds..."
-                    sh ${WORKDIR}/build/profile_build.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${POC_GIT_BRANCH} ${PROJECT_NAME}
+                    sh ${WORKDIR}/build/profile_build.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${POC_GIT_BRANCH} ${PROJECT_NAME}
     
                     """
                 }
@@ -126,7 +128,7 @@ pipeline {
                     ssh ${NCI_ALIAS} << EOF
                     cd ${WORKDIR}
                     echo "Energy profiling builds..."
-                    sh ${WORKDIR}/build/energy_build.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${POC_GIT_BRANCH} ${PROJECT_NAME}
+                    sh ${WORKDIR}/build/energy_build.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${POC_GIT_BRANCH} ${PROJECT_NAME}
     
                     """
                 }
@@ -152,7 +154,7 @@ pipeline {
                     ssh ${NCI_ALIAS} << EOF
                     cd ${WORKDIR}
                     echo "Profiling..."
-                    sh ${WORKDIR}/qsub/profile_qsub_script.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${PROJECT_NAME}
+                    sh ${WORKDIR}/qsub/profile_qsub_script.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${PROJECT_NAME}
     
                     """
                 }
@@ -168,7 +170,7 @@ pipeline {
                     ssh ${NCI_ALIAS} << EOF
                     cd ${WORKDIR}
                     echo "Energy profiling..."
-                    sh ${WORKDIR}/qsub/energy_measure_qsub_script.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${PROJECT_NAME}
+                    sh ${WORKDIR}/qsub/energy_measure_qsub_script.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${PROJECT_NAME}
     
                     """
                 }
@@ -195,7 +197,7 @@ pipeline {
                         ssh ${NCI_ALIAS} << EOF
                         cd ${WORKDIR}
                         echo "Running..."
-                        sh ${WORKDIR}/qsub/qsub_script_lenbased.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME}
+                        sh ${WORKDIR}/qsub/qsub_script_lenbased.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${H200}
         
                         """
                     } else if (params.SPECIFIC_TREE) {
@@ -204,7 +206,7 @@ pipeline {
                         ssh ${NCI_ALIAS} << EOF
                         cd ${WORKDIR}
                         echo "Running..."
-                        sh ${WORKDIR}/qsub/qsub_script_specific.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${TYPE}
+                        sh ${WORKDIR}/qsub/qsub_script_specific.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${TYPE} ${H200}
         
                         """
                     }
@@ -223,7 +225,7 @@ pipeline {
                         ssh ${NCI_ALIAS} << EOF
                         cd ${WORKDIR}
                         echo "Running..."
-                        sh ${WORKDIR}/qsub/qsub_script.sh ${IQTREE} ${OpenACC_V100} ${OpenACC_A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${TYPE}
+                        sh ${WORKDIR}/qsub/qsub_script.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${TYPE} ${H200}
         
                         """
                     }

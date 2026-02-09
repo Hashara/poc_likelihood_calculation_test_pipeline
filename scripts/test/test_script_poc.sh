@@ -5,23 +5,22 @@ DATASET_DIR=$ARG1
 UNIQUE_NAME=$ARG2
 WD=$ARG3
 AA_or_DNA=$ARG4
-A_or_V100=$ARG5
+GPU_TYPE=$ARG5
 
 length=$ARG6
 
 TYPE=$ARG7
 
 executable_type=()
-if [ "$A_or_V100" = "A100" ]; then
+if [ "$GPU_TYPE" == "A100" ]; then
     echo "Using A100 build"
 #    executable_type=("openacc_a100" "openacc_transpose_a100")
     if [ "$TYPE" == "OpenACC" ]; then
       executable_type=("openacc_a100")
     elif [ "$TYPE" == "cuBLAS" ]; then
       executable_type=("cublas_a100")
-    fi
 
-else
+elif [ "$GPU_TYPE" == "V100" ]; then
     echo "Using V100 build"
 #    executable_type=("openacc_v100" "openacc_transpose_v100")
     echo "TYPE: $TYPE"
@@ -32,6 +31,16 @@ else
       echo "Using cuBLAS executable"
       executable_type=("cublas_v100")
     fi
+elif [ "$GPU_TYPE" == "H200" ]; then
+    echo "Uisng H200 build"
+    echo "TYPE: $TYPE"
+     if [ "$TYPE" == "OpenACC" ]; then
+        echo "Using OpenACC executable"
+        executable_type=("openacc_h200")
+      elif [ "$TYPE" == "cuBLAS" ]; then
+        echo "Using cuBLAS executable"
+        executable_type=("cublas_h200")
+      fi
 fi
 
 echo "executable_type: ${executable_type[@]}"

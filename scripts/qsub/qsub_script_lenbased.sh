@@ -18,6 +18,7 @@ IQTREE_OPENMP=${12}
 IQTREE_THREADS=${13}
 IQTREE_AUTO=${14}
 PROJECT_NAME=${15}
+H200=${16}
 
 data_types=()
 if [ "$AA" = true ]; then
@@ -50,25 +51,30 @@ printf -v wall_time "%02d:%02d:%02d" \
 for r in $(seq 1 $repeat); do
     local_unique_name="${UNIQUE_NAME}_run${r}"
   for data_type in "${data_types[@]}"; do
-      if [ "$OPENACC_V100" = true ]; then
+      if [ "$OPENACC_V100" == true ]; then
         memory=$((factor * 1 * 48))
           qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=12,ngpus=1,mem="${memory}GB",jobfs=10GB,wd -qgpuvolta -N test_v100 \
                 -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="V100",ARG6="$length" "$WD"/test/test_script_poc_lenbased.sh
       fi
 
-      if [ "$OPENACC_A100" = true ]; then
+      if [ "$OPENACC_A100" == true ]; then
         memory=$(echo "$factor * 0.5 * 64" | bc)
          qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=16,ngpus=1,mem="64GB",jobfs=10GB,wd -qdgxa100 -N test_a100 \
                 -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="A100",ARG6="$length" "$WD"/test/test_script_poc_lenbased.sh
       fi
+      if [ "$H200" == true ]; then
+          memory=$((factor * 1 * 48))
+          qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=12,ngpus=1,mem="${memory}GB",jobfs=10GB,wd -qgpuhopper -N test_v100 \
+                -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="H200",ARG6="$length" "$WD"/test/test_script_poc_lenbased.sh
+      fi
 
-      if [ "$IQTREE" = true ]; then
+      if [ "$IQTREE" == true ]; then
           memory=$((factor * 1 * 20))
          qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=1,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree \
                 -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length" "$WD"/test/test_script_iqtree_lenbased.sh
       fi
 
-      if [ "$IQTREE_OPENMP" = true ]; then
+      if [ "$IQTREE_OPENMP" == true ]; then
           memory=$((factor * IQTREE_THREADS * 4))
           echo "Submitting IQ-TREE OMP job with $IQTREE_THREADS threads and memory ${memory}GB for lenbased ..."
          qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=$IQTREE_THREADS,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree_omp \
