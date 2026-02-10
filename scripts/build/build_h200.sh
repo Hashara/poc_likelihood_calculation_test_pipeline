@@ -4,7 +4,7 @@ WD=$ARG1
 code_dir=$ARG2
 
 mkdir -p "$WD/openacc_h200"
-cd "$WD/openacc_h200" || { echo "Failed to change directory to openacc_a100"; exit 1; }
+cd "$WD/openacc_h200" || { echo "Failed to change directory to openacc_h200"; exit 1; }
 
 module load nvhpc-compilers/24.7
 
