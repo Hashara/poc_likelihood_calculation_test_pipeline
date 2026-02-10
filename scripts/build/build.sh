@@ -134,15 +134,15 @@ fi
 if [ "$GPU_H200" == true ]; then
     if [ "$TYPE" == "OpenACC" ]; then
 
-      echo "Building OpenACC A100 version"
+      echo "Building OpenACC V100 version"
 
-      qsub -P${PROJECT_NAME} -lwalltime=00:05:00,ncpus=12,ngpus=1,mem=48GB,jobfs=10GB,wd -qgpuhopper -N build_h200 -vARG1="$WD/build",ARG2="$WD/build/poc-gpu-likelihood-calculation" $WD/build/build_h200.sh
+      qsub -P${PROJECT_NAME} -lwalltime=00:05:00,ncpus=12,ngpus=1,mem=50GB,jobfs=10GB,wd -qgpuhopper -N build_h200 -vARG1="$WD/build",ARG2="$WD/build/poc-gpu-likelihood-calculation" $WD/build/build_h200.sh
 
     elif [ "$TYPE" == "cuBLAS" ]; then
 
       echo "Building cuBLAS A100 version"
 
-      qsub -P${PROJECT_NAME} -lwalltime=00:05:00,ncpus=12,ngpus=1,mem=48B,jobfs=10GB,wd -qgpuhopper -N build_cublas_h200 -vARG1="$WD/build",ARG2="$WD/build/poc-gpu-likelihood-calculation" $WD/build/cublas_build_h200.sh
+      qsub -P${PROJECT_NAME} -lwalltime=00:05:00,ncpus=12,ngpus=1,mem=50B,jobfs=10GB,wd -qgpuhopper -N build_cublas_h200 -vARG1="$WD/build",ARG2="$WD/build/poc-gpu-likelihood-calculation" $WD/build/cublas_build_h200.sh
 
     else
         echo "Unknown TYPE specified for GPU_A100 build: $TYPE"
