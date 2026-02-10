@@ -5,20 +5,24 @@ DATASET_DIR=$ARG1
 UNIQUE_NAME=$ARG2
 WD=$ARG3
 AA_or_DNA=$ARG4
-A_or_V100=$ARG5
+GPU_TYPE=$ARG5
 
 length=$ARG6
 
 executable_type=()
-if [ "$A_or_V100" = "A100" ]; then
+if [ "$GPU_TYPE" == "A100" ]; then
     echo "Using A100 build"
 #    executable_type=("openacc_a100" "openacc_transpose_a100")
     executable_type=("openacc_a100")
 
-else
+elif [ "$GPU_TYPE" == "V100" ]; then
     echo "Using V100 build"
 #    executable_type=("openacc_v100" "openacc_transpose_v100")
     executable_type=("openacc_v100")
+
+elif [ "$GPU_TYPE" == "H200" ]; then
+    echo "Using H200 build"
+    executable_type=("openacc_h200")
 fi
 
 

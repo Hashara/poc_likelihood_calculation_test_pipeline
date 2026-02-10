@@ -3,8 +3,8 @@
 WD=$ARG1
 code_dir=$ARG2
 
-mkdir -p "$WD/cublas_a100"
-cd "$WD/cublas_a100" || { echo "Failed to change directory to openacc_a100"; exit 1; }
+mkdir -p "$WD/cublas_h200"
+cd "$WD/cublas_h200" || { echo "Failed to change directory to openacc_h200"; exit 1; }
 
 
 module load nvhpc-compilers/24.7 cuda/12.5.1
@@ -19,7 +19,7 @@ export CUDACXX=nvcc
 export LDFLAGS="-L/apps/nvidia-hpc-sdk/24.7/Linux_x86_64/24.7/compilers/lib"
 export CPPFLAGS="-I/apps/nvidia-hpc-sdk/24.7/Linux_x86_64/24.7/compilers/include"
 
-cmake -DCMAKE_CXX_FLAGS="$LDFLAGS $CPPFLAGS" -DUSE_CUDA=ON -DUSE_CUBLAS=ON -DTARGET_A100=ON $code_dir
+cmake -DCMAKE_CXX_FLAGS="$LDFLAGS $CPPFLAGS" -DUSE_CUDA=ON -DUSE_CUBLAS=ON -DTARGET_H200=ON $code_dir
 make -j
 
 cd ..
