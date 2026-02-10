@@ -134,13 +134,13 @@ fi
 if [ "$GPU_H200" == true ]; then
     if [ "$TYPE" == "OpenACC" ]; then
 
-      echo "Building OpenACC V100 version"
+      echo "Building OpenACC H200 version"
 
       qsub -P${PROJECT_NAME} -lwalltime=00:05:00,ncpus=12,ngpus=1,mem=48GB,jobfs=10GB,wd -qgpuhopper -N build_h200 -vARG1="$WD/build",ARG2="$WD/build/poc-gpu-likelihood-calculation" $WD/build/build_h200.sh
 
     elif [ "$TYPE" == "cuBLAS" ]; then
 
-      echo "Building cuBLAS V100 version"
+      echo "Building cuBLAS H200 version"
 
       qsub -P${PROJECT_NAME} -lwalltime=00:05:00,ncpus=12,ngpus=1,mem=48GB,jobfs=10GB,wd -qgpuhopper -N build_cublas_h200 -vARG1="$WD/build",ARG2="$WD/build/poc-gpu-likelihood-calculation" $WD/build/cublas_build_h200.sh
 
