@@ -14,7 +14,7 @@ TYPE=$ARG7
 TEST_SCRIPT="$WD"/test/h200/test_script_poc_h200.sh
 
 # Logs directory
-LOG_DIR="gpu_runs_$(date +%Y%m%d_%H%M%S)"
+LOG_DIR=""$WD"/test/h200/gpu_runs_$(date +%Y%m%d_%H%M%S)"
 mkdir -p "$LOG_DIR"
 
 # Check NVIDIA visibility
