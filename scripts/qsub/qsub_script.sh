@@ -22,6 +22,7 @@ PROJECT_NAME=${15}
 
 TYPE=${16}
 H200=${17}
+ALL_NODE=${18}
 
 data_types=()
 if [ "$AA" == true ]; then
@@ -67,9 +68,15 @@ for r in $(seq 1 $repeat); do
       fi
 
       if [ "$H200" == true ]; then
-           memory=$((factor * 1 * 48))
-                    qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=12,ngpus=1,mem="${memory}GB",jobfs=10GB,wd -qgpuhopper -N test_h200 \
+        if [ "$ALL_NODE" == true ]; then
+              memory=$((factor * 4 * 48))
+              qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=48,ngpus=4,mem="${memory}GB",jobfs=10GB,wd -qgpuhopper -N test_h200_all \
+                                    -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="H200",ARG6="$length",ARG7="$TYPE" "$WD"/test/h200/run_test_per_gpu.sh
+          else
+                memory=$((factor * 1 * 48))
+                qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=12,ngpus=1,mem="${memory}GB",jobfs=10GB,wd -qgpuhopper -N test_h200 \
                           -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="H200",ARG6="$length",ARG7="$TYPE" "$WD"/test/test_script_poc.sh
+          fi
       fi
       if [ "$IQTREE" == true ]; then
           memory=$((factor * 1 * 20))

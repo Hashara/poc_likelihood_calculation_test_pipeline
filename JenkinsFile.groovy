@@ -29,6 +29,7 @@ pipeline {
         booleanParam(name: 'V100', defaultValue: false, description: 'Use V100 GPUs')
         booleanParam(name: 'A100', defaultValue: false, description: 'Use A100 GPUs')
         booleanParam(name: 'H200', defaultValue: false, description: 'Use H200 GPUs' )
+        booleanParam(name: 'ALL_NODE', defaultValue: false, description: 'Use whole node and execute parallely')
         string(name: 'FACTOR',defaultValue: "1", description: "memory/time multipler")
 
         string(name: 'REPETITIONS', defaultValue: '1', description: 'Number of repetitions of each analysis')
