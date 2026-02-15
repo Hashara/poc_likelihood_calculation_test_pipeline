@@ -63,6 +63,7 @@ pipeline {
         V100 = "${params.V100}"
         A100 = "${params.A100}"
         H200 = "${params.H200}"
+        ALL_NODE = "${params.ALL_NODE}"
         LENGTH="${params.LENGTH}"
         FACTOR="${params.FACTOR}"
         REPETITIONS = "${params.REPETITIONS}"
@@ -226,7 +227,7 @@ pipeline {
                         ssh ${NCI_ALIAS} << EOF
                         cd ${WORKDIR}
                         echo "Running..."
-                        sh ${WORKDIR}/qsub/qsub_script.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${TYPE} ${H200}
+                        sh ${WORKDIR}/qsub/qsub_script.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${TYPE} ${H200} ${ALL_NODE}
         
                         """
                     }
