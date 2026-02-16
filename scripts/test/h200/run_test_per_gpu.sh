@@ -52,7 +52,7 @@ for ((gpu=0; gpu<GPU_COUNT; gpu++)); do
 
     bash "$TEST_SCRIPT" \
       "$DATASET_DIR" \
-      "UNIQUE_NAME_LOC" \
+      "$UNIQUE_NAME_LOC" \
       "$WD" \
       "$AA_or_DNA" \
       "$GPU_TYPE" \
