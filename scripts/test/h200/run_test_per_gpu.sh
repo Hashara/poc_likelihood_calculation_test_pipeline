@@ -50,6 +50,8 @@ for ((gpu=0; gpu<GPU_COUNT; gpu++)); do
     START=$(date +%s%N)
     UNIQUE_NAME_LOC=${UNIQUE_NAME}_gpu_${gpu}
 
+    # --- run test, but DON'T let `set -e` kill the subshell before we log ---
+    set +e
     bash "$TEST_SCRIPT" \
       "$DATASET_DIR" \
       "$UNIQUE_NAME_LOC" \
@@ -57,9 +59,11 @@ for ((gpu=0; gpu<GPU_COUNT; gpu++)); do
       "$AA_or_DNA" \
       "$GPU_TYPE" \
       "$length" \
-      "$TYPE"
-
+      "$TYPE" \
+      >>"$LOG_FILE" 2>&1
     RC=$?
+    set -e
+    # ----------------------------------------------------------------------
 
     END=$(date +%s%N)
     ELAPSED_MS=$(( (END - START) / 1000000 ))
