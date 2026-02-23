@@ -81,7 +81,7 @@ for r in $(seq 1 $repeat); do
       elif [ "$IQTREE" == true ]; then
           memory=$((factor * 1 * 20))
          qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=1,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree \
-                -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length" "$WD"/test/test_script_iqtree.sh
+                -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length",ARG6="$TYPE" "$WD"/test/iqtree/test_script_iqtree.sh
       fi
 
       if [ "$IQTREE_OPENMP" == true ]; then
