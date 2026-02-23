@@ -126,9 +126,9 @@ pipeline {
         }
 
         stage('run tests'){
-            when {
-                expression { return params.PROFILE == false && params.ENERGY_PROFILE == false  }
-            }
+//            when {
+//                expression { return params.PROFILE == false && params.ENERGY_PROFILE == false  }
+//            }
             steps{
                 script{
 //                    if (params.LEN_BASED) {
