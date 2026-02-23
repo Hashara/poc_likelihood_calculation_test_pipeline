@@ -1,16 +1,15 @@
 #!/bin/bash
 
 # this script for running 10 different trees with 1M sites each with 100 taxa
-DATASET_DIR=$ARG1
-UNIQUE_NAME=$ARG2
-WD=$ARG3
-AA_or_DNA=$ARG4
-GPU_TYPE=$ARG5
+DATASET_DIR=$1
+UNIQUE_NAME=$2
+WD=$3
+AA_or_DNA=$4
+GPU_TYPE=$5
 
-length=$ARG6
+length=$6
 
-TYPE=$ARG7
-EIGEN=$ARG8
+TYPE=$7
 
 executable_type=()
 if [ "$GPU_TYPE" == "A100" ]; then
@@ -71,20 +70,10 @@ for i in $(seq 1 $iter); do
                     echo "Running test for length: $length with $type"
                     if [ "$AA_or_DNA" = "AA" ]; then
                         echo "Using amino acid data"
-                        if [ "$EIGEN" == "true" ]; then
-                          echo "Using eigen space"
-                          $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --seqtype AA --eigenspace -prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type}.txt
-                        else
-                          $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --seqtype AA -prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type}.txt
-                        fi
+                        $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --seqtype AA -prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type}.txt
                     elif [ "$AA_or_DNA" = "DNA" ]; then
                         echo "Using DNA data"
-                        if [ "$EIGEN" == "true" ]; then
-                          echo "Using eigen space"
-                          $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --eigenspace -prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_dna_${type}.txt
-                        else
-                          $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile -prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_dna_${type}.txt
-                        fi
+                        $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile -prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_dna_${type}.txt
                     fi
 
                     if [ $? -ne 0 ]; then
