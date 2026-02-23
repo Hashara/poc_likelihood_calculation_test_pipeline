@@ -58,7 +58,7 @@ for r in $(seq 1 $repeat); do
       if [ "$V100_GPU" == true ]; then
         memory=$((factor * 1 * 48))
           qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=12,ngpus=1,mem="${memory}GB",jobfs=10GB,wd -qgpuvolta -N test_v100 \
-                -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length" "$WD"/test/test_script_iqtree.sh
+                -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length" "$WD"/test/iqtree/test_script_iqtree.sh
 
 #
 #      if [ "$A100_GPU" == true ]; then
