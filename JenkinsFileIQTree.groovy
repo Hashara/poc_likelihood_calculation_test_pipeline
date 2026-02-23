@@ -102,13 +102,13 @@ pipeline {
 
                     build job: 'iqtree_cuda-pipeline',
                         parameters: [
-                                string(name: 'BRANCH', value: ${IQ_TREE_GIT_BRANCH}),
+                                string(name: 'BRANCH', value: params.IQ_TREE_GIT_BRANCH),
                                 booleanParam(name: 'CLONE_IQTREE', value: params.CLONE_IQTREE),
                                 string(name: 'NCI_ALIAS', value: 'nci_gadi'),
-                                string(name: 'WORKING_DIR', value: ${WORKDIR}),
+                                string(name: 'WORKING_DIR', value: params.WORKDIR),
                                 booleanParam(name: 'QSUB', value: params.QSUB),
-                                booleanParam(name: 'VANILLA', value:${VANILA} ),
-                                booleanParam(name: 'CUDA', value: ${CUDA} )
+                                booleanParam(name: 'VANILLA', value: params.VANILLA),
+                                booleanParam(name: 'CUDA', value: params.CUDA)
                         ],wait:true
                 }
             }
