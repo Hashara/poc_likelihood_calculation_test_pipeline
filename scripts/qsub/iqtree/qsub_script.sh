@@ -20,9 +20,9 @@ IQTREE_AUTO=${14}
 
 PROJECT_NAME=${15}
 
-TYPE=${16}
-H200=${17}
-ALL_NODE=${18}
+
+H200=${16}
+ALL_NODE=${17}
 
 data_types=()
 if [ "$AA" == true ]; then
