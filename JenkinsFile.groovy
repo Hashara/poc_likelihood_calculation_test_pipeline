@@ -30,6 +30,8 @@ pipeline {
         booleanParam(name: 'A100', defaultValue: false, description: 'Use A100 GPUs')
         booleanParam(name: 'H200', defaultValue: false, description: 'Use H200 GPUs' )
         booleanParam(name: 'ALL_NODE', defaultValue: false, description: 'Use whole node and execute parallely')
+
+        booleanParam(name: 'EIGEN', defaultValue: false, description: 'Use eigne')
         string(name: 'FACTOR',defaultValue: "1", description: "memory/time multipler")
 
         string(name: 'REPETITIONS', defaultValue: '1', description: 'Number of repetitions of each analysis')
@@ -70,6 +72,7 @@ pipeline {
         PROFILE = "${params.PROFILE}"
         ENERGY_PROFILE = "${params.ENERGY_PROFILE}"
         LEN_BASED = "${params.LEN_BASED}"
+        EIGEN="${params.EIGEN}"
     }
 
     stages{
@@ -227,7 +230,7 @@ pipeline {
                         ssh ${NCI_ALIAS} << EOF
                         cd ${WORKDIR}
                         echo "Running..."
-                        sh ${WORKDIR}/qsub/qsub_script.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${TYPE} ${H200} ${ALL_NODE}
+                        sh ${WORKDIR}/qsub/qsub_script.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${TYPE} ${H200} ${ALL_NODE} ${EIGEN}
         
                         """
                     }

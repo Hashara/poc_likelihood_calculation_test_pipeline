@@ -10,6 +10,7 @@ GPU_TYPE=$ARG5
 length=$ARG6
 
 TYPE=$ARG7
+EIGEN=$ARG8
 
 executable_type=()
 if [ "$GPU_TYPE" == "A100" ]; then
@@ -70,10 +71,20 @@ for i in $(seq 1 $iter); do
                     echo "Running test for length: $length with $type"
                     if [ "$AA_or_DNA" = "AA" ]; then
                         echo "Using amino acid data"
-                        $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --seqtype AA -prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type}.txt
+                        if [ "$EIGEN" == "true" ]; then
+                          echo "Using eigen space"
+                          $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --seqtype AA --eigenspace -prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type}.txt
+                        else
+                          $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --seqtype AA -prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type}.txt
+                        fi
                     elif [ "$AA_or_DNA" = "DNA" ]; then
                         echo "Using DNA data"
-                        $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile -prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_dna_${type}.txt
+                        if [ "$EIGEN" == "true" ]; then
+                          echo "Using eigen space"
+                          $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --eigenspace -prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_dna_${type}.txt
+                        else
+                          $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile -prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_dna_${type}.txt
+                        fi
                     fi
 
                     if [ $? -ne 0 ]; then
