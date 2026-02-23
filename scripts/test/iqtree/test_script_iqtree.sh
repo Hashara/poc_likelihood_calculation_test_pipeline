@@ -9,7 +9,16 @@ AA_or_DNA=$ARG4
 length=$ARG5
 
 executable_type=("iqtree")
-executable_path="$WD/builds/build-nvhpc-cuda/iqtree3"
+
+TYPE=$ARG6
+
+executable_path=""
+if [ "$TYPE" == "VANILA" ]; then
+  executable_path="$WD/builds/build-vanila/iqtree3"
+elif [ "$TYPE" == "CUDA" ]; then
+  executable_path="$WD/builds/build-nvhpc-cuda/iqtree3"
+fi
+
 
 iter=10
 

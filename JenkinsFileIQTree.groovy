@@ -170,12 +170,14 @@ pipeline {
                             UNIQUE_NAME=$6
                             AA=$7
                             DNA=$8*/
-                            echo "Running ...."
+                    env.TYPE = params.VANILA ? "VANILA" : "CUDA"
+
+                    echo "Running ...."
                             sh """
                         ssh ${NCI_ALIAS} << EOF
                         cd ${WORKDIR}
                         echo "Running..."
-                        sh ${WORKDIR}/qsub/iqtree/qsub_script.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${H200} ${ALL_NODE}
+                        sh ${WORKDIR}/qsub/iqtree/qsub_script.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME}  ${TYPE} ${H200} ${ALL_NODE}
         
                         """
 //                    }
