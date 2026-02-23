@@ -100,7 +100,7 @@ pipeline {
                     WD=$ARG4
                     IQ_TREE_GIT_BRANCH=$ARG5*/
 
-                    build job: 'iqtree_cuda-pipeline',
+                    build job: 'iqtree-cuda-pipeline',
                         parameters: [
                                 string(name: 'BRANCH', value: params.IQ_TREE_GIT_BRANCH),
                                 booleanParam(name: 'CLONE_IQTREE', value: params.CLONE_IQTREE),
