@@ -11,11 +11,6 @@ length=$6
 
 TYPE=$7
 
-# Optional sharding controls for multi-GPU runs.
-# Defaults preserve current behavior (single process handles all trees).
-GPU_ID=${GPU_ID:-0}
-GPU_COUNT=${GPU_COUNT:-1}
-
 executable_type=()
 if [ "$GPU_TYPE" == "A100" ]; then
     echo "Using A100 build"
@@ -52,7 +47,7 @@ echo "executable_type: ${executable_type[@]}"
 
 iter=10
 
-for (( i=GPU_ID+1; i<=iter; i+=GPU_COUNT )); do
+for i in $(seq 1 $iter); do
     TAXA_DIR="${DATASET_DIR}/tree_${i}"
     echo "Processing folder: $TAXA_DIR"
     taxa_size=$(basename "$TAXA_DIR")

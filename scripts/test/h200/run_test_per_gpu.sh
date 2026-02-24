@@ -30,8 +30,25 @@ if [[ "$GPU_COUNT" -lt 1 ]]; then
   exit 1
 fi
 
+# This script is intended for H200 full-node jobs (4 GPUs).
+TARGET_GPU_COUNT=4
+if [[ "$GPU_COUNT" -gt "$TARGET_GPU_COUNT" ]]; then
+  GPU_COUNT=$TARGET_GPU_COUNT
+fi
+
+# Prevent CPU thread oversubscription when running one worker per GPU.
+if [[ -n "${PBS_NCPUS:-}" ]] && [[ "${PBS_NCPUS}" =~ ^[0-9]+$ ]] && [[ "${PBS_NCPUS}" -gt 0 ]]; then
+  CPU_THREADS_PER_WORKER=$(( PBS_NCPUS / GPU_COUNT ))
+  if [[ "$CPU_THREADS_PER_WORKER" -lt 1 ]]; then
+    CPU_THREADS_PER_WORKER=1
+  fi
+else
+  CPU_THREADS_PER_WORKER=1
+fi
+
 echo "Detected $GPU_COUNT GPU(s)"
 echo "Running test_poc.sh once per GPU in parallel..."
+echo "CPU threads per worker: $CPU_THREADS_PER_WORKER"
 echo "Logs will be stored in: $LOG_DIR"
 echo
 
@@ -41,7 +58,11 @@ for ((gpu=0; gpu<GPU_COUNT; gpu++)); do
   (
     export CUDA_VISIBLE_DEVICES=$gpu
     export GPU_ID=$gpu
-    export GPU_COUNT=$GPU_COUNT
+    export CUDA_DEVICE_ORDER=PCI_BUS_ID
+    export OMP_NUM_THREADS=$CPU_THREADS_PER_WORKER
+    export MKL_NUM_THREADS=1
+    export OPENBLAS_NUM_THREADS=1
+    export NUMEXPR_NUM_THREADS=1
 
     LOG_FILE="$LOG_DIR/gpu_${gpu}.log"
 
