@@ -46,11 +46,11 @@ for i in $(seq 1 $iter); do
                 echo "Running test for length: $length with $type"
                 if [ "$AA_or_DNA" = "AA" ]; then
                     echo "Using amino acid data"
-                    $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} -m Poisson  -blfix --kernel-nonrev -v
+                    $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} -m Poisson  -blfix --kernel-nonrev -vvv
 
                 elif [ "$AA_or_DNA" = "DNA" ]; then
                     echo "Using DNA data"
-                    $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} -m JC  -blfix --kernel-nonrev -v
+                    $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} -m JC  -blfix --kernel-nonrev -vvv
 
                 fi
 
