@@ -111,7 +111,7 @@ pipeline {
                                 booleanParam(name: 'QSUB', value: params.QSUB),
                                 booleanParam(name: 'VANILLA', value: params.VANILLA),
                                 booleanParam(name: 'CUDA', value: params.CUDA),
-                                booleanParamn(name: 'OPENACC', value: params.OPENACC)
+                                booleanParam(name: 'OPENACC', value: params.OPENACC)
                         ],wait:true
                 }
             }
