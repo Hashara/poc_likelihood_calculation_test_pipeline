@@ -129,61 +129,9 @@ pipeline {
         }
 
         stage('run tests'){
-//            when {
-//                expression { return params.PROFILE == false && params.ENERGY_PROFILE == false  }
-//            }
+
             steps{
                 script{
-//                    if (params.LEN_BASED) {
-//                        // args of the run script
-//                        /*IQTREE=$1 # boolean for whether to build IQTREE
-//                            OPENACC_V100=$2
-//                            OPENACC_A100=$3
-//                            WD=$4
-//                            DATASET_DIR=$5
-//                            UNIQUE_NAME=$6
-//                            AA=$7
-//                            DNA=$8*/
-//                        echo "Running ...."
-//                        sh """
-//                        ssh ${NCI_ALIAS} << EOF
-//                        cd ${WORKDIR}
-//                        echo "Running..."
-//                        sh ${WORKDIR}/qsub/qsub_script_lenbased.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${H200}
-//
-//                        """
-//                    }
-//                    else if (params.SPECIFIC_TREE) {
-//                        echo "Running ...."
-//                        sh """
-//                        ssh ${NCI_ALIAS} << EOF
-//                        cd ${WORKDIR}
-//                        echo "Running..."
-//                        sh ${WORKDIR}/qsub/qsub_script_specific.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${TYPE} ${H200}
-//
-//                        """
-//                    }
-//                    else {
-                        // args of the run script
-                        /*IQTREE=$1 # boolean for whether to build IQTREE
-                            OPENACC_V100=$2
-                            OPENACC_A100=$3
-                            WD=$4
-                            DATASET_DIR=$5
-                            UNIQUE_NAME=$6
-                            AA=$7
-                            DNA=$8*/
-//                    env.TYPE = params.VANILA ? "VANILA" : "CUDA"
-//
-//                    echo "Running ...."
-//                            sh """
-//                        ssh ${NCI_ALIAS} << EOF
-//                        cd ${WORKDIR}
-//                        echo "Running..."
-//                        sh ${WORKDIR}/qsub/iqtree/qsub_script.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME}  ${TYPE} ${H200} ${ALL_NODE}
-//
-//                        """
-//                    }
 
                     def backends = []
 
@@ -211,7 +159,7 @@ pipeline {
                             ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} \
                             ${PROJECT_NAME} ${backend} ${H200} ${ALL_NODE}
-                        EOF
+                 
                         """
                     }
 
