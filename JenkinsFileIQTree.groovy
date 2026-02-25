@@ -17,7 +17,7 @@ pipeline {
         booleanParam(name: 'CLONE_IQTREE', defaultValue: false, description: 'Clone IQ-TREE?')
 
         booleanParam(name: 'QSUB', defaultValue: true, description: 'QSUB?')
-        booleanParam(name: 'VANILLA', defaultValue: false, description: 'Vanilla?')
+        booleanParam(name: 'VANILA', defaultValue: false, description: 'VANILA?')
         booleanParam(name: 'CUDA', defaultValue: true, description: 'CUDA integration?')
         booleanParam(name: 'OPENACC', defaultValue: true, description: 'OPENACC integration?')
 
@@ -109,7 +109,7 @@ pipeline {
                                 string(name: 'NCI_ALIAS', value: 'nci_gadi'),
                                 string(name: 'WORKING_DIR', value: params.WORKDIR),
                                 booleanParam(name: 'QSUB', value: params.QSUB),
-                                booleanParam(name: 'VANILLA', value: params.VANILLA),
+                                booleanParam(name: 'VANILA', value: params.VANILA),
                                 booleanParam(name: 'CUDA', value: params.CUDA),
                                 booleanParam(name: 'OPENACC', value: params.OPENACC)
                         ],wait:true
@@ -135,12 +135,12 @@ pipeline {
 
                     def backends = []
 
-                    if (params.VANILLA) backends << "VANILLA"
+                    if (params.VANILA) backends << "VANILA"
                     if (params.CUDA)    backends << "CUDA"
                     if (params.OPENACC) backends << "OPENACC"
 
                     if (backends.isEmpty()) {
-                        error("No backend selected. Enable at least one of VANILLA, CUDA, OPENACC")
+                        error("No backend selected. Enable at least one of VANILA, CUDA, OPENACC")
                     }
 
                     echo "Selected backends: ${backends}"
