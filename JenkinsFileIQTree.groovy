@@ -19,6 +19,7 @@ pipeline {
         booleanParam(name: 'QSUB', defaultValue: true, description: 'QSUB?')
         booleanParam(name: 'VANILLA', defaultValue: false, description: 'Vanilla?')
         booleanParam(name: 'CUDA', defaultValue: true, description: 'CUDA integration?')
+        booleanParam(name: 'OPENACC', defaultValue: true, description: 'OPENACC integration?')
 
 
         // dataset path
@@ -55,6 +56,7 @@ pipeline {
 
         VANILA="${params.VANILA}"
         CUDA="${params.CUDA}"
+        OPENACC="${params.OPENACC}"
 
 
         BUILD = "${params.BUILD}"
@@ -108,7 +110,8 @@ pipeline {
                                 string(name: 'WORKING_DIR', value: params.WORKDIR),
                                 booleanParam(name: 'QSUB', value: params.QSUB),
                                 booleanParam(name: 'VANILLA', value: params.VANILLA),
-                                booleanParam(name: 'CUDA', value: params.CUDA)
+                                booleanParam(name: 'CUDA', value: params.CUDA),
+                                booleanParamn(name: 'OPENACC', value: params.OPENACC)
                         ],wait:true
                 }
             }
@@ -170,17 +173,47 @@ pipeline {
                             UNIQUE_NAME=$6
                             AA=$7
                             DNA=$8*/
-                    env.TYPE = params.VANILA ? "VANILA" : "CUDA"
+//                    env.TYPE = params.VANILA ? "VANILA" : "CUDA"
+//
+//                    echo "Running ...."
+//                            sh """
+//                        ssh ${NCI_ALIAS} << EOF
+//                        cd ${WORKDIR}
+//                        echo "Running..."
+//                        sh ${WORKDIR}/qsub/iqtree/qsub_script.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME}  ${TYPE} ${H200} ${ALL_NODE}
+//
+//                        """
+//                    }
 
-                    echo "Running ...."
-                            sh """
+                    def backends = []
+
+                    if (params.VANILLA) backends << "VANILLA"
+                    if (params.CUDA)    backends << "CUDA"
+                    if (params.OPENACC) backends << "OPENACC"
+
+                    if (backends.isEmpty()) {
+                        error("No backend selected. Enable at least one of VANILLA, CUDA, OPENACC")
+                    }
+
+                    echo "Selected backends: ${backends}"
+
+                    for (backend in backends) {
+
+                        echo "Running backend: ${backend}"
+
+                        sh """
                         ssh ${NCI_ALIAS} << EOF
                         cd ${WORKDIR}
-                        echo "Running..."
-                        sh ${WORKDIR}/qsub/iqtree/qsub_script.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME}  ${TYPE} ${H200} ${ALL_NODE}
-        
+                        echo "Running ${backend}..."
+                        sh ${WORKDIR}/qsub/iqtree/qsub_script.sh \
+                            ${IQTREE} ${V100} ${A100} ${WORKDIR} \
+                            ${DATASET_PATH} ${RUN_ALIASES}_${backend} \
+                            ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
+                            ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} \
+                            ${PROJECT_NAME} ${backend} ${H200} ${ALL_NODE}
+                        EOF
                         """
-//                    }
+                    }
 
                 }
             }
