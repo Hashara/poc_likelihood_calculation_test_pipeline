@@ -35,6 +35,8 @@ pipeline {
         booleanParam(name: 'A100', defaultValue: false, description: 'Use A100 GPUs')
         booleanParam(name: 'H200', defaultValue: false, description: 'Use H200 GPUs' )
         booleanParam(name: 'ALL_NODE', defaultValue: false, description: 'Use whole node and execute parallely')
+
+        booleanParam(name: 'REV', defaultValue: true, description: "Kernel non rev flag")
         string(name: 'FACTOR',defaultValue: "1", description: "memory/time multipler")
 
         string(name: 'REPETITIONS', defaultValue: '1', description: 'Number of repetitions of each analysis')
@@ -72,6 +74,9 @@ pipeline {
         A100 = "${params.A100}"
         H200 = "${params.H200}"
         ALL_NODE = "${params.ALL_NODE}"
+
+        REV = "${params.REV}"
+
         LENGTH="${params.LENGTH}"
         FACTOR="${params.FACTOR}"
         REPETITIONS = "${params.REPETITIONS}"
@@ -158,7 +163,8 @@ pipeline {
                             ${DATASET_PATH} ${RUN_ALIASES}_${backend} \
                             ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} \
-                            ${PROJECT_NAME} ${backend} ${H200} ${ALL_NODE}
+                            ${PROJECT_NAME} ${backend} ${H200} ${ALL_NODE} \
+                            ${REV}
                  
                         """
                     }
