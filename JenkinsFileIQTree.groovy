@@ -37,6 +37,7 @@ pipeline {
         booleanParam(name: 'ALL_NODE', defaultValue: false, description: 'Use whole node and execute parallely')
 
         booleanParam(name: 'REV', defaultValue: true, description: "Kernel non rev flag")
+        booleanParam(name: 'VERBOSE', defaultValue: true, description: "Verbose mode")
         string(name: 'FACTOR',defaultValue: "1", description: "memory/time multipler")
 
         string(name: 'REPETITIONS', defaultValue: '1', description: 'Number of repetitions of each analysis')
@@ -76,6 +77,7 @@ pipeline {
         ALL_NODE = "${params.ALL_NODE}"
 
         REV = "${params.REV}"
+        VERBOSE = "${params.VERBOSE}"
 
         LENGTH="${params.LENGTH}"
         FACTOR="${params.FACTOR}"
@@ -164,7 +166,7 @@ pipeline {
                             ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} \
                             ${PROJECT_NAME} ${backend} ${H200} ${ALL_NODE} \
-                            ${REV}
+                            ${REV} ${VERBOSE}
                  
                         """
                     }
