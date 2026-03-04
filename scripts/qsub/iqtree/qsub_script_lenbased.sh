@@ -56,7 +56,7 @@ for r in $(seq 1 $repeat); do
       if [ "$IQTREE" == true ]; then
           memory=$((factor * 1 * 20))
           if [ "$V100_GPU" == true ]; then
-            qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=12,mem="${memory}GB",jobfs=10GB,wd -qgpuvolta -N test_iqtree_v100 \
+            qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=12,ngpus=1,mem="${memory}GB",jobfs=10GB,wd -qgpuvolta -N test_iqtree_v100 \
                 -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length",ARG6="$TYPE" "$WD"/test/iqtree/test_script_iqtree_lenbased.sh
 
           else
