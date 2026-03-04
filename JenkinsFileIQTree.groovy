@@ -139,7 +139,6 @@ pipeline {
 
             steps{
                 script{
-
                     def backends = []
 
                     if (params.VANILA) backends << "VANILA"
@@ -151,12 +150,35 @@ pipeline {
                     }
 
                     echo "Selected backends: ${backends}"
-
-                    for (backend in backends) {
-
-                        echo "Running backend: ${backend}"
-
+                    if (params.LEN_BASED) {
+                        // args of the run script
+                        /*IQTREE=$1 # boolean for whether to build IQTREE
+                            OPENACC_V100=$2
+                            OPENACC_A100=$3
+                            WD=$4
+                            DATASET_DIR=$5
+                            UNIQUE_NAME=$6
+                            AA=$7
+                            DNA=$8*/
+                        echo "Running ...."
                         sh """
+                        ssh ${NCI_ALIAS} << EOF
+                        cd ${WORKDIR}
+                        echo "Running..."
+                        sh ${WORKDIR}/qsub/iqtree/qsub_script_lenbased.sh \
+                        ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} \
+                        ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
+                        ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${H200} \
+                        ${backend}
+        
+                        """
+                    }
+                    else{
+                        for (backend in backends) {
+
+                            echo "Running backend: ${backend}"
+
+                            sh """
                         ssh ${NCI_ALIAS} << EOF
                         cd ${WORKDIR}
                         echo "Running ${backend}..."
@@ -169,7 +191,38 @@ pipeline {
                             ${REV} ${VERBOSE}
                  
                         """
+                        }
                     }
+//                    def backends = []
+//
+//                    if (params.VANILA) backends << "VANILA"
+//                    if (params.CUDA)    backends << "CUDA"
+//                    if (params.OPENACC) backends << "OPENACC"
+//
+//                    if (backends.isEmpty()) {
+//                        error("No backend selected. Enable at least one of VANILA, CUDA, OPENACC")
+//                    }
+//
+//                    echo "Selected backends: ${backends}"
+//
+//                    for (backend in backends) {
+//
+//                        echo "Running backend: ${backend}"
+//
+//                        sh """
+//                        ssh ${NCI_ALIAS} << EOF
+//                        cd ${WORKDIR}
+//                        echo "Running ${backend}..."
+//                        sh ${WORKDIR}/qsub/iqtree/qsub_script.sh \
+//                            ${IQTREE} ${V100} ${A100} ${WORKDIR} \
+//                            ${DATASET_PATH} ${RUN_ALIASES}_${backend} \
+//                            ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
+//                            ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} \
+//                            ${PROJECT_NAME} ${backend} ${H200} ${ALL_NODE} \
+//                            ${REV} ${VERBOSE}
+//
+//                        """
+//                    }
 
                 }
             }
