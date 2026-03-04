@@ -160,18 +160,22 @@ pipeline {
                             UNIQUE_NAME=$6
                             AA=$7
                             DNA=$8*/
-                        echo "Running ...."
-                        sh """
-                        ssh ${NCI_ALIAS} << EOF
-                        cd ${WORKDIR}
-                        echo "Running..."
-                        sh ${WORKDIR}/qsub/iqtree/qsub_script_lenbased.sh \
-                        ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} \
-                        ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
-                        ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${H200} \
-                        ${backend}
-        
-                        """
+                        for (backend in backends) {
+
+                            echo "Running backend: ${backend}"
+                            echo "Running ...."
+                            sh """
+                            ssh ${NCI_ALIAS} << EOF
+                            cd ${WORKDIR}
+                            echo "Running..."
+                            sh ${WORKDIR}/qsub/iqtree/qsub_script_lenbased.sh \
+                            ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} \
+                            ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
+                            ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${H200} \
+                            ${backend}
+                
+                            """
+                        }
                     }
                     else{
                         for (backend in backends) {
