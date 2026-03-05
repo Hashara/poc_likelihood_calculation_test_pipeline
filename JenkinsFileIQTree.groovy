@@ -42,7 +42,7 @@ pipeline {
 
         string(name: 'REPETITIONS', defaultValue: '1', description: 'Number of repetitions of each analysis')
 //        booleanParam(name: 'PROFILE', defaultValue: false, description: 'Profile runs with nsight')
-//        booleanParam(name: 'ENERGY_PROFILE', defaultValue: false, description: 'Profile energy consumption with forge')
+        booleanParam(name: 'ENERGY_PROFILE', defaultValue: false, description: 'Profile energy consumption with forge')
         string(name: 'RUN_ALIASES', defaultValue: 'run', description: 'Unique name for this run')
 
     }
@@ -135,8 +135,49 @@ pipeline {
             }
         }
 
-        stage('run tests'){
+        stage('Energy profiling'){
+            when {
+                expression { return params.ENERGY_PROFILE == true }
+            }
+            steps{
+                script{
+                    def backends = []
 
+                    if (params.VANILA) backends << "VANILA"
+                    if (params.OPENACC) backends << "OPENACC"
+
+                    if (backends.isEmpty()) {
+                        error("No backend selected for energy profiling. Enable at least one of VANILA, OPENACC")
+                    }
+
+                    echo "Energy profiling backends: ${backends}"
+
+                    for (backend in backends) {
+
+                        echo "Energy profiling backend: ${backend}"
+
+                        sh """
+                        ssh ${NCI_ALIAS} << EOF
+                        cd ${WORKDIR}
+                        echo "Energy profiling ${backend}..."
+                        sh ${WORKDIR}/qsub/iqtree/energy_measure_qsub_script.sh \
+                            ${IQTREE} ${V100} ${A100} ${WORKDIR} \
+                            ${DATASET_PATH} ${RUN_ALIASES}_energy_${backend} \
+                            ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
+                            ${IQTREE_OPENMP} ${IQTREE_THREADS} \
+                            ${PROJECT_NAME} ${backend} ${H200} \
+                            ${REV} ${VERBOSE}
+
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('run tests'){
+            when {
+                expression { return params.ENERGY_PROFILE == false }
+            }
             steps{
                 script{
                     def backends = []
