@@ -41,7 +41,7 @@ pipeline {
         string(name: 'FACTOR',defaultValue: "1", description: "memory/time multipler")
 
         string(name: 'REPETITIONS', defaultValue: '1', description: 'Number of repetitions of each analysis')
-//        booleanParam(name: 'PROFILE', defaultValue: false, description: 'Profile runs with nsight')
+        booleanParam(name: 'PROFILE', defaultValue: false, description: 'Profile runs with nsight')
         booleanParam(name: 'ENERGY_PROFILE', defaultValue: false, description: 'Profile energy consumption with forge')
         string(name: 'RUN_ALIASES', defaultValue: 'run', description: 'Unique name for this run')
 
@@ -82,7 +82,7 @@ pipeline {
         LENGTH="${params.LENGTH}"
         FACTOR="${params.FACTOR}"
         REPETITIONS = "${params.REPETITIONS}"
-//        PROFILE = "${params.PROFILE}"
+        PROFILE = "${params.PROFILE}"
         ENERGY_PROFILE = "${params.ENERGY_PROFILE}"
         LEN_BASED = "${params.LEN_BASED}"
     }
@@ -135,6 +135,45 @@ pipeline {
             }
         }
 
+        stage('Profiling'){
+            when {
+                expression { return params.PROFILE == true }
+            }
+            steps{
+                script{
+                    def backends = []
+
+                    if (params.VANILA) backends << "VANILA"
+                    if (params.CUDA)    backends << "CUDA"
+                    if (params.OPENACC) backends << "OPENACC"
+
+                    if (backends.isEmpty()) {
+                        error("No backend selected for profiling. Enable at least one of VANILA, CUDA, OPENACC")
+                    }
+
+                    echo "Profiling backends: ${backends}"
+
+                    for (backend in backends) {
+
+                        echo "Profiling backend: ${backend}"
+
+                        sh """
+                        ssh ${NCI_ALIAS} << EOF
+                        cd ${WORKDIR}
+                        echo "Profiling ${backend}..."
+                        sh ${WORKDIR}/qsub/iqtree/profile_qsub_script.sh \
+                            ${IQTREE} ${V100} ${A100} ${WORKDIR} \
+                            ${DATASET_PATH} ${RUN_ALIASES}_profile_${backend} \
+                            ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
+                            ${PROJECT_NAME} ${backend} ${H200} \
+                            ${REV} ${VERBOSE}
+
+                        """
+                    }
+                }
+            }
+        }
+
         stage('Energy profiling'){
             when {
                 expression { return params.ENERGY_PROFILE == true }
@@ -176,7 +215,7 @@ pipeline {
 
         stage('run tests'){
             when {
-                expression { return params.ENERGY_PROFILE == false }
+                expression { return params.PROFILE == false && params.ENERGY_PROFILE == false }
             }
             steps{
                 script{
