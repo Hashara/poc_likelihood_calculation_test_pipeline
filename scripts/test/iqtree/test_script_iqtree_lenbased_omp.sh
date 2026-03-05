@@ -29,7 +29,7 @@ for length in "${lengths[@]}"; do
 
         #loop through each executable type
         for type in "${executable_type[@]}"; do
-            executable_path="$WD/build/iqtree_build/iqtree3"
+            executable_path="$WD/builds/build-vanila/iqtree3"
             echo "Using executable: $executable_path"
 
             if [ -f "$executable_path" ]; then
