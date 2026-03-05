@@ -57,11 +57,11 @@ for i in $(seq 1 $iter); do
                 echo "Running energy measurement for tree: $i length: $length with $type ($TYPE) threads: $IQTREE_THREADS"
                 if [ "$AA_or_DNA" = "AA" ]; then
                     echo "Using amino acid data"
-                    perf-report --no-mpi $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} -m Poisson -blfix $kernel_rev $verbose -nt $IQTREE_THREADS
+                    perf-report --no-mpi --output=perf_report_${UNIQUE_NAME}_tree${i}_aa $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} -m Poisson -blfix $kernel_rev $verbose -nt $IQTREE_THREADS
 
                 elif [ "$AA_or_DNA" = "DNA" ]; then
                     echo "Using DNA data"
-                    perf-report --no-mpi $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} -m JC -blfix $kernel_rev $verbose -nt $IQTREE_THREADS
+                    perf-report --no-mpi --output=perf_report_${UNIQUE_NAME}_tree${i}_dna $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} -m JC -blfix $kernel_rev $verbose -nt $IQTREE_THREADS
 
                 fi
 
