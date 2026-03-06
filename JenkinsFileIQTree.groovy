@@ -20,6 +20,7 @@ pipeline {
         booleanParam(name: 'VANILA', defaultValue: false, description: 'VANILA?')
         booleanParam(name: 'CUDA', defaultValue: true, description: 'CUDA integration?')
         booleanParam(name: 'OPENACC', defaultValue: true, description: 'OPENACC integration?')
+        string(name: 'GPU_ARCH', defaultValue: '', description: 'GPU architecture for OpenACC build (e.g. cc70 for V100, cc80 for A100, cc90 for H100). Empty = multi-arch default (cc70,cc80,cc90)')
 
 
         // dataset path
@@ -60,6 +61,7 @@ pipeline {
         VANILA="${params.VANILA}"
         CUDA="${params.CUDA}"
         OPENACC="${params.OPENACC}"
+        GPU_ARCH="${params.GPU_ARCH}"
 
 
         BUILD = "${params.BUILD}"
@@ -118,7 +120,8 @@ pipeline {
                                 booleanParam(name: 'QSUB', value: params.QSUB),
                                 booleanParam(name: 'VANILA', value: params.VANILA),
                                 booleanParam(name: 'CUDA', value: params.CUDA),
-                                booleanParam(name: 'OPENACC', value: params.OPENACC)
+                                booleanParam(name: 'OPENACC', value: params.OPENACC),
+                                string(name: 'GPU_ARCH', value: params.GPU_ARCH)
                         ],wait:true
                 }
             }
