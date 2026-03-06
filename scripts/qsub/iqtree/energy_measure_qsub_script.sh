@@ -55,7 +55,7 @@ for r in $(seq 1 $repeat); do
     local_unique_name="${UNIQUE_NAME}_run${r}"
   for data_type in "${data_types[@]}"; do
 
-      if [ "$TYPE" == "OPENACC" ] || [ "$TYPE" == "CUDA" ]; then
+      if [ "$TYPE" == "OPENACC" ] || [ "$TYPE" == "OPENACC_PROFILE" ] || [ "$TYPE" == "CUDA" ]; then
           # GPU backends need GPU queue
           if [ "$V100_GPU" == true ]; then
             memory=$((factor * 1 * 48))
