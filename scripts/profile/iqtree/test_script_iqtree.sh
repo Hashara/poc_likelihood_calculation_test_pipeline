@@ -5,7 +5,6 @@ UNIQUE_NAME=$ARG2
 WD=$ARG3
 AA_or_DNA=$ARG4
 
-
 length=$ARG5
 
 executable_type=("iqtree")
@@ -35,7 +34,8 @@ if [[ "$VERBOSE" == "true" ]]; then
   verbose="-vvv"
 fi
 
-iter=10
+iter=1
+module load nvhpc-profilers/22.11
 
 for i in $(seq 1 $iter); do
   TAXA_DIR="${DATASET_DIR}/tree_${i}"
@@ -46,26 +46,25 @@ for i in $(seq 1 $iter); do
 
   cd "$TAXA_DIR" || { echo "Failed to change directory to $TAXA_DIR"; exit 1; }
 
-
     echo "Current directory: $(pwd)"
 
-#    for length in "${lengths[@]}"; do
-        echo "Running likelihood for length: $length taxa: $taxa_size"
+        echo "Running profiling for length: $length taxa: $taxa_size"
 
         #loop through each executable type
         for type in "${executable_type[@]}"; do
-
             echo "Using executable: $executable_path"
 
             if [ -f "$executable_path" ]; then
-                echo "Running test for length: $length with $type"
+                echo "Running nsys + ncu profiling for tree: $i length: $length with $type ($TYPE)"
                 if [ "$AA_or_DNA" = "AA" ]; then
                     echo "Using amino acid data"
-                    $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} -m Poisson  -blfix $kernel_rev $verbose
+                    nsys profile --trace=cuda,openacc,nvtx --gpu-metrics-device=all --cuda-memory-usage=true --stats=true -o profile_report_${UNIQUE_NAME}_tree${i}_aa $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} -m Poisson -blfix $kernel_rev $verbose
+                    ncu --set full -f -o ncu_report_${UNIQUE_NAME}_tree${i}_aa $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix outputncu_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} -m Poisson -blfix $kernel_rev $verbose
 
                 elif [ "$AA_or_DNA" = "DNA" ]; then
                     echo "Using DNA data"
-                    $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} -m JC  -blfix $kernel_rev $verbose
+                    nsys profile --trace=cuda,openacc,nvtx --gpu-metrics-device=all --cuda-memory-usage=true --stats=true -o profile_report_${UNIQUE_NAME}_tree${i}_dna $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} -m JC -blfix $kernel_rev $verbose
+                    ncu --set full -f -o ncu_report_${UNIQUE_NAME}_tree${i}_dna $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix outputncu_${UNIQUE_NAME}_${taxa_size}_${length}_${type} -m JC -blfix $kernel_rev $verbose
 
                 fi
 
@@ -77,11 +76,7 @@ for i in $(seq 1 $iter); do
                 echo "Executable not found: $executable_path"
             fi
 
-#        done
-
     done
-
-
 
   cd - || { echo "Failed to return to previous directory"; exit 1; }
 

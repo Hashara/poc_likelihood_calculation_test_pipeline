@@ -7,21 +7,25 @@ AA_or_DNA=$ARG4
 
 
 length=$ARG5
-IQTREE_THREADS=$ARG6
-AUTO=$ARG7
-
-if [ "$AUTO" == "true" ]; then
-    IQTREE_THREADS="AUTO"
-    echo "Auto opertation for IQ-TREE threads enabled."
-fi
-
+TYPE=$ARG6
 
 executable_type=("iqtree")
 
-iter=10
+lengths=(100 1000 10000 100000 1000000)
 
-for i in $(seq 1 $iter); do
-  TAXA_DIR="${DATASET_DIR}/tree_${i}"
+if [ "$TYPE" == "VANILA" ]; then
+  executable_path="$WD/builds/build-vanila/iqtree3"
+elif [ "$TYPE" == "CUDA" ]; then
+  executable_path="$WD/builds/build-nvhpc-cuda/iqtree3"
+elif [ "$TYPE" == "OPENACC_PROFILE" ]; then
+  executable_path="$WD/builds/build-nvhpc-prof-openacc/iqtree3"
+elif [ "$TYPE" == "OPENACC" ]; then
+  executable_path="$WD/builds/build-nvhpc-openacc/iqtree3"
+fi
+
+
+for length in "${lengths[@]}"; do
+  TAXA_DIR="${DATASET_DIR}/alignment_${length}"
   echo "Processing folder: $TAXA_DIR"
   taxa_size=$(basename "$TAXA_DIR")
 
@@ -37,18 +41,17 @@ for i in $(seq 1 $iter); do
 
         #loop through each executable type
         for type in "${executable_type[@]}"; do
-            executable_path="$WD/builds/build-vanila/iqtree3"
             echo "Using executable: $executable_path"
 
             if [ -f "$executable_path" ]; then
                 echo "Running test for length: $length with $type"
                 if [ "$AA_or_DNA" = "AA" ]; then
                     echo "Using amino acid data"
-                    $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} -m Poisson  -blfix --kernel-nonrev -nt $IQTREE_THREADS
+                    $executable_path -s alignment_${length}.phy -te tree.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} -m Poisson  -blfix --kernel-nonrev
 
                 elif [ "$AA_or_DNA" = "DNA" ]; then
                     echo "Using DNA data"
-                    $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} -m JC  -blfix --kernel-nonrev -nt $IQTREE_THREADS
+                    $executable_path -s alignment_${length}.phy -te tree.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} -m JC  -blfix --kernel-nonrev
 
                 fi
 

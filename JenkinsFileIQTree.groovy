@@ -17,8 +17,11 @@ pipeline {
         booleanParam(name: 'CLONE_IQTREE', defaultValue: false, description: 'Clone IQ-TREE?')
 
         booleanParam(name: 'QSUB', defaultValue: true, description: 'QSUB?')
-        booleanParam(name: 'VANILLA', defaultValue: false, description: 'Vanilla?')
+        booleanParam(name: 'VANILA', defaultValue: false, description: 'VANILA?')
         booleanParam(name: 'CUDA', defaultValue: true, description: 'CUDA integration?')
+        booleanParam(name: 'OPENACC', defaultValue: true, description: 'OPENACC integration?')
+        booleanParam(name: 'OPENACC_PROFILE', defaultValue: false, description: 'OpenACC with profiling instrumentation?')
+        string(name: 'GPU_ARCH', defaultValue: '', description: 'GPU architecture for OpenACC build (e.g. cc70 for V100, cc80 for A100, cc90 for H100). Empty = multi-arch default (cc70,cc80,cc90)')
 
 
         // dataset path
@@ -34,11 +37,14 @@ pipeline {
         booleanParam(name: 'A100', defaultValue: false, description: 'Use A100 GPUs')
         booleanParam(name: 'H200', defaultValue: false, description: 'Use H200 GPUs' )
         booleanParam(name: 'ALL_NODE', defaultValue: false, description: 'Use whole node and execute parallely')
+
+        booleanParam(name: 'REV', defaultValue: true, description: "Kernel non rev flag")
+        booleanParam(name: 'VERBOSE', defaultValue: true, description: "Verbose mode")
         string(name: 'FACTOR',defaultValue: "1", description: "memory/time multipler")
 
         string(name: 'REPETITIONS', defaultValue: '1', description: 'Number of repetitions of each analysis')
-//        booleanParam(name: 'PROFILE', defaultValue: false, description: 'Profile runs with nsight')
-//        booleanParam(name: 'ENERGY_PROFILE', defaultValue: false, description: 'Profile energy consumption with forge')
+        booleanParam(name: 'PROFILE', defaultValue: false, description: 'Profile runs with nsight')
+        booleanParam(name: 'ENERGY_PROFILE', defaultValue: false, description: 'Profile energy consumption with forge')
         string(name: 'RUN_ALIASES', defaultValue: 'run', description: 'Unique name for this run')
 
     }
@@ -55,6 +61,9 @@ pipeline {
 
         VANILA="${params.VANILA}"
         CUDA="${params.CUDA}"
+        OPENACC="${params.OPENACC}"
+        OPENACC_PROFILE="${params.OPENACC_PROFILE}"
+        GPU_ARCH="${params.GPU_ARCH}"
 
 
         BUILD = "${params.BUILD}"
@@ -70,10 +79,14 @@ pipeline {
         A100 = "${params.A100}"
         H200 = "${params.H200}"
         ALL_NODE = "${params.ALL_NODE}"
+
+        REV = "${params.REV}"
+        VERBOSE = "${params.VERBOSE}"
+
         LENGTH="${params.LENGTH}"
         FACTOR="${params.FACTOR}"
         REPETITIONS = "${params.REPETITIONS}"
-//        PROFILE = "${params.PROFILE}"
+        PROFILE = "${params.PROFILE}"
         ENERGY_PROFILE = "${params.ENERGY_PROFILE}"
         LEN_BASED = "${params.LEN_BASED}"
     }
@@ -107,8 +120,11 @@ pipeline {
                                 string(name: 'NCI_ALIAS', value: 'nci_gadi'),
                                 string(name: 'WORKING_DIR', value: params.WORKDIR),
                                 booleanParam(name: 'QSUB', value: params.QSUB),
-                                booleanParam(name: 'VANILLA', value: params.VANILLA),
-                                booleanParam(name: 'CUDA', value: params.CUDA)
+                                booleanParam(name: 'VANILA', value: params.VANILA),
+                                booleanParam(name: 'CUDA', value: params.CUDA),
+                                booleanParam(name: 'OPENACC', value: params.OPENACC),
+                                booleanParam(name: 'OPENACC_PROFILE', value: params.OPENACC_PROFILE),
+                                string(name: 'GPU_ARCH', value: params.GPU_ARCH)
                         ],wait:true
                 }
             }
@@ -125,42 +141,105 @@ pipeline {
             }
         }
 
-        stage('run tests'){
-//            when {
-//                expression { return params.PROFILE == false && params.ENERGY_PROFILE == false  }
-//            }
+        stage('Profiling'){
+            when {
+                expression { return params.PROFILE == true }
+            }
             steps{
                 script{
-//                    if (params.LEN_BASED) {
-//                        // args of the run script
-//                        /*IQTREE=$1 # boolean for whether to build IQTREE
-//                            OPENACC_V100=$2
-//                            OPENACC_A100=$3
-//                            WD=$4
-//                            DATASET_DIR=$5
-//                            UNIQUE_NAME=$6
-//                            AA=$7
-//                            DNA=$8*/
-//                        echo "Running ...."
-//                        sh """
-//                        ssh ${NCI_ALIAS} << EOF
-//                        cd ${WORKDIR}
-//                        echo "Running..."
-//                        sh ${WORKDIR}/qsub/qsub_script_lenbased.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${H200}
-//
-//                        """
-//                    }
-//                    else if (params.SPECIFIC_TREE) {
-//                        echo "Running ...."
-//                        sh """
-//                        ssh ${NCI_ALIAS} << EOF
-//                        cd ${WORKDIR}
-//                        echo "Running..."
-//                        sh ${WORKDIR}/qsub/qsub_script_specific.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${TYPE} ${H200}
-//
-//                        """
-//                    }
-//                    else {
+                    def backends = []
+
+                    if (params.VANILA) backends << "VANILA"
+                    if (params.CUDA)    backends << "CUDA"
+                    if (params.OPENACC) backends << "OPENACC"
+                    if (params.OPENACC_PROFILE) backends << "OPENACC_PROFILE"
+
+                    if (backends.isEmpty()) {
+                        error("No backend selected for profiling. Enable at least one of VANILA, CUDA, OPENACC, OPENACC_PROFILE")
+                    }
+
+                    echo "Profiling backends: ${backends}"
+
+                    for (backend in backends) {
+
+                        echo "Profiling backend: ${backend}"
+
+                        sh """
+                        ssh ${NCI_ALIAS} << EOF
+                        cd ${WORKDIR}
+                        echo "Profiling ${backend}..."
+                        sh ${WORKDIR}/qsub/iqtree/profile_qsub_script.sh \
+                            ${IQTREE} ${V100} ${A100} ${WORKDIR} \
+                            ${DATASET_PATH} ${RUN_ALIASES}_profile_${backend} \
+                            ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
+                            ${PROJECT_NAME} ${backend} ${H200} \
+                            ${REV} ${VERBOSE}
+
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Energy profiling'){
+            when {
+                expression { return params.ENERGY_PROFILE == true }
+            }
+            steps{
+                script{
+                    def backends = []
+
+                    if (params.VANILA) backends << "VANILA"
+                    if (params.OPENACC) backends << "OPENACC"
+                    if (params.OPENACC_PROFILE) backends << "OPENACC_PROFILE"
+
+                    if (backends.isEmpty()) {
+                        error("No backend selected for energy profiling. Enable at least one of VANILA, OPENACC, OPENACC_PROFILE")
+                    }
+
+                    echo "Energy profiling backends: ${backends}"
+
+                    for (backend in backends) {
+
+                        echo "Energy profiling backend: ${backend}"
+
+                        sh """
+                        ssh ${NCI_ALIAS} << EOF
+                        cd ${WORKDIR}
+                        echo "Energy profiling ${backend}..."
+                        sh ${WORKDIR}/qsub/iqtree/energy_measure_qsub_script.sh \
+                            ${IQTREE} ${V100} ${A100} ${WORKDIR} \
+                            ${DATASET_PATH} ${RUN_ALIASES}_energy_${backend} \
+                            ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
+                            ${IQTREE_OPENMP} ${IQTREE_THREADS} \
+                            ${PROJECT_NAME} ${backend} ${H200} \
+                            ${REV} ${VERBOSE}
+
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('run tests'){
+            when {
+                expression { return params.PROFILE == false && params.ENERGY_PROFILE == false }
+            }
+            steps{
+                script{
+                    def backends = []
+
+                    if (params.VANILA) backends << "VANILA"
+                    if (params.CUDA)    backends << "CUDA"
+                    if (params.OPENACC) backends << "OPENACC"
+                    if (params.OPENACC_PROFILE) backends << "OPENACC_PROFILE"
+
+                    if (backends.isEmpty()) {
+                        error("No backend selected. Enable at least one of VANILA, CUDA, OPENACC, OPENACC_PROFILE")
+                    }
+
+                    echo "Selected backends: ${backends}"
+                    if (params.LEN_BASED) {
                         // args of the run script
                         /*IQTREE=$1 # boolean for whether to build IQTREE
                             OPENACC_V100=$2
@@ -170,16 +249,72 @@ pipeline {
                             UNIQUE_NAME=$6
                             AA=$7
                             DNA=$8*/
-                    env.TYPE = params.VANILA ? "VANILA" : "CUDA"
+                        for (backend in backends) {
 
-                    echo "Running ...."
+                            echo "Running backend: ${backend}"
+                            echo "Running ...."
+                            sh """
+                            ssh ${NCI_ALIAS} << EOF
+                            cd ${WORKDIR}
+                            echo "Running..."
+                            sh ${WORKDIR}/qsub/iqtree/qsub_script_lenbased.sh \
+                            ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} \
+                            ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
+                            ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${H200} \
+                            ${backend}
+                
+                            """
+                        }
+                    }
+                    else{
+                        for (backend in backends) {
+
+                            echo "Running backend: ${backend}"
+
                             sh """
                         ssh ${NCI_ALIAS} << EOF
                         cd ${WORKDIR}
-                        echo "Running..."
-                        sh ${WORKDIR}/qsub/iqtree/qsub_script.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME}  ${TYPE} ${H200} ${ALL_NODE}
-        
+                        echo "Running ${backend}..."
+                        sh ${WORKDIR}/qsub/iqtree/qsub_script.sh \
+                            ${IQTREE} ${V100} ${A100} ${WORKDIR} \
+                            ${DATASET_PATH} ${RUN_ALIASES}_${backend} \
+                            ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
+                            ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} \
+                            ${PROJECT_NAME} ${backend} ${H200} ${ALL_NODE} \
+                            ${REV} ${VERBOSE}
+                 
                         """
+                        }
+                    }
+//                    def backends = []
+//
+//                    if (params.VANILA) backends << "VANILA"
+//                    if (params.CUDA)    backends << "CUDA"
+//                    if (params.OPENACC) backends << "OPENACC"
+//
+//                    if (backends.isEmpty()) {
+//                        error("No backend selected. Enable at least one of VANILA, CUDA, OPENACC")
+//                    }
+//
+//                    echo "Selected backends: ${backends}"
+//
+//                    for (backend in backends) {
+//
+//                        echo "Running backend: ${backend}"
+//
+//                        sh """
+//                        ssh ${NCI_ALIAS} << EOF
+//                        cd ${WORKDIR}
+//                        echo "Running ${backend}..."
+//                        sh ${WORKDIR}/qsub/iqtree/qsub_script.sh \
+//                            ${IQTREE} ${V100} ${A100} ${WORKDIR} \
+//                            ${DATASET_PATH} ${RUN_ALIASES}_${backend} \
+//                            ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
+//                            ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} \
+//                            ${PROJECT_NAME} ${backend} ${H200} ${ALL_NODE} \
+//                            ${REV} ${VERBOSE}
+//
+//                        """
 //                    }
 
                 }

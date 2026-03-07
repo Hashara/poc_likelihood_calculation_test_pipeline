@@ -16,7 +16,7 @@ if [ "$AUTO" == "true" ]; then
 fi
 
 
-executable_type=("iqtree")
+executable_type=("iqtree3")
 
 iter=10
 

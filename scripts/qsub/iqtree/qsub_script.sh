@@ -23,6 +23,8 @@ PROJECT_NAME=${15}
 TYPE=${16}
 H200=${17}
 ALL_NODE=${18}
+REV=${19}
+VERBOSE=${20}
 
 data_types=()
 if [ "$AA" == true ]; then
@@ -58,7 +60,7 @@ for r in $(seq 1 $repeat); do
       if [ "$V100_GPU" == true ]; then
         memory=$((factor * 1 * 48))
           qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=12,ngpus=1,mem="${memory}GB",jobfs=10GB,wd -qgpuvolta -N test_v100 \
-                -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length",ARG6="$TYPE" "$WD"/test/iqtree/test_script_iqtree.sh
+                -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length",ARG6="$TYPE",ARG7="$REV",ARG8="$VERBOSE" "$WD"/test/iqtree/test_script_iqtree.sh
 
 #
 #      if [ "$A100_GPU" == true ]; then
@@ -81,13 +83,14 @@ for r in $(seq 1 $repeat); do
       elif [ "$IQTREE" == true ]; then
           memory=$((factor * 1 * 20))
          qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=1,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree \
-                -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length",ARG6="$TYPE" "$WD"/test/iqtree/test_script_iqtree.sh
+                -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length",ARG6="$TYPE",ARG7="$REV",ARG8="$VERBOSE" "$WD"/test/iqtree/test_script_iqtree.sh
       fi
 
       if [ "$IQTREE_OPENMP" == true ]; then
           memory=$((factor * IQTREE_THREADS * 4))
+          wall_time="1:00:00"
          qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=$IQTREE_THREADS,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree_omp \
-                -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length",ARG6="$IQTREE_THREADS",ARG7="$IQTREE_AUTO" "$WD"/test/test_script_iqtree_omp.sh
+                -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length",ARG6="$IQTREE_THREADS",ARG7="$IQTREE_AUTO" "$WD"/test/iqtree/test_script_iqtree_omp.sh
       fi
   done
 done
