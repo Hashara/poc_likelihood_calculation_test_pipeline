@@ -239,7 +239,8 @@ pipeline {
 
                                     // ── Fixed defaults ──────────────────────
                                     booleanParam(name: 'QSUB',          value: true),
-                                    booleanParam(name: 'IQTREE',        value: true),
+                                    // When iqtree_omp=true the child runs OMP only — suppress IQTREE
+                                    booleanParam(name: 'IQTREE',        value: !cIqtreeOmp.toBoolean()),
                                     booleanParam(name: 'BUILD',         value: false),
                                     booleanParam(name: 'LEN_BASED',     value: false),
                                     booleanParam(name: 'SPECIFIC_TREE', value: false),
