@@ -11,12 +11,12 @@
 //   CONFIG_YAML_PATH   Relative path to pipeline_config.yaml inside the repo
 //   CONFIG_CSV_PATH    Relative path to test_matrix.csv  inside the repo
 //
-// YAML  → common params: cluster, GPU, repetitions, dataset base path, tree type
-// CSV   → per-test params: data_type, alignment_length, execution_type, iqtree_args, model
+// YAML  → common params: cluster, execution settings, all_node flag, dataset base path
+// CSV   → per-test params: data_type, alignment_length, tree_type, execution_type, iqtree_args, model, gpu_type
 //
 // Per-row runtime construction
 // ────────────────────────────
-//   DATASET_PATH = general.parent_dataset_path / data_type / general.tree_type / model
+//   DATASET_PATH = general.parent_dataset_path / data_type / tree_type / model
 //   IQTREE_ARGS  = "-m <model> <csv_iqtree_args>"
 //   RUN_ALIASES  = "<run_aliases>_<data_type>_<model>_<execution_type>_<row_index>"
 // =============================================================================
@@ -115,13 +115,11 @@ pipeline {
                     // Optional with defaults
                     def repetitions = (cfg.execution?.repetitions ?: 1).toString()
                     def failFast    =  cfg.execution?.fail_fast   ?: false
-                    def gpuType     =  cfg.gpu?.gpu_type          ?: 'none'
                     def allNode     =  cfg.gpu?.all_node          ?: false
 
-                    // Derive GPU_ARCH from gpu_type
+                    // GPU_ARCH is derived per-row from the csv gpu_type column
                     // V100 → cc70 | A100 → cc80 | H200 → cc90 | none → '' (multi-arch default)
                     def gpuArchMap = [V100: 'cc70', A100: 'cc80', H200: 'cc90']
-                    def gpuArch    = gpuArchMap[gpuType] ?: ''
 
                     echo "=== YAML ========================="
                     echo "  workdir            : ${workdir}"
@@ -130,8 +128,6 @@ pipeline {
                     echo "  parent_dataset_path: ${parentDatasetPath}"
                     echo "  repetitions        : ${repetitions}"
                     echo "  fail_fast          : ${failFast}"
-                    echo "  gpu_type           : ${gpuType}"
-                    echo "  gpu_arch           : ${gpuArch ?: '(multi-arch default)'}"
                     echo "  all_node           : ${allNode}"
                     echo "=================================="
 
@@ -156,9 +152,10 @@ pipeline {
 
                     lines.eachWithIndex { line, idx ->
 
-                        // Split with limit 6: iqtree_args may contain spaces
-                        def parts = line.split(',', 6)
-                        if (parts.size() < 6) {
+                        // Split with limit 7: iqtree_args (col 5) may contain spaces;
+                        // gpu_type (col 7) is last and must not contain spaces
+                        def parts = line.split(',', 7)
+                        if (parts.size() < 7) {
                             echo "WARNING: skipping malformed row ${idx + 2}: '${line}'"
                             return
                         }
@@ -169,12 +166,16 @@ pipeline {
                         def execType   = parts[3].trim()   // VANILA | CUDA | OPENACC | OPENACC_PROFILE
                         def iqtreeArgs = parts[4].trim()   // e.g. -blfix
                         def model      = parts[5].trim()   // e.g. GTR | Poisson
+                        def gpuType    = parts[6].trim()   // none | V100 | A100 | H200
+
+                        // Per-row GPU arch derivation
+                        def gpuArch    = gpuArchMap[gpuType] ?: ''
 
                         // Constructed values
                         def datasetPath    = "${parentDatasetPath}/${dataType}/${treeType}/${model}"
                         def fullIqtreeArgs = "-m ${model} ${iqtreeArgs}"
                         def runAlias       = "${runAliasPrefix}_${dataType}_${model}_${execType}_${idx + 1}"
-                        def stageName      = "Row ${idx + 1} | ${dataType} | ${model} | ${execType}"
+                        def stageName      = "Row ${idx + 1} | ${dataType} | ${model} | ${execType} | ${gpuType}"
 
                         // Capture loop variables for the closure
                         def cDataType    = dataType
@@ -183,12 +184,16 @@ pipeline {
                         def cDatasetPath = datasetPath
                         def cFullArgs    = fullIqtreeArgs
                         def cRunAlias    = runAlias
+                        def cGpuType     = gpuType
+                        def cGpuArch     = gpuArch
 
                         parallelStages[stageName] = {
                             echo "▶ ${stageName}"
                             echo "  DATASET_PATH : ${cDatasetPath}"
                             echo "  IQTREE_ARGS  : ${cFullArgs}"
                             echo "  RUN_ALIASES  : ${cRunAlias}"
+                            echo "  GPU_TYPE     : ${cGpuType}"
+                            echo "  GPU_ARCH     : ${cGpuArch ?: '(multi-arch default)'}"
 
                             build job: 'iqtree_cuda_test_pipeline',
                                 parameters: [
@@ -197,9 +202,9 @@ pipeline {
                                     string(name: 'PROJECT_NAME', value: projectName),
                                     string(name: 'NCI_ALIAS',    value: nciAlias),
                                     string(name: 'REPETITIONS',  value: repetitions),
-                                    booleanParam(name: 'V100',     value: gpuType == 'V100'),
-                                    booleanParam(name: 'A100',     value: gpuType == 'A100'),
-                                    booleanParam(name: 'H200',     value: gpuType == 'H200'),
+                                    booleanParam(name: 'V100',     value: cGpuType == 'V100'),
+                                    booleanParam(name: 'A100',     value: cGpuType == 'A100'),
+                                    booleanParam(name: 'H200',     value: cGpuType == 'H200'),
                                     booleanParam(name: 'ALL_NODE', value: allNode),
 
                                     // ── From CSV (per row) ──────────────────
@@ -227,7 +232,7 @@ pipeline {
                                     string(name: 'IQTREE_THREADS',      value: '1'),
                                     string(name: 'AUTO',                 value: 'true'),
                                     string(name: 'FACTOR',               value: '1'),
-                                    string(name: 'GPU_ARCH',             value: gpuArch),
+                                    string(name: 'GPU_ARCH',             value: cGpuArch),
                                     string(name: 'IQ_TREE_GIT_BRANCH',  value: 'main'),
                                 ],
                                 wait:      true,
