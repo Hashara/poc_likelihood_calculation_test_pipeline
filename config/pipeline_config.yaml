@@ -1,0 +1,95 @@
+# =============================================================================
+# Pipeline Configuration for JenkinsFileIQTree
+# =============================================================================
+# This YAML file externalises all parameters used by the IQ-TREE Jenkins
+# pipeline.  JenkinsFileConfig.groovy reads this file so that defaults can
+# be changed without touching the pipeline DSL.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# General
+# ---------------------------------------------------------------------------
+general:
+  workdir: "/path/to/workdir"
+  project_name: "dx61"
+  nci_alias: "nci_gadi"
+  run_aliases: "run"
+
+# ---------------------------------------------------------------------------
+# IQ-TREE source
+# ---------------------------------------------------------------------------
+iqtree_source:
+  clone: false
+  git_branch: "main"
+
+# ---------------------------------------------------------------------------
+# Data selection
+# ---------------------------------------------------------------------------
+data:
+  dna: true
+  aa: true
+  length: 1000000
+  dataset_path: "/path/to/dataset"
+  len_based: false
+  specific_tree: false
+
+# ---------------------------------------------------------------------------
+# Backend selection  (at least one must be true)
+# ---------------------------------------------------------------------------
+backends:
+  vanila: false
+  cuda: true
+  openacc: true
+  openacc_profile: false
+
+# ---------------------------------------------------------------------------
+# GPU / Hardware
+# ---------------------------------------------------------------------------
+gpu:
+  gpu_arch: ""            # e.g. cc70 (V100), cc80 (A100), cc90 (H100). Empty = multi-arch
+  v100: false
+  a100: false
+  h200: false
+  all_node: false
+
+# ---------------------------------------------------------------------------
+# Execution
+# ---------------------------------------------------------------------------
+execution:
+  build: false
+  qsub: true
+  iqtree: true
+  iqtree_openmp: false
+  iqtree_threads: 1
+  auto_threads: true
+  iqtree_args: "-m Poisson -blfix --kernel-nonrev -vvv"
+  factor: 1
+  repetitions: 1
+
+# ---------------------------------------------------------------------------
+# Profiling
+# ---------------------------------------------------------------------------
+profiling:
+  profile: false
+  energy_profile: false
+
+# ---------------------------------------------------------------------------
+# 100taxa_1000000sites dataset configuration
+# ---------------------------------------------------------------------------
+# This section defines the test matrix for the multi-model 100-taxa dataset.
+# The pipeline uses the CSV generated from these settings.
+# ---------------------------------------------------------------------------
+datasets:
+  100taxa_1000000sites:
+    base_path: "/scratch/dx61/data/100taxa_1000000sites"
+    taxa: 100
+    sites: 1000000
+    trees_per_model: 10
+
+    dna:
+      models: ["GTR", "HKY", "JC", "K2P"]
+      tree_types: ["rooted", "unrooted"]
+
+    aa:
+      models: ["JTT", "LG", "Poisson", "WAG"]
+      tree_types: ["rooted", "unrooted"]
