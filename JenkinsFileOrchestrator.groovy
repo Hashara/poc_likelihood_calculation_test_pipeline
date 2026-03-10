@@ -13,7 +13,7 @@
 //   REPETITIONS        Override execution.repetitions from YAML (leave blank = use YAML)
 //
 // YAML  → common params: cluster, execution settings, all_node flag, dataset base path
-// CSV   → per-test params: data_type, alignment_length, tree_type, execution_type, iqtree_args, model, gpu_type
+// CSV   → per-test params: data_type, alignment_length, tree_type, execution_type, iqtree_args, model, gpu_type, iqtree_omp, cpu_nodes
 //
 // Per-row runtime construction
 // ────────────────────────────
@@ -161,10 +161,10 @@ pipeline {
 
                     lines.eachWithIndex { line, idx ->
 
-                        // Split with limit 7: iqtree_args (col 5) may contain spaces;
-                        // gpu_type (col 7) is last and must not contain spaces
-                        def parts = line.split(',', 7)
-                        if (parts.size() < 7) {
+                        // Split with limit 9: iqtree_args (col 5) may contain spaces;
+                        // remaining cols (gpu_type, iqtree_omp, cpu_nodes) must not
+                        def parts = line.split(',', 9)
+                        if (parts.size() < 9) {
                             echo "WARNING: skipping malformed row ${idx + 2}: '${line}'"
                             return
                         }
@@ -176,6 +176,8 @@ pipeline {
                         def iqtreeArgs = parts[4].trim()   // e.g. -blfix
                         def model      = parts[5].trim()   // e.g. GTR | Poisson
                         def gpuType    = parts[6].trim()   // none | V100 | A100 | H200
+                        def iqtreeOmp  = parts[7].trim()   // true | false
+                        def cpuNodes   = parts[8].trim()   // integer, e.g. 4
 
                         // Per-row GPU arch derivation
                         def gpuArch    = gpuArchMap[gpuType] ?: ''
@@ -195,6 +197,8 @@ pipeline {
                         def cRunAlias    = runAlias
                         def cGpuType     = gpuType
                         def cGpuArch     = gpuArch
+                        def cIqtreeOmp   = iqtreeOmp
+                        def cCpuNodes    = cpuNodes
 
                         parallelStages[stageName] = {
                             echo "▶ ${stageName}"
@@ -203,6 +207,8 @@ pipeline {
                             echo "  RUN_ALIASES  : ${cRunAlias}"
                             echo "  GPU_TYPE     : ${cGpuType}"
                             echo "  GPU_ARCH     : ${cGpuArch ?: '(multi-arch default)'}"
+                            echo "  IQTREE_OMP   : ${cIqtreeOmp}"
+                            echo "  CPU_NODES    : ${cCpuNodes}"
 
                             build job: 'iqtree_cuda_test_pipeline',
                                 parameters: [
@@ -234,11 +240,11 @@ pipeline {
                                     booleanParam(name: 'BUILD',         value: false),
                                     booleanParam(name: 'LEN_BASED',     value: false),
                                     booleanParam(name: 'SPECIFIC_TREE', value: false),
-                                    booleanParam(name: 'IQTREE_OPENMP', value: false),
+                                    booleanParam(name: 'IQTREE_OPENMP', value: cIqtreeOmp.toBoolean()),
                                     booleanParam(name: 'CLONE_IQTREE',  value: false),
                                     booleanParam(name: 'PROFILE',        value: false),
                                     booleanParam(name: 'ENERGY_PROFILE', value: false),
-                                    string(name: 'IQTREE_THREADS',      value: '1'),
+                                    string(name: 'IQTREE_THREADS',      value: cCpuNodes),
                                     string(name: 'AUTO',                 value: 'true'),
                                     string(name: 'FACTOR',               value: '1'),
                                     string(name: 'GPU_ARCH',             value: cGpuArch),
