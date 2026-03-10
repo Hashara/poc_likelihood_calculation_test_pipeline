@@ -4,12 +4,13 @@
 // Reads a YAML + CSV from a config repo and invokes iqtree_cuda_test_pipeline
 // in parallel for every row in the CSV.
 //
-// Parameters (4 inputs only)
-// ──────────────────────────
+// Parameters (5 inputs)
+// ─────────────────────
 //   CONFIG_REPO_URL    Git URL of the config repository
-//   CONFIG_REPO_BRANCH Branch of the config repository  (default: main)
+//   CONFIG_REPO_BRANCH Branch of the config repository  (default: master)
 //   CONFIG_YAML_PATH   Relative path to pipeline_config.yaml inside the repo
 //   CONFIG_CSV_PATH    Relative path to test_matrix.csv  inside the repo
+//   REPETITIONS        Override execution.repetitions from YAML (leave blank = use YAML)
 //
 // YAML  → common params: cluster, execution settings, all_node flag, dataset base path
 // CSV   → per-test params: data_type, alignment_length, tree_type, execution_type, iqtree_args, model, gpu_type
@@ -44,6 +45,12 @@ pipeline {
             name:         'CONFIG_CSV_PATH',
             defaultValue: '100taxa_10000sites/test_matrix.csv',
             description:  'Relative path to the test-matrix CSV inside the config repo'
+        )
+        string(
+            name:         'REPETITIONS',
+            defaultValue: '',
+            description:  'Number of times each test row is repeated on the cluster. ' +
+                          'Overrides execution.repetitions in the YAML when set. Leave blank to use YAML value.'
         )
     }
 
@@ -113,9 +120,11 @@ pipeline {
                     }
 
                     // Optional with defaults
-                    def repetitions = (cfg.execution?.repetitions ?: 1).toString()
-                    def failFast    =  cfg.execution?.fail_fast   ?: false
-                    def allNode     =  cfg.gpu?.all_node          ?: false
+                    // REPETITIONS param overrides YAML when provided; YAML is used otherwise
+                    def yamlRepetitions = (cfg.execution?.repetitions ?: 1).toString()
+                    def repetitions     = params.REPETITIONS?.trim() ?: yamlRepetitions
+                    def failFast        =  cfg.execution?.fail_fast   ?: false
+                    def allNode         =  cfg.gpu?.all_node          ?: false
 
                     // GPU_ARCH is derived per-row from the csv gpu_type column
                     // V100 → cc70 | A100 → cc80 | H200 → cc90 | none → '' (multi-arch default)
@@ -126,7 +135,7 @@ pipeline {
                     echo "  project_name       : ${projectName}"
                     echo "  nci_alias          : ${nciAlias}"
                     echo "  parent_dataset_path: ${parentDatasetPath}"
-                    echo "  repetitions        : ${repetitions}"
+                    echo "  repetitions        : ${repetitions} ${params.REPETITIONS?.trim() ? '(param override)' : '(from YAML)'}"
                     echo "  fail_fast          : ${failFast}"
                     echo "  all_node           : ${allNode}"
                     echo "=================================="
