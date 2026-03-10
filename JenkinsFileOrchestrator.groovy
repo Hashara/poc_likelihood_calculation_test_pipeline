@@ -228,8 +228,7 @@ pipeline {
                                     booleanParam(name: 'DNA',    value: cDataType == 'DNA'),
                                     booleanParam(name: 'AA',     value: cDataType == 'AA'),
                                     string(name: 'LENGTH',       value: cAlignLen),
-                                    // When iqtree_omp=true the child runs OMP only — suppress VANILA
-                                    booleanParam(name: 'VANILA',          value: cExecType == 'VANILA' && !cIqtreeOmp.toBoolean()),
+                                    booleanParam(name: 'VANILA',          value: cExecType == 'VANILA'),
                                     booleanParam(name: 'CUDA',            value: cExecType == 'CUDA'),
                                     booleanParam(name: 'OPENACC',         value: cExecType == 'OPENACC'),
                                     booleanParam(name: 'OPENACC_PROFILE', value: cExecType == 'OPENACC_PROFILE'),
