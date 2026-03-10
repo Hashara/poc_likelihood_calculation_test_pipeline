@@ -186,8 +186,10 @@ pipeline {
                         // Constructed values
                         def datasetPath    = "${parentDatasetPath}/${dataType}/${treeType}/${model}"
                         def fullIqtreeArgs = "-m ${model} ${iqtreeArgs}"
-                        def runAlias       = "${runAliasPrefix}_${dataType}_${model}_${execType}_${idx + 1}"
-                        def stageName      = "Row ${idx + 1} | ${dataType} | ${model} | ${execType} | ${gpuType}"
+                        // OMP rows use OMP_{cpuNodes} as the exec label; all others use execType
+                        def execLabel      = iqtreeOmp.toBoolean() ? "OMP_${cpuNodes}" : execType
+                        def runAlias       = "${runAliasPrefix}_${dataType}_${model}_${execLabel}_run1_tree_1_${alignLen}_iqtree3"
+                        def stageName      = "Row ${idx + 1} | ${dataType} | ${model} | ${execLabel} | ${gpuType}"
 
                         // Capture loop variables for the closure
                         def cDataType    = dataType
