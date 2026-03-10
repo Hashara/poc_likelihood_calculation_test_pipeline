@@ -105,7 +105,6 @@ pipeline {
                     def projectName       = cfg.general?.project_name        ?: ''
                     def nciAlias          = cfg.general?.nci_alias           ?: ''
                     def parentDatasetPath = cfg.general?.parent_dataset_path ?: ''
-                    def treeType          = cfg.general?.tree_type           ?: 'unrooted'
                     def runAliasPrefix    = cfg.general?.run_aliases         ?: 'run'
 
                     if (!workdir || !projectName || !nciAlias || !parentDatasetPath) {
@@ -129,7 +128,6 @@ pipeline {
                     echo "  project_name       : ${projectName}"
                     echo "  nci_alias          : ${nciAlias}"
                     echo "  parent_dataset_path: ${parentDatasetPath}"
-                    echo "  tree_type          : ${treeType}"
                     echo "  repetitions        : ${repetitions}"
                     echo "  fail_fast          : ${failFast}"
                     echo "  gpu_type           : ${gpuType}"
@@ -158,18 +156,19 @@ pipeline {
 
                     lines.eachWithIndex { line, idx ->
 
-                        // Split with limit 5: iqtree_args may contain spaces
-                        def parts = line.split(',', 5)
-                        if (parts.size() < 5) {
+                        // Split with limit 6: iqtree_args may contain spaces
+                        def parts = line.split(',', 6)
+                        if (parts.size() < 6) {
                             echo "WARNING: skipping malformed row ${idx + 2}: '${line}'"
                             return
                         }
 
                         def dataType   = parts[0].trim()   // DNA | AA
-                        def alignLen   = parts[1].trim()   // e.g. 10000
-                        def execType   = parts[2].trim()   // VANILA | CUDA | OPENACC | OPENACC_PROFILE
-                        def iqtreeArgs = parts[3].trim()   // e.g. -blfix --kernel-nonrev -vvv
-                        def model      = parts[4].trim()   // e.g. GTR | Poisson
+                        def alignLen   = parts[1].trim()   // e.g. 100000
+                        def treeType   = parts[2].trim()   // rooted | unrooted
+                        def execType   = parts[3].trim()   // VANILA | CUDA | OPENACC | OPENACC_PROFILE
+                        def iqtreeArgs = parts[4].trim()   // e.g. -blfix
+                        def model      = parts[5].trim()   // e.g. GTR | Poisson
 
                         // Constructed values
                         def datasetPath    = "${parentDatasetPath}/${dataType}/${treeType}/${model}"
