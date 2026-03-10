@@ -32,7 +32,7 @@ pipeline {
         )
         string(
             name:         'CONFIG_REPO_BRANCH',
-            defaultValue: 'main',
+            defaultValue: 'master',
             description:  'Branch of the config repo to check out'
         )
         string(
