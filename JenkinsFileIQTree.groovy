@@ -38,8 +38,7 @@ pipeline {
         booleanParam(name: 'H200', defaultValue: false, description: 'Use H200 GPUs' )
         booleanParam(name: 'ALL_NODE', defaultValue: false, description: 'Use whole node and execute parallely')
 
-        booleanParam(name: 'REV', defaultValue: true, description: "Kernel non rev flag")
-        booleanParam(name: 'VERBOSE', defaultValue: true, description: "Verbose mode")
+        string(name: 'IQTREE_ARGS', defaultValue: '-m Poisson -blfix --kernel-nonrev -vvv', description: 'Additional IQ-TREE arguments (e.g. -m Poisson -blfix --kernel-nonrev -vvv)')
         string(name: 'FACTOR',defaultValue: "1", description: "memory/time multipler")
 
         string(name: 'REPETITIONS', defaultValue: '1', description: 'Number of repetitions of each analysis')
@@ -80,8 +79,7 @@ pipeline {
         H200 = "${params.H200}"
         ALL_NODE = "${params.ALL_NODE}"
 
-        REV = "${params.REV}"
-        VERBOSE = "${params.VERBOSE}"
+        IQTREE_ARGS = "${params.IQTREE_ARGS}"
 
         LENGTH="${params.LENGTH}"
         FACTOR="${params.FACTOR}"
@@ -173,7 +171,7 @@ pipeline {
                             ${DATASET_PATH} ${RUN_ALIASES}_profile_${backend} \
                             ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
                             ${PROJECT_NAME} ${backend} ${H200} \
-                            ${REV} ${VERBOSE}
+                            "${IQTREE_ARGS}"
 
                         """
                     }
@@ -213,7 +211,7 @@ pipeline {
                             ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} \
                             ${PROJECT_NAME} ${backend} ${H200} \
-                            ${REV} ${VERBOSE}
+                            "${IQTREE_ARGS}"
 
                         """
                     }
@@ -261,7 +259,7 @@ pipeline {
                             ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} \
                             ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${H200} \
-                            ${backend}
+                            ${backend} "${IQTREE_ARGS}"
                 
                             """
                         }
@@ -281,7 +279,7 @@ pipeline {
                             ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} \
                             ${PROJECT_NAME} ${backend} ${H200} ${ALL_NODE} \
-                            ${REV} ${VERBOSE}
+                            "${IQTREE_ARGS}"
                  
                         """
                         }
