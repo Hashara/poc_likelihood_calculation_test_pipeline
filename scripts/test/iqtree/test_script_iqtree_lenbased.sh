@@ -8,6 +8,7 @@ AA_or_DNA=$ARG4
 
 length=$ARG5
 TYPE=$ARG6
+IQTREE_ARGS=$ARG7
 
 executable_type=("iqtree")
 
@@ -47,11 +48,11 @@ for length in "${lengths[@]}"; do
                 echo "Running test for length: $length with $type"
                 if [ "$AA_or_DNA" = "AA" ]; then
                     echo "Using amino acid data"
-                    $executable_path -s alignment_${length}.phy -te tree.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} -m Poisson  -blfix --kernel-nonrev
+                    $executable_path -s alignment_${length}.phy -te tree.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} ${IQTREE_ARGS}
 
                 elif [ "$AA_or_DNA" = "DNA" ]; then
                     echo "Using DNA data"
-                    $executable_path -s alignment_${length}.phy -te tree.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} -m JC  -blfix --kernel-nonrev
+                    $executable_path -s alignment_${length}.phy -te tree.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} ${IQTREE_ARGS}
 
                 fi
 

@@ -11,8 +11,7 @@ length=$ARG5
 executable_type=("iqtree")
 
 TYPE=$ARG6
-REV=$ARG7
-VERBOSE=$ARG8
+IQTREE_ARGS=$ARG7
 
 executable_path=""
 if [ "$TYPE" == "VANILA" ]; then
@@ -23,16 +22,6 @@ elif [ "$TYPE" == "OPENACC_PROFILE" ]; then
   executable_path="$WD/builds/build-nvhpc-prof-openacc/iqtree3"
 elif [ "$TYPE" == "OPENACC" ]; then
   executable_path="$WD/builds/build-nvhpc-openacc/iqtree3"
-fi
-
-kernel_rev=""
-if [[ "$REV" == "true" ]]; then
-    kernel_rev="--kernel-nonrev"
-fi
-
-verbose=""
-if [[ "$VERBOSE" == "true" ]]; then
-  verbose="-vvv"
 fi
 
 iter=10
@@ -61,11 +50,11 @@ for i in $(seq 1 $iter); do
                 echo "Running test for length: $length with $type"
                 if [ "$AA_or_DNA" = "AA" ]; then
                     echo "Using amino acid data"
-                    $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} -m Poisson  -blfix $kernel_rev $verbose
+                    $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} ${IQTREE_ARGS}
 
                 elif [ "$AA_or_DNA" = "DNA" ]; then
                     echo "Using DNA data"
-                    $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} -m JC  -blfix $kernel_rev $verbose
+                    $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} ${IQTREE_ARGS}
 
                 fi
 

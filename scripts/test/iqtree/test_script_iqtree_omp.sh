@@ -9,6 +9,7 @@ AA_or_DNA=$ARG4
 length=$ARG5
 IQTREE_THREADS=$ARG6
 AUTO=$ARG7
+IQTREE_ARGS=$ARG8
 
 if [ "$AUTO" == "true" ]; then
     IQTREE_THREADS="AUTO"
@@ -42,13 +43,14 @@ for i in $(seq 1 $iter); do
 
             if [ -f "$executable_path" ]; then
                 echo "Running test for length: $length with $type"
+                omp_prefix="${UNIQUE_NAME/tree_1/tree_${i}}"
                 if [ "$AA_or_DNA" = "AA" ]; then
                     echo "Using amino acid data"
-                    $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} -m Poisson  -blfix --kernel-nonrev -nt $IQTREE_THREADS
+                    $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${omp_prefix}_aa ${IQTREE_ARGS} -nt $IQTREE_THREADS
 
                 elif [ "$AA_or_DNA" = "DNA" ]; then
                     echo "Using DNA data"
-                    $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} -m JC  -blfix --kernel-nonrev -nt $IQTREE_THREADS
+                    $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${omp_prefix} ${IQTREE_ARGS} -nt $IQTREE_THREADS
 
                 fi
 
