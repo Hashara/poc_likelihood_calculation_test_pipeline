@@ -88,8 +88,11 @@ for r in $(seq 1 $repeat); do
       if [ "$IQTREE_OPENMP" == true ]; then
           memory=$((factor * IQTREE_THREADS * 4))
           wall_time="1:00:00"
+          # Strip the _${TYPE} suffix that the child pipeline appended so the
+          # OMP test receives the clean RUN_ALIASES prefix (e.g. run_DNA_GTR_OMP_10_...)
+          omp_unique="${UNIQUE_NAME%_${TYPE}}"
          qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=$IQTREE_THREADS,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree_omp \
-                -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length",ARG6="$IQTREE_THREADS",ARG7="$IQTREE_AUTO",ARG8="$IQTREE_ARGS" "$WD"/test/iqtree/test_script_iqtree_omp.sh
+                -vARG1="$DATASET_DIR",ARG2="$omp_unique",ARG3="$WD",ARG4="$data_type",ARG5="$length",ARG6="$IQTREE_THREADS",ARG7="$IQTREE_AUTO",ARG8="$IQTREE_ARGS" "$WD"/test/iqtree/test_script_iqtree_omp.sh
       fi
   done
 done
