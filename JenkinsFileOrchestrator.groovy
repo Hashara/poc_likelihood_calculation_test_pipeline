@@ -161,10 +161,10 @@ pipeline {
 
                     lines.eachWithIndex { line, idx ->
 
-                        // Split with limit 10: iqtree_args (col 5) may contain spaces;
+                        // Split with limit 11: iqtree_args (col 5) may contain spaces;
                         // remaining cols must not contain spaces
-                        def parts = line.split(',', 10)
-                        if (parts.size() < 10) {
+                        def parts = line.split(',', 11)
+                        if (parts.size() < 11) {
                             echo "WARNING: skipping malformed row ${idx + 2}: '${line}'"
                             return
                         }
@@ -179,6 +179,7 @@ pipeline {
                         def iqtreeOmp  = parts[7].trim()   // true | false
                         def cpuNodes   = parts[8].trim()   // integer, e.g. 4
                         def auto       = parts[9].trim()   // true | false
+                        def factor     = parts[10].trim()  // integer, memory/time multiplier
 
                         // Per-row GPU arch derivation
                         def gpuArch    = gpuArchMap[gpuType] ?: ''
@@ -203,6 +204,7 @@ pipeline {
                         def cIqtreeOmp   = iqtreeOmp
                         def cCpuNodes    = cpuNodes
                         def cAuto        = auto
+                        def cFactor      = factor
 
                         parallelStages[stageName] = {
                             echo "▶ ${stageName}"
@@ -251,7 +253,7 @@ pipeline {
                                     booleanParam(name: 'ENERGY_PROFILE', value: false),
                                     string(name: 'IQTREE_THREADS',      value: cCpuNodes),
                                     string(name: 'AUTO',                 value: cAuto),
-                                    string(name: 'FACTOR',               value: '1'),
+                                    string(name: 'FACTOR',               value: cFactor),
                                     string(name: 'GPU_ARCH',             value: cGpuArch),
                                     string(name: 'IQ_TREE_GIT_BRANCH',  value: 'main'),
                                 ],
