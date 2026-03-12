@@ -4,15 +4,17 @@
 // Reads a YAML + CSV from a config repo and invokes iqtree_cuda_test_pipeline
 // in parallel for every row in the CSV.
 //
-// Parameters (5 inputs)
+// Parameters (6 inputs)
 // ─────────────────────
 //   CONFIG_REPO_URL    Git URL of the config repository
 //   CONFIG_REPO_BRANCH Branch of the config repository  (default: master)
 //   CONFIG_YAML_PATH   Relative path to pipeline_config.yaml inside the repo
 //   CONFIG_CSV_PATH    Relative path to test_matrix.csv  inside the repo
 //   REPETITIONS        Override execution.repetitions from YAML (leave blank = use YAML)
+//   RUN_ALIASES        Prefix for per-row run alias identifier (default: run)
 //
 // YAML  → common params: cluster, execution settings, all_node flag, dataset base path
+// RUN_ALIASES param → prefix for per-row run alias (was previously in YAML as general.run_aliases)
 // CSV   → per-test params: data_type, alignment_length, tree_type, execution_type, iqtree_args, model, gpu_type, iqtree_omp, cpu_nodes, auto
 //
 // Per-row runtime construction
@@ -51,6 +53,12 @@ pipeline {
             defaultValue: '',
             description:  'Number of times each test row is repeated on the cluster. ' +
                           'Overrides execution.repetitions in the YAML when set. Leave blank to use YAML value.'
+        )
+        string(
+            name:         'RUN_ALIASES',
+            defaultValue: 'run',
+            description:  'Prefix for the run alias identifier (e.g. "run", "D1"). ' +
+                          'Used to construct per-row RUN_ALIASES passed to child builds.'
         )
     }
 
@@ -112,7 +120,7 @@ pipeline {
                     def projectName       = cfg.general?.project_name        ?: ''
                     def nciAlias          = cfg.general?.nci_alias           ?: ''
                     def parentDatasetPath = cfg.general?.parent_dataset_path ?: ''
-                    def runAliasPrefix    = cfg.general?.run_aliases         ?: 'run'
+                    def runAliasPrefix    = params.RUN_ALIASES?.trim() ?: 'run'
 
                     if (!workdir || !projectName || !nciAlias || !parentDatasetPath) {
                         error('YAML must define: general.workdir, general.project_name, ' +
