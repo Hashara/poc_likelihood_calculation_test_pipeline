@@ -4,7 +4,7 @@
 // Reads a YAML + CSV from a config repo and invokes iqtree_cuda_test_pipeline
 // in parallel for every row in the CSV.
 //
-// Parameters (6 inputs)
+// Parameters (7 inputs)
 // ─────────────────────
 //   CONFIG_REPO_URL    Git URL of the config repository
 //   CONFIG_REPO_BRANCH Branch of the config repository  (default: master)
@@ -12,6 +12,7 @@
 //   CONFIG_CSV_PATH    Relative path to test_matrix.csv  inside the repo
 //   REPETITIONS        Override execution.repetitions from YAML (leave blank = use YAML)
 //   RUN_ALIASES        Prefix for per-row run alias identifier (default: run)
+//   PROFILE            Enable profiling in child builds (default: false)
 //
 // YAML  → common params: cluster, execution settings, all_node flag, dataset base path
 // RUN_ALIASES param → prefix for per-row run alias (was previously in YAML as general.run_aliases)
@@ -59,6 +60,11 @@ pipeline {
             defaultValue: 'run',
             description:  'Prefix for the run alias identifier (e.g. "run", "D1"). ' +
                           'Used to construct per-row RUN_ALIASES passed to child builds.'
+        )
+        booleanParam(
+            name:         'PROFILE',
+            defaultValue: false,
+            description:  'Enable profiling in child builds.'
         )
     }
 
@@ -257,7 +263,7 @@ pipeline {
                                     booleanParam(name: 'SPECIFIC_TREE', value: false),
                                     booleanParam(name: 'IQTREE_OPENMP', value: cIqtreeOmp.toBoolean()),
                                     booleanParam(name: 'CLONE_IQTREE',  value: false),
-                                    booleanParam(name: 'PROFILE',        value: false),
+                                    booleanParam(name: 'PROFILE',        value: params.PROFILE),
                                     booleanParam(name: 'ENERGY_PROFILE', value: false),
                                     string(name: 'IQTREE_THREADS',      value: cCpuNodes),
                                     string(name: 'AUTO',                 value: cAuto),
