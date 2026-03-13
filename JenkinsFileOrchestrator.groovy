@@ -4,17 +4,18 @@
 // Reads a YAML + CSV from a config repo and invokes iqtree_cuda_test_pipeline
 // in parallel for every row in the CSV.
 //
-// Parameters (7 inputs)
+// Parameters (8 inputs)
 // ─────────────────────
 //   CONFIG_REPO_URL    Git URL of the config repository
 //   CONFIG_REPO_BRANCH Branch of the config repository  (default: master)
 //   CONFIG_YAML_PATH   Relative path to pipeline_config.yaml inside the repo
 //   CONFIG_CSV_PATH    Relative path to test_matrix.csv  inside the repo
+//   WORKDIR            Working directory on the cluster (e.g. /scratch/dx61/workdir)
 //   REPETITIONS        Override execution.repetitions from YAML (leave blank = use YAML)
 //   RUN_ALIASES        Prefix for per-row run alias identifier (default: run)
 //   PROFILE            Enable profiling in child builds (default: false)
 //
-// YAML  → common params: cluster, execution settings, all_node flag, dataset base path
+// YAML  → common params: cluster, execution settings, all_node flag, dataset base path (workdir now a param)
 // RUN_ALIASES param → prefix for per-row run alias (was previously in YAML as general.run_aliases)
 // CSV   → per-test params: data_type, alignment_length, tree_type, execution_type, iqtree_args, model, gpu_type, iqtree_omp, cpu_nodes, auto
 //
@@ -50,6 +51,12 @@ pipeline {
             description:  'Relative path to the test-matrix CSV inside the config repo'
         )
         string(
+            name:         'WORKDIR',
+            defaultValue: '',
+            description:  'Working directory on the cluster (e.g. /scratch/dx61/workdir). ' +
+                          'Scripts are copied here and child builds use it as their workdir.'
+        )
+        string(
             name:         'REPETITIONS',
             defaultValue: '',
             description:  'Number of times each test row is repeated on the cluster. ' +
@@ -77,9 +84,13 @@ pipeline {
                     if (!params.CONFIG_REPO_URL?.trim()) {
                         error('CONFIG_REPO_URL is required — provide the Git URL of the config repository.')
                     }
+                    if (!params.WORKDIR?.trim()) {
+                        error('WORKDIR is required — provide the working directory on the cluster.')
+                    }
                     echo "Config repo : ${params.CONFIG_REPO_URL} @ ${params.CONFIG_REPO_BRANCH}"
                     echo "YAML        : ${params.CONFIG_YAML_PATH}"
                     echo "CSV         : ${params.CONFIG_CSV_PATH}"
+                    echo "WORKDIR     : ${params.WORKDIR}"
                 }
             }
         }
@@ -102,10 +113,10 @@ pipeline {
                 script {
                     def cfg      = readYaml file: "config_repo/${params.CONFIG_YAML_PATH}"
                     def nciAlias = cfg.general?.nci_alias ?: ''
-                    def workdir  = cfg.general?.workdir   ?: ''
+                    def workdir  = params.WORKDIR?.trim() ?: ''
 
                     if (!nciAlias || !workdir) {
-                        error('YAML must define general.nci_alias and general.workdir')
+                        error('YAML must define general.nci_alias and WORKDIR parameter must be set')
                     }
 
                     sh "scp -r scripts/* ${nciAlias}:${workdir}"
@@ -122,15 +133,15 @@ pipeline {
                     def cfg = readYaml file: "config_repo/${params.CONFIG_YAML_PATH}"
 
                     // Required
-                    def workdir           = cfg.general?.workdir             ?: ''
+                    def workdir           = params.WORKDIR?.trim()           ?: ''
                     def projectName       = cfg.general?.project_name        ?: ''
                     def nciAlias          = cfg.general?.nci_alias           ?: ''
                     def parentDatasetPath = cfg.general?.parent_dataset_path ?: ''
                     def runAliasPrefix    = params.RUN_ALIASES?.trim() ?: 'run'
 
                     if (!workdir || !projectName || !nciAlias || !parentDatasetPath) {
-                        error('YAML must define: general.workdir, general.project_name, ' +
-                              'general.nci_alias, general.parent_dataset_path')
+                        error('WORKDIR parameter must be set. YAML must define: ' +
+                              'general.project_name, general.nci_alias, general.parent_dataset_path')
                     }
 
                     // Optional with defaults
