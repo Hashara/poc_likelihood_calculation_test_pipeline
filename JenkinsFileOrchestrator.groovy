@@ -17,11 +17,13 @@
 //
 // YAML  → common params: cluster, execution settings, all_node flag, dataset base path (workdir now a param)
 // RUN_ALIASES param → prefix for per-row run alias (was previously in YAML as general.run_aliases)
-// CSV   → per-test params: data_type, alignment_length, tree_type, execution_type, iqtree_args, model, gpu_type, iqtree_omp, cpu_nodes, auto
+// CSV   → per-test params: data_type, alignment_length, tree_type, execution_type, iqtree_args, model, gpu_type, iqtree_omp, cpu_nodes, auto, factor, taxa (optional)
 //
 // Per-row runtime construction
 // ────────────────────────────
-//   DATASET_PATH = general.parent_dataset_path / data_type / tree_type / model
+//   DATASET_PATH = general.parent_dataset_path / <dataset_path_pattern>
+//                  default pattern: {data_type}/{tree_type}/{model}
+//                  complex pattern: {data_type}/{model}/taxa_{taxa}
 //   IQTREE_ARGS  = "-m <model> <csv_iqtree_args>"
 //   RUN_ALIASES  = "<run_aliases>_<data_type>_<model>_<execution_type>_<row_index>"
 // =============================================================================
@@ -139,6 +141,11 @@ pipeline {
                     def parentDatasetPath = cfg.general?.parent_dataset_path ?: ''
                     def runAliasPrefix    = params.RUN_ALIASES?.trim() ?: 'run'
 
+                    // Dataset path pattern — controls how DATASET_PATH is built per row
+                    // Default: legacy format  {data_type}/{tree_type}/{model}
+                    // Complex: e.g.           {data_type}/{model}/taxa_{taxa}
+                    def datasetPathPattern = cfg.general?.dataset_path_pattern ?: '{data_type}/{tree_type}/{model}'
+
                     if (!workdir || !projectName || !nciAlias || !parentDatasetPath) {
                         error('WORKDIR parameter must be set. YAML must define: ' +
                               'general.project_name, general.nci_alias, general.parent_dataset_path')
@@ -160,6 +167,7 @@ pipeline {
                     echo "  project_name       : ${projectName}"
                     echo "  nci_alias          : ${nciAlias}"
                     echo "  parent_dataset_path: ${parentDatasetPath}"
+                    echo "  dataset_path_pattern: ${datasetPathPattern}"
                     echo "  repetitions        : ${repetitions} ${params.REPETITIONS?.trim() ? '(param override)' : '(from YAML)'}"
                     echo "  fail_fast          : ${failFast}"
                     echo "  all_node           : ${allNode}"
@@ -186,9 +194,9 @@ pipeline {
 
                     lines.eachWithIndex { line, idx ->
 
-                        // Split with limit 11: iqtree_args (col 5) may contain spaces;
-                        // remaining cols must not contain spaces
-                        def parts = line.split(',', 11)
+                        // Split by comma — minimum 11 columns required,
+                        // optional 12th column (taxa) for complex dataset layouts
+                        def parts = line.split(',')
                         if (parts.size() < 11) {
                             echo "WARNING: skipping malformed row ${idx + 2}: '${line}'"
                             return
@@ -196,26 +204,35 @@ pipeline {
 
                         def dataType   = parts[0].trim()   // DNA | AA
                         def alignLen   = parts[1].trim()   // e.g. 100000
-                        def treeType   = parts[2].trim()   // rooted | unrooted
+                        def treeType   = parts[2].trim()   // rooted | unrooted | none
                         def execType   = parts[3].trim()   // VANILA | CUDA | OPENACC | OPENACC_PROFILE
                         def iqtreeArgs = parts[4].trim()   // e.g. -blfix
-                        def model      = parts[5].trim()   // e.g. GTR | Poisson
+                        def model      = parts[5].trim()   // e.g. GTR | GTR+I+G4 | LG+R4
                         def gpuType    = parts[6].trim()   // none | V100 | A100 | H200
                         def iqtreeOmp  = parts[7].trim()   // true | false
                         def cpuNodes   = parts[8].trim()   // integer, e.g. 4
                         def auto       = parts[9].trim()   // true | false
                         def factor     = parts[10].trim()  // integer, memory/time multiplier
+                        def taxa       = parts.size() > 11 ? parts[11].trim() : ''  // optional, e.g. 100
 
                         // Per-row GPU arch derivation
                         def gpuArch    = gpuArchMap[gpuType] ?: ''
 
-                        // Constructed values
-                        def datasetPath    = "${parentDatasetPath}/${dataType}/${treeType}/${model}"
+                        // Constructed values — dataset path uses the YAML pattern
+                        def datasetPath = "${parentDatasetPath}/" + datasetPathPattern
+                            .replace('{data_type}', dataType)
+                            .replace('{tree_type}', treeType)
+                            .replace('{model}', model)
+                            .replace('{taxa}', taxa)
+                            .replace('{alignment_length}', alignLen)
+
                         def fullIqtreeArgs = "-m ${model} ${iqtreeArgs}"
                         // OMP rows use OMP_{cpuNodes} as the exec label; all others use execType
                         def execLabel      = iqtreeOmp.toBoolean() ? "OMP_${cpuNodes}" : execType
-                        def runAlias       = "${runAliasPrefix}_${dataType}_${model}_${execLabel}_run1_tree_1_${alignLen}_iqtree3"
-                        def stageName      = "Row ${idx + 1} | ${dataType} | ${model} | ${execLabel} | ${gpuType}"
+                        def taxaSuffix     = taxa ? "_taxa${taxa}" : ''
+                        def runAlias       = "${runAliasPrefix}_${dataType}_${model}_${execLabel}${taxaSuffix}_run1_tree_1_${alignLen}_iqtree3"
+                        def stageName      = "Row ${idx + 1} | ${dataType} | ${model} | ${execLabel} | ${gpuType}" +
+                                             (taxa ? " | taxa_${taxa}" : '')
 
                         // Capture loop variables for the closure
                         def cDataType    = dataType
