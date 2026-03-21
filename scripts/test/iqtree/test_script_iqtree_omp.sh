@@ -11,6 +11,7 @@ IQTREE_THREADS=$ARG6
 AUTO=$ARG7
 IQTREE_ARGS=$ARG8
 NUM_TREES=${ARG9:-10}
+TREE_MODE=${ARG10:-te}
 
 if [ "$AUTO" == "true" ]; then
     IQTREE_THREADS="AUTO"
@@ -31,8 +32,16 @@ for i in $(seq 1 $NUM_TREES); do
 
   cd "$TAXA_DIR" || { echo "Failed to change directory to $TAXA_DIR"; exit 1; }
 
+    # Build tree args based on TREE_MODE
+    tree_file="tree_${i}.full.treefile"
+    case "$TREE_MODE" in
+      te)   tree_args="-te $tree_file" ;;
+      t)    tree_args="-t $tree_file" ;;
+      none) tree_args="" ;;
+    esac
 
     echo "Current directory: $(pwd)"
+    echo "Tree mode: $TREE_MODE → tree_args: $tree_args"
 
 #    for length in "${lengths[@]}"; do
         echo "Running likelihood for length: $length taxa: $taxa_size"
@@ -47,11 +56,11 @@ for i in $(seq 1 $NUM_TREES); do
                 omp_prefix="${UNIQUE_NAME/tree_1/tree_${i}}"
                 if [ "$AA_or_DNA" = "AA" ]; then
                     echo "Using amino acid data"
-                    $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${omp_prefix}_aa ${IQTREE_ARGS} -nt $IQTREE_THREADS
+                    $executable_path -s alignment_${length}.phy $tree_args --prefix output_${omp_prefix}_aa ${IQTREE_ARGS} -nt $IQTREE_THREADS
 
                 elif [ "$AA_or_DNA" = "DNA" ]; then
                     echo "Using DNA data"
-                    $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${omp_prefix} ${IQTREE_ARGS} -nt $IQTREE_THREADS
+                    $executable_path -s alignment_${length}.phy $tree_args --prefix output_${omp_prefix} ${IQTREE_ARGS} -nt $IQTREE_THREADS
 
                 fi
 

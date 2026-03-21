@@ -10,6 +10,7 @@ length=$ARG5
 IQTREE_THREADS=$ARG6
 IQTREE_AUTO=$ARG7
 IQTREE_ARGS=$ARG8
+TREE_MODE=${ARG9:-te}
 
 if [ "$IQTREE_AUTO" == "true" ]; then
     IQTREE_THREADS="AUTO"
@@ -19,6 +20,15 @@ fi
 executable_type=("iqtree")
 
 lengths=(100 1000 10000 100000 1000000)
+
+# Build tree args based on TREE_MODE (lenbased uses tree.full.treefile)
+tree_file="tree.full.treefile"
+case "$TREE_MODE" in
+  te)   tree_args="-te $tree_file" ;;
+  t)    tree_args="-t $tree_file" ;;
+  none) tree_args="" ;;
+esac
+echo "Tree mode: $TREE_MODE → tree_args: $tree_args"
 
 for length in "${lengths[@]}"; do
   TAXA_DIR="${DATASET_DIR}/alignment_${length}"
@@ -44,11 +54,11 @@ for length in "${lengths[@]}"; do
                 echo "Running test for length: $length with $type"
                 if [ "$AA_or_DNA" = "AA" ]; then
                     echo "Using amino acid data"
-                    $executable_path -s alignment_${length}.phy -te tree.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} ${IQTREE_ARGS} -nt $IQTREE_THREADS
+                    $executable_path -s alignment_${length}.phy $tree_args --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} ${IQTREE_ARGS} -nt $IQTREE_THREADS
 
                 elif [ "$AA_or_DNA" = "DNA" ]; then
                     echo "Using DNA data"
-                    $executable_path -s alignment_${length}.phy -te tree.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} ${IQTREE_ARGS} -nt $IQTREE_THREADS
+                    $executable_path -s alignment_${length}.phy $tree_args --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} ${IQTREE_ARGS} -nt $IQTREE_THREADS
 
                 fi
 

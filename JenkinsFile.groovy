@@ -39,6 +39,7 @@ pipeline {
         booleanParam(name: 'PROFILE', defaultValue: false, description: 'Profile runs with nsight')
         booleanParam(name: 'ENERGY_PROFILE', defaultValue: false, description: 'Profile energy consumption with forge')
         string(name: 'RUN_ALIASES', defaultValue: 'run', description: 'Unique name for this run')
+        string(name: 'TREE_MODE', defaultValue: 'te', description: 'Tree arg mode: te (-te TREEFILE), t (-t TREEFILE), none (no tree args)')
 
     }
 
@@ -75,6 +76,7 @@ pipeline {
         ENERGY_PROFILE = "${params.ENERGY_PROFILE}"
         LEN_BASED = "${params.LEN_BASED}"
         EIGEN="${params.EIGEN}"
+        TREE_MODE="${params.TREE_MODE}"
     }
 
     stages{

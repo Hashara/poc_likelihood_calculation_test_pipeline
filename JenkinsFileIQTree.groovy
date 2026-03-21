@@ -47,6 +47,7 @@ pipeline {
         booleanParam(name: 'ENERGY_PROFILE', defaultValue: false, description: 'Profile energy consumption with forge')
         string(name: 'RUN_ALIASES', defaultValue: 'run', description: 'Unique name for this run')
         string(name: 'NUM_TREES', defaultValue: '10', description: 'Number of tree folders (tree_1..tree_N) to iterate over in the dataset')
+        string(name: 'TREE_MODE', defaultValue: 'te', description: 'Tree arg mode: te (-te TREEFILE), t (-t TREEFILE), none (no tree args)')
 
     }
 
@@ -91,6 +92,7 @@ pipeline {
         ENERGY_PROFILE = "${params.ENERGY_PROFILE}"
         LEN_BASED = "${params.LEN_BASED}"
         NUM_TREES = "${params.NUM_TREES}"
+        TREE_MODE = "${params.TREE_MODE}"
     }
 
     stages{
@@ -175,7 +177,7 @@ pipeline {
                             ${DATASET_PATH} ${RUN_ALIASES}_profile_${backend} \
                             ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
                             ${PROJECT_NAME} ${backend} ${H200} \
-                            "${IQTREE_ARGS}" ${WALL_TIME_FACTOR}
+                            "${IQTREE_ARGS}" ${WALL_TIME_FACTOR} ${TREE_MODE}
 
                         """
                     }
@@ -215,7 +217,7 @@ pipeline {
                             ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} \
                             ${PROJECT_NAME} ${backend} ${H200} \
-                            "${IQTREE_ARGS}" ${WALL_TIME_FACTOR}
+                            "${IQTREE_ARGS}" ${WALL_TIME_FACTOR} ${TREE_MODE}
 
                         """
                     }
@@ -263,7 +265,7 @@ pipeline {
                             ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} \
                             ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${H200} \
-                            ${backend} "${IQTREE_ARGS}" ${NUM_TREES} ${WALL_TIME_FACTOR}
+                            ${backend} "${IQTREE_ARGS}" ${NUM_TREES} ${WALL_TIME_FACTOR} ${TREE_MODE}
 
                             """
                         }
@@ -283,7 +285,7 @@ pipeline {
                             ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} \
                             ${PROJECT_NAME} ${backend} ${H200} ${ALL_NODE} \
-                            "${IQTREE_ARGS}" ${NUM_TREES} ${WALL_TIME_FACTOR}
+                            "${IQTREE_ARGS}" ${NUM_TREES} ${WALL_TIME_FACTOR} ${TREE_MODE}
 
                         """
                         }

@@ -13,6 +13,7 @@ executable_type=("iqtree")
 TYPE=$ARG6
 IQTREE_ARGS=$ARG7
 NUM_TREES=${ARG8:-10}
+TREE_MODE=${ARG9:-te}
 
 executable_path=""
 if [ "$TYPE" == "VANILA" ]; then
@@ -36,8 +37,16 @@ for i in $(seq 1 $NUM_TREES); do
 
   cd "$TAXA_DIR" || { echo "Failed to change directory to $TAXA_DIR"; exit 1; }
 
+    # Build tree args based on TREE_MODE
+    tree_file="tree_${i}.full.treefile"
+    case "$TREE_MODE" in
+      te)   tree_args="-te $tree_file" ;;
+      t)    tree_args="-t $tree_file" ;;
+      none) tree_args="" ;;
+    esac
 
     echo "Current directory: $(pwd)"
+    echo "Tree mode: $TREE_MODE → tree_args: $tree_args"
 
 #    for length in "${lengths[@]}"; do
         echo "Running likelihood for length: $length taxa: $taxa_size"
@@ -51,11 +60,11 @@ for i in $(seq 1 $NUM_TREES); do
                 echo "Running test for length: $length with $type"
                 if [ "$AA_or_DNA" = "AA" ]; then
                     echo "Using amino acid data"
-                    $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} ${IQTREE_ARGS}
+                    $executable_path -s alignment_${length}.phy $tree_args --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} ${IQTREE_ARGS}
 
                 elif [ "$AA_or_DNA" = "DNA" ]; then
                     echo "Using DNA data"
-                    $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} ${IQTREE_ARGS}
+                    $executable_path -s alignment_${length}.phy $tree_args --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} ${IQTREE_ARGS}
 
                 fi
 
