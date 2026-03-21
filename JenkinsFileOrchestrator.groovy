@@ -23,8 +23,8 @@
 // ────────────────────────────
 //   DATASET_PATH = general.parent_dataset_path / <dataset_path_pattern>
 //                  default pattern: {data_type}/{tree_type}/{model}
-//                  complex pattern: {data_type}/{model}/taxa_{taxa}
-//   IQTREE_ARGS  = "-m <model> <csv_iqtree_args>"
+//                  complex pattern: {data_type}/{model}/taxa_{taxa}/len_{alignment_length}
+//   IQTREE_ARGS  = <csv_iqtree_args>  (model is NOT auto-prepended; use iqtree_args column if needed)
 //   RUN_ALIASES  = "<run_aliases>_<data_type>_<model>_<execution_type>_<row_index>"
 // =============================================================================
 
@@ -143,7 +143,7 @@ pipeline {
 
                     // Dataset path pattern — controls how DATASET_PATH is built per row
                     // Default: legacy format  {data_type}/{tree_type}/{model}
-                    // Complex: e.g.           {data_type}/{model}/taxa_{taxa}
+                    // Complex: e.g.           {data_type}/{model}/taxa_{taxa}/len_{alignment_length}
                     def datasetPathPattern = cfg.general?.dataset_path_pattern ?: '{data_type}/{tree_type}/{model}'
 
                     if (!workdir || !projectName || !nciAlias || !parentDatasetPath) {
@@ -226,7 +226,7 @@ pipeline {
                             .replace('{taxa}', taxa)
                             .replace('{alignment_length}', alignLen)
 
-                        def fullIqtreeArgs = "-m ${model} ${iqtreeArgs}"
+                        def fullIqtreeArgs = iqtreeArgs
                         // OMP rows use OMP_{cpuNodes} as the exec label; all others use execType
                         def execLabel      = iqtreeOmp.toBoolean() ? "OMP_${cpuNodes}" : execType
                         def taxaSuffix     = taxa ? "_taxa${taxa}" : ''
