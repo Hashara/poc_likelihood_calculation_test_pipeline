@@ -11,7 +11,7 @@ UNIQUE_NAME=$6
 AA=$7
 DNA=$8
 length=$9
-factor=${10}
+mem_factor=${10}
 repeat=${11}
 
 IQTREE_OPENMP=${12}
@@ -48,32 +48,32 @@ for r in $(seq 1 $repeat); do
       if [ "$TYPE" == "OPENACC" ] || [ "$TYPE" == "OPENACC_PROFILE" ] || [ "$TYPE" == "CUDA" ]; then
           # GPU backends need GPU queue
           if [ "$V100_GPU" == true ]; then
-            memory=$((factor * 1 * 48))
+            memory=$((mem_factor * 1 * 48))
               qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=12,ngpus=1,mem="${memory}GB",jobfs=10GB,wd -qgpuvolta -N energy_v100_${TYPE} \
                     -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length",ARG6="$TYPE",ARG7="$IQTREE_ARGS",ARG8="$TREE_MODE" "$WD"/energy_measure/iqtree/test_script_iqtree.sh
           fi
 
           if [ "$A100_GPU" == true ]; then
-            memory=$(echo "$factor * 0.5 * 64" | bc)
+            memory=$(echo "$mem_factor * 0.5 * 64" | bc)
              qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=16,ngpus=1,mem="64GB",jobfs=10GB,wd -qdgxa100 -N energy_a100_${TYPE} \
                     -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length",ARG6="$TYPE",ARG7="$IQTREE_ARGS",ARG8="$TREE_MODE" "$WD"/energy_measure/iqtree/test_script_iqtree.sh
           fi
 
           if [ "$H200" == true ]; then
-            memory=$((factor * 1 * 48))
+            memory=$((mem_factor * 1 * 48))
              qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=12,ngpus=1,mem="${memory}GB",jobfs=10GB,wd -qgpuhopper -N energy_h200_${TYPE} \
                     -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length",ARG6="$TYPE",ARG7="$IQTREE_ARGS",ARG8="$TREE_MODE" "$WD"/energy_measure/iqtree/test_script_iqtree.sh
           fi
 
       elif [ "$TYPE" == "VANILA" ]; then
           # VANILA is CPU-only, use normal queue
-          memory=$((factor * 1 * 20))
+          memory=$((mem_factor * 1 * 20))
          qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=1,mem="${memory}GB",jobfs=10GB,wd -qnormal -N energy_iqtree_${TYPE} \
                 -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length",ARG6="$TYPE",ARG7="$IQTREE_ARGS",ARG8="$TREE_MODE" "$WD"/energy_measure/iqtree/test_script_iqtree.sh
       fi
 
       if [ "$IQTREE_OPENMP" == true ]; then
-          memory=$((factor * IQTREE_THREADS * 4))
+          memory=$((mem_factor * IQTREE_THREADS * 4))
           omp_wall_time="1:00:00"
          qsub -P${PROJECT_NAME} -lwalltime=$omp_wall_time,ncpus=$IQTREE_THREADS,mem="${memory}GB",jobfs=10GB,wd -qnormal -N energy_iqtree_omp_${TYPE} \
                 -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length",ARG6="$IQTREE_THREADS",ARG7="$TYPE",ARG8="$IQTREE_ARGS",ARG9="$TREE_MODE" "$WD"/energy_measure/iqtree/test_script_iqtree_omp.sh

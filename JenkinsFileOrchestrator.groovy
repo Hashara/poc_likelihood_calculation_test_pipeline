@@ -216,7 +216,7 @@ pipeline {
                         def iqtreeOmp  = parts[7].trim()   // true | false
                         def cpuNodes   = parts[8].trim()   // integer, e.g. 4
                         def auto       = parts[9].trim()   // true | false
-                        def factor     = parts[10].trim()  // integer, memory multiplier
+                        def memFactor  = parts[10].trim()  // integer, memory multiplier
                         def taxa           = parts.size() > 11 ? parts[11].trim() : ''  // optional, e.g. 100
                         def wallTimeFactor = parts.size() > 12 ? parts[12].trim() : '1' // optional, default 1 (1=10min)
                         def treeMode       = parts.size() > 13 ? parts[13].trim() : 'te' // optional, default te (te|t|none)
@@ -252,7 +252,7 @@ pipeline {
                         def cIqtreeOmp   = iqtreeOmp
                         def cCpuNodes    = cpuNodes
                         def cAuto        = auto
-                        def cFactor          = factor
+                        def cMemFactor       = memFactor
                         def cWallTimeFactor  = wallTimeFactor
                         def cTreeMode        = treeMode
 
@@ -303,7 +303,7 @@ pipeline {
                                     booleanParam(name: 'ENERGY_PROFILE', value: false),
                                     string(name: 'IQTREE_THREADS',      value: cCpuNodes),
                                     string(name: 'AUTO',                 value: cAuto),
-                                    string(name: 'FACTOR',               value: cFactor),
+                                    string(name: 'MEM_FACTOR',            value: cMemFactor),
                                     string(name: 'WALL_TIME_FACTOR',     value: cWallTimeFactor),
                                     string(name: 'TREE_MODE',            value: cTreeMode),
                                     string(name: 'GPU_ARCH',             value: cGpuArch),

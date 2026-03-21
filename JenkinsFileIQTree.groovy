@@ -39,7 +39,7 @@ pipeline {
         booleanParam(name: 'ALL_NODE', defaultValue: false, description: 'Use whole node and execute parallely')
 
         string(name: 'IQTREE_ARGS', defaultValue: '-m Poisson -blfix --kernel-nonrev -vvv', description: 'Additional IQ-TREE arguments (e.g. -m Poisson -blfix --kernel-nonrev -vvv)')
-        string(name: 'FACTOR',defaultValue: "1", description: "memory multiplier")
+        string(name: 'MEM_FACTOR',defaultValue: "1", description: "memory multiplier (1 = base memory per GPU type)")
         string(name: 'WALL_TIME_FACTOR', defaultValue: "1", description: "wall time multiplier (1 = 10 minutes)")
 
         string(name: 'REPETITIONS', defaultValue: '1', description: 'Number of repetitions of each analysis')
@@ -85,7 +85,7 @@ pipeline {
         IQTREE_ARGS = "${params.IQTREE_ARGS}"
 
         LENGTH="${params.LENGTH}"
-        FACTOR="${params.FACTOR}"
+        MEM_FACTOR="${params.MEM_FACTOR}"
         WALL_TIME_FACTOR="${params.WALL_TIME_FACTOR}"
         REPETITIONS = "${params.REPETITIONS}"
         PROFILE = "${params.PROFILE}"
@@ -175,7 +175,7 @@ pipeline {
                         sh ${WORKDIR}/qsub/iqtree/profile_qsub_script.sh \
                             ${IQTREE} ${V100} ${A100} ${WORKDIR} \
                             ${DATASET_PATH} ${RUN_ALIASES}_profile_${backend} \
-                            ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
+                            ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} \
                             ${PROJECT_NAME} ${backend} ${H200} \
                             "${IQTREE_ARGS}" ${WALL_TIME_FACTOR} ${TREE_MODE}
 
@@ -214,7 +214,7 @@ pipeline {
                         sh ${WORKDIR}/qsub/iqtree/energy_measure_qsub_script.sh \
                             ${IQTREE} ${V100} ${A100} ${WORKDIR} \
                             ${DATASET_PATH} ${RUN_ALIASES}_energy_${backend} \
-                            ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
+                            ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} \
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} \
                             ${PROJECT_NAME} ${backend} ${H200} \
                             "${IQTREE_ARGS}" ${WALL_TIME_FACTOR} ${TREE_MODE}
@@ -263,7 +263,7 @@ pipeline {
                             echo "Running..."
                             sh ${WORKDIR}/qsub/iqtree/qsub_script_lenbased.sh \
                             ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} \
-                            ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
+                            ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} \
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${H200} \
                             ${backend} "${IQTREE_ARGS}" ${NUM_TREES} ${WALL_TIME_FACTOR} ${TREE_MODE}
 
@@ -282,7 +282,7 @@ pipeline {
                         sh ${WORKDIR}/qsub/iqtree/qsub_script.sh \
                             ${IQTREE} ${V100} ${A100} ${WORKDIR} \
                             ${DATASET_PATH} ${RUN_ALIASES}_${backend} \
-                            ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
+                            ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} \
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} \
                             ${PROJECT_NAME} ${backend} ${H200} ${ALL_NODE} \
                             "${IQTREE_ARGS}" ${NUM_TREES} ${WALL_TIME_FACTOR} ${TREE_MODE}
@@ -313,7 +313,7 @@ pipeline {
 //                        sh ${WORKDIR}/qsub/iqtree/qsub_script.sh \
 //                            ${IQTREE} ${V100} ${A100} ${WORKDIR} \
 //                            ${DATASET_PATH} ${RUN_ALIASES}_${backend} \
-//                            ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
+//                            ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} \
 //                            ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} \
 //                            ${PROJECT_NAME} ${backend} ${H200} ${ALL_NODE} \
 //                            ${REV} ${VERBOSE}

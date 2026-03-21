@@ -11,7 +11,7 @@ UNIQUE_NAME=$6
 AA=$7
 DNA=$8
 length=$9
-factor=${10}
+mem_factor=${10}
 repeat=${11}
 PROJECT_NAME=${12}
 wall_time_factor=${13:-1}
@@ -37,19 +37,19 @@ for r in $(seq 1 $repeat); do
     local_unique_name="${UNIQUE_NAME}_run${r}"
   for data_type in "${data_types[@]}"; do
       if [ "$OPENACC_V100" = true ]; then
-        memory=$((factor * 1 * 48))
+        memory=$((mem_factor * 1 * 48))
           qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=12,ngpus=1,mem="${memory}GB",jobfs=10GB,wd -qgpuvolta -N test_v100 \
                 -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="V100",ARG6="$length" "$WD"/profile/test_script_poc.sh
       fi
 
       if [ "$OPENACC_A100" = true ]; then
-        memory=$(echo "$factor * 0.5 * 64" | bc)
+        memory=$(echo "$mem_factor * 0.5 * 64" | bc)
          qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=16,ngpus=1,mem="64GB",jobfs=10GB,wd -qdgxa100 -N test_a100 \
                 -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="A100",ARG6="$length" "$WD"/profile/test_script_poc.sh
       fi
 
       if [ "$IQTREE" = true ]; then
-          memory=$((factor * 1 * 20))
+          memory=$((mem_factor * 1 * 20))
          qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=1,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree \
                 -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length" "$WD"/test/test_script_iqtree.sh
       fi
