@@ -15,9 +15,9 @@
 //   RUN_ALIASES        Prefix for per-row run alias identifier (default: run)
 //   PROFILE            Enable profiling in child builds (default: false)
 //
-// YAML  → common params: cluster, execution settings, all_node flag, dataset base path (workdir now a param)
+// YAML  → common params: cluster, execution settings, all_node flag, dataset base path, num_trees (workdir now a param)
 // RUN_ALIASES param → prefix for per-row run alias (was previously in YAML as general.run_aliases)
-// CSV   → per-test params: data_type, alignment_length, tree_type, execution_type, iqtree_args, model, gpu_type, iqtree_omp, cpu_nodes, auto, factor, taxa (optional), num_trees (optional, default 10)
+// CSV   → per-test params: data_type, alignment_length, tree_type, execution_type, iqtree_args, model, gpu_type, iqtree_omp, cpu_nodes, auto, factor, taxa (optional)
 //
 // Per-row runtime construction
 // ────────────────────────────
@@ -146,6 +146,9 @@ pipeline {
                     // Complex: e.g.           {data_type}/{model}/taxa_{taxa}/len_{alignment_length}
                     def datasetPathPattern = cfg.general?.dataset_path_pattern ?: '{data_type}/{tree_type}/{model}'
 
+                    // Number of tree folders (tree_1..tree_N) — common to all rows
+                    def numTrees = (cfg.general?.num_trees ?: 10).toString()
+
                     if (!workdir || !projectName || !nciAlias || !parentDatasetPath) {
                         error('WORKDIR parameter must be set. YAML must define: ' +
                               'general.project_name, general.nci_alias, general.parent_dataset_path')
@@ -171,6 +174,7 @@ pipeline {
                     echo "  repetitions        : ${repetitions} ${params.REPETITIONS?.trim() ? '(param override)' : '(from YAML)'}"
                     echo "  fail_fast          : ${failFast}"
                     echo "  all_node           : ${allNode}"
+                    echo "  num_trees          : ${numTrees}"
                     echo "=================================="
 
                     // ── Load CSV ─────────────────────────────────────────────
@@ -196,7 +200,6 @@ pipeline {
 
                         // Split by comma — minimum 11 columns required,
                         // optional 12th column (taxa) for complex dataset layouts
-                        // optional 13th column (num_trees) — number of tree folders (default 10)
                         def parts = line.split(',')
                         if (parts.size() < 11) {
                             echo "WARNING: skipping malformed row ${idx + 2}: '${line}'"
@@ -215,7 +218,6 @@ pipeline {
                         def auto       = parts[9].trim()   // true | false
                         def factor     = parts[10].trim()  // integer, memory/time multiplier
                         def taxa       = parts.size() > 11 ? parts[11].trim() : ''  // optional, e.g. 100
-                        def numTrees   = parts.size() > 12 ? parts[12].trim() : '10' // optional, default 10
 
                         // Per-row GPU arch derivation
                         def gpuArch    = gpuArchMap[gpuType] ?: ''
@@ -249,7 +251,6 @@ pipeline {
                         def cCpuNodes    = cpuNodes
                         def cAuto        = auto
                         def cFactor      = factor
-                        def cNumTrees    = numTrees
 
                         parallelStages[stageName] = {
                             echo "▶ ${stageName}"
@@ -300,7 +301,7 @@ pipeline {
                                     string(name: 'AUTO',                 value: cAuto),
                                     string(name: 'FACTOR',               value: cFactor),
                                     string(name: 'GPU_ARCH',             value: cGpuArch),
-                                    string(name: 'NUM_TREES',            value: cNumTrees),
+                                    string(name: 'NUM_TREES',            value: numTrees),
                                     string(name: 'IQ_TREE_GIT_BRANCH',  value: 'main'),
                                 ],
                                 wait:      true,
