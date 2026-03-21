@@ -17,7 +17,7 @@
 //
 // YAML  → common params: cluster, execution settings, all_node flag, dataset base path, num_trees (workdir now a param)
 // RUN_ALIASES param → prefix for per-row run alias (was previously in YAML as general.run_aliases)
-// CSV   → per-test params: data_type, alignment_length, tree_type, execution_type, iqtree_args, model, gpu_type, iqtree_omp, cpu_nodes, auto, factor, taxa (optional)
+// CSV   → per-test params: data_type, alignment_length, tree_type, execution_type, iqtree_args, model, gpu_type, iqtree_omp, cpu_nodes, auto, factor, taxa (optional), wall_time_factor (optional, default 1; 1=10min)
 //
 // Per-row runtime construction
 // ────────────────────────────
@@ -216,8 +216,9 @@ pipeline {
                         def iqtreeOmp  = parts[7].trim()   // true | false
                         def cpuNodes   = parts[8].trim()   // integer, e.g. 4
                         def auto       = parts[9].trim()   // true | false
-                        def factor     = parts[10].trim()  // integer, memory/time multiplier
-                        def taxa       = parts.size() > 11 ? parts[11].trim() : ''  // optional, e.g. 100
+                        def factor     = parts[10].trim()  // integer, memory multiplier
+                        def taxa           = parts.size() > 11 ? parts[11].trim() : ''  // optional, e.g. 100
+                        def wallTimeFactor = parts.size() > 12 ? parts[12].trim() : '1' // optional, default 1 (1=10min)
 
                         // Per-row GPU arch derivation
                         def gpuArch    = gpuArchMap[gpuType] ?: ''
@@ -250,7 +251,8 @@ pipeline {
                         def cIqtreeOmp   = iqtreeOmp
                         def cCpuNodes    = cpuNodes
                         def cAuto        = auto
-                        def cFactor      = factor
+                        def cFactor          = factor
+                        def cWallTimeFactor  = wallTimeFactor
 
                         parallelStages[stageName] = {
                             echo "▶ ${stageName}"
@@ -300,6 +302,7 @@ pipeline {
                                     string(name: 'IQTREE_THREADS',      value: cCpuNodes),
                                     string(name: 'AUTO',                 value: cAuto),
                                     string(name: 'FACTOR',               value: cFactor),
+                                    string(name: 'WALL_TIME_FACTOR',     value: cWallTimeFactor),
                                     string(name: 'GPU_ARCH',             value: cGpuArch),
                                     string(name: 'NUM_TREES',            value: numTrees),
                                     string(name: 'IQ_TREE_GIT_BRANCH',  value: 'main'),

@@ -39,7 +39,8 @@ pipeline {
         booleanParam(name: 'ALL_NODE', defaultValue: false, description: 'Use whole node and execute parallely')
 
         string(name: 'IQTREE_ARGS', defaultValue: '-m Poisson -blfix --kernel-nonrev -vvv', description: 'Additional IQ-TREE arguments (e.g. -m Poisson -blfix --kernel-nonrev -vvv)')
-        string(name: 'FACTOR',defaultValue: "1", description: "memory/time multipler")
+        string(name: 'FACTOR',defaultValue: "1", description: "memory multiplier")
+        string(name: 'WALL_TIME_FACTOR', defaultValue: "1", description: "wall time multiplier (1 = 10 minutes)")
 
         string(name: 'REPETITIONS', defaultValue: '1', description: 'Number of repetitions of each analysis')
         booleanParam(name: 'PROFILE', defaultValue: false, description: 'Profile runs with nsight')
@@ -84,6 +85,7 @@ pipeline {
 
         LENGTH="${params.LENGTH}"
         FACTOR="${params.FACTOR}"
+        WALL_TIME_FACTOR="${params.WALL_TIME_FACTOR}"
         REPETITIONS = "${params.REPETITIONS}"
         PROFILE = "${params.PROFILE}"
         ENERGY_PROFILE = "${params.ENERGY_PROFILE}"
@@ -173,7 +175,7 @@ pipeline {
                             ${DATASET_PATH} ${RUN_ALIASES}_profile_${backend} \
                             ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
                             ${PROJECT_NAME} ${backend} ${H200} \
-                            "${IQTREE_ARGS}"
+                            "${IQTREE_ARGS}" ${WALL_TIME_FACTOR}
 
                         """
                     }
@@ -213,7 +215,7 @@ pipeline {
                             ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} \
                             ${PROJECT_NAME} ${backend} ${H200} \
-                            "${IQTREE_ARGS}"
+                            "${IQTREE_ARGS}" ${WALL_TIME_FACTOR}
 
                         """
                     }
@@ -261,7 +263,7 @@ pipeline {
                             ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} \
                             ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${H200} \
-                            ${backend} "${IQTREE_ARGS}" ${NUM_TREES}
+                            ${backend} "${IQTREE_ARGS}" ${NUM_TREES} ${WALL_TIME_FACTOR}
 
                             """
                         }
@@ -281,8 +283,8 @@ pipeline {
                             ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} \
                             ${PROJECT_NAME} ${backend} ${H200} ${ALL_NODE} \
-                            "${IQTREE_ARGS}" ${NUM_TREES}
-                 
+                            "${IQTREE_ARGS}" ${NUM_TREES} ${WALL_TIME_FACTOR}
+
                         """
                         }
                     }

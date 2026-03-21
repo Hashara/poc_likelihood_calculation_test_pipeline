@@ -24,6 +24,7 @@ TYPE=${16}
 H200=${17}
 ALL_NODE=${18}
 EIGEN=${19}
+wall_time_factor=${20:-1}
 
 data_types=()
 if [ "$AA" == true ]; then
@@ -33,21 +34,10 @@ if [ "$DNA" == true ]; then
     data_types+=("DNA")
 fi
 
-base_walltime="00:05:00"
-if [ "$OPENACC_V100" == true ] || [ "$OPENACC_V100" == true ] || [ "$H200" == true ]; then
-  base_walltime="00:05:00"
-else
-  base_walltime="00:10:00"
-fi
+# wall_time_factor=1 → 10 minutes (600 seconds)
+scaled_seconds=$((wall_time_factor * 600))
 
-# Convert HH:MM:SS to total seconds
-IFS=: read -r h m s <<< "$base_walltime"
-total_seconds=$((10#$h * 3600 + 10#$m * 60 + 10#$s))
-
-# Multiply by factor
-scaled_seconds=$((total_seconds * factor))
-
-# Convert back to HH:MM:SS
+# Convert to HH:MM:SS
 printf -v wall_time "%02d:%02d:%02d" \
   $((scaled_seconds / 3600)) \
   $(((scaled_seconds % 3600) / 60)) \

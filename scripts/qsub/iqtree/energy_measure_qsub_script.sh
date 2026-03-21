@@ -21,6 +21,7 @@ PROJECT_NAME=${14}
 TYPE=${15}
 H200=${16}
 IQTREE_ARGS=${17}
+wall_time_factor=${18:-1}
 
 data_types=()
 if [ "$AA" == true ]; then
@@ -30,21 +31,10 @@ if [ "$DNA" == true ]; then
     data_types+=("DNA")
 fi
 
-base_walltime="00:05:00"
-if [ "$V100_GPU" == true ] || [ "$A100_GPU" == true ] || [ "$H200" == true ]; then
-  base_walltime="01:20:00"
-else
-  base_walltime="01:10:00"
-fi
+# wall_time_factor=1 → 10 minutes (600 seconds)
+scaled_seconds=$((wall_time_factor * 600))
 
-# Convert HH:MM:SS to total seconds
-IFS=: read -r h m s <<< "$base_walltime"
-total_seconds=$((10#$h * 3600 + 10#$m * 60 + 10#$s))
-
-# Multiply by factor
-scaled_seconds=$((total_seconds * factor))
-
-# Convert back to HH:MM:SS
+# Convert to HH:MM:SS
 printf -v wall_time "%02d:%02d:%02d" \
   $((scaled_seconds / 3600)) \
   $(((scaled_seconds % 3600) / 60)) \
