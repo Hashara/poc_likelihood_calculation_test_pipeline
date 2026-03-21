@@ -21,6 +21,7 @@ PROJECT_NAME=${15}
 H200=${16}
 TYPE=${17}
 IQTREE_ARGS=${18}
+NUM_TREES=${19:-10}
 
 data_types=()
 if [ "$AA" = true ]; then

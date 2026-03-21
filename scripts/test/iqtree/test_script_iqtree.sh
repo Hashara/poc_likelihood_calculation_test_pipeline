@@ -12,6 +12,7 @@ executable_type=("iqtree")
 
 TYPE=$ARG6
 IQTREE_ARGS=$ARG7
+NUM_TREES=${ARG8:-10}
 
 executable_path=""
 if [ "$TYPE" == "VANILA" ]; then
@@ -24,9 +25,9 @@ elif [ "$TYPE" == "OPENACC" ]; then
   executable_path="$WD/builds/build-nvhpc-openacc/iqtree3"
 fi
 
-iter=10
+echo "Number of trees: $NUM_TREES"
 
-for i in $(seq 1 $iter); do
+for i in $(seq 1 $NUM_TREES); do
   TAXA_DIR="${DATASET_DIR}/tree_${i}"
   echo "Processing folder: $TAXA_DIR"
   taxa_size=$(basename "$TAXA_DIR")

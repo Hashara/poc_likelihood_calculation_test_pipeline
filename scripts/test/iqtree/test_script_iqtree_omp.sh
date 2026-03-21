@@ -10,6 +10,7 @@ length=$ARG5
 IQTREE_THREADS=$ARG6
 AUTO=$ARG7
 IQTREE_ARGS=$ARG8
+NUM_TREES=${ARG9:-10}
 
 if [ "$AUTO" == "true" ]; then
     IQTREE_THREADS="AUTO"
@@ -19,9 +20,9 @@ fi
 
 executable_type=("iqtree3")
 
-iter=10
+echo "Number of trees: $NUM_TREES"
 
-for i in $(seq 1 $iter); do
+for i in $(seq 1 $NUM_TREES); do
   TAXA_DIR="${DATASET_DIR}/tree_${i}"
   echo "Processing folder: $TAXA_DIR"
   taxa_size=$(basename "$TAXA_DIR")

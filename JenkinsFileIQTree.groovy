@@ -45,6 +45,7 @@ pipeline {
         booleanParam(name: 'PROFILE', defaultValue: false, description: 'Profile runs with nsight')
         booleanParam(name: 'ENERGY_PROFILE', defaultValue: false, description: 'Profile energy consumption with forge')
         string(name: 'RUN_ALIASES', defaultValue: 'run', description: 'Unique name for this run')
+        string(name: 'NUM_TREES', defaultValue: '10', description: 'Number of tree folders (tree_1..tree_N) to iterate over in the dataset')
 
     }
 
@@ -87,6 +88,7 @@ pipeline {
         PROFILE = "${params.PROFILE}"
         ENERGY_PROFILE = "${params.ENERGY_PROFILE}"
         LEN_BASED = "${params.LEN_BASED}"
+        NUM_TREES = "${params.NUM_TREES}"
     }
 
     stages{
@@ -259,8 +261,8 @@ pipeline {
                             ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} \
                             ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${H200} \
-                            ${backend} "${IQTREE_ARGS}"
-                
+                            ${backend} "${IQTREE_ARGS}" ${NUM_TREES}
+
                             """
                         }
                     }
@@ -279,7 +281,7 @@ pipeline {
                             ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} \
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} \
                             ${PROJECT_NAME} ${backend} ${H200} ${ALL_NODE} \
-                            "${IQTREE_ARGS}"
+                            "${IQTREE_ARGS}" ${NUM_TREES}
                  
                         """
                         }

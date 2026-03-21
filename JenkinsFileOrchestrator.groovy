@@ -17,7 +17,7 @@
 //
 // YAML  → common params: cluster, execution settings, all_node flag, dataset base path (workdir now a param)
 // RUN_ALIASES param → prefix for per-row run alias (was previously in YAML as general.run_aliases)
-// CSV   → per-test params: data_type, alignment_length, tree_type, execution_type, iqtree_args, model, gpu_type, iqtree_omp, cpu_nodes, auto, factor, taxa (optional)
+// CSV   → per-test params: data_type, alignment_length, tree_type, execution_type, iqtree_args, model, gpu_type, iqtree_omp, cpu_nodes, auto, factor, taxa (optional), num_trees (optional, default 10)
 //
 // Per-row runtime construction
 // ────────────────────────────
@@ -196,6 +196,7 @@ pipeline {
 
                         // Split by comma — minimum 11 columns required,
                         // optional 12th column (taxa) for complex dataset layouts
+                        // optional 13th column (num_trees) — number of tree folders (default 10)
                         def parts = line.split(',')
                         if (parts.size() < 11) {
                             echo "WARNING: skipping malformed row ${idx + 2}: '${line}'"
@@ -214,6 +215,7 @@ pipeline {
                         def auto       = parts[9].trim()   // true | false
                         def factor     = parts[10].trim()  // integer, memory/time multiplier
                         def taxa       = parts.size() > 11 ? parts[11].trim() : ''  // optional, e.g. 100
+                        def numTrees   = parts.size() > 12 ? parts[12].trim() : '10' // optional, default 10
 
                         // Per-row GPU arch derivation
                         def gpuArch    = gpuArchMap[gpuType] ?: ''
@@ -247,6 +249,7 @@ pipeline {
                         def cCpuNodes    = cpuNodes
                         def cAuto        = auto
                         def cFactor      = factor
+                        def cNumTrees    = numTrees
 
                         parallelStages[stageName] = {
                             echo "▶ ${stageName}"
@@ -297,6 +300,7 @@ pipeline {
                                     string(name: 'AUTO',                 value: cAuto),
                                     string(name: 'FACTOR',               value: cFactor),
                                     string(name: 'GPU_ARCH',             value: cGpuArch),
+                                    string(name: 'NUM_TREES',            value: cNumTrees),
                                     string(name: 'IQ_TREE_GIT_BRANCH',  value: 'main'),
                                 ],
                                 wait:      true,
