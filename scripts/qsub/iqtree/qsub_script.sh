@@ -79,7 +79,6 @@ for r in $(seq 1 $repeat); do
 
       if [ "$IQTREE_OPENMP" == true ]; then
           memory=$((mem_factor * IQTREE_THREADS * 4))
-          wall_time="1:00:00"
           # Strip _${TYPE} suffix appended by child pipeline, then substitute
           # run1 → run${r} so repetitions produce distinct output names
           omp_unique_base="${UNIQUE_NAME%_${TYPE}}"
