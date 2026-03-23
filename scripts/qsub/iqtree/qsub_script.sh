@@ -50,33 +50,35 @@ for r in $(seq 1 $repeat); do
   for data_type in "${data_types[@]}"; do
       if [ "$V100_GPU" == true ]; then
         memory=$((mem_factor * 1 * 48))
-          echo "[qsub] V100: walltime=$wall_time mem=${memory}GB IQTREE_ARGS='$IQTREE_ARGS' NUM_TREES=$NUM_TREES TREE_MODE=$TREE_MODE"
+          export ARG1="$DATASET_DIR" ARG2="$local_unique_name" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$TYPE" ARG7="$IQTREE_ARGS" ARG8="$NUM_TREES" ARG9="$TREE_MODE"
+          echo "[qsub] V100: walltime=$wall_time mem=${memory}GB ARG1=$ARG1 ARG2=$ARG2 ARG3=$ARG3 ARG4=$ARG4 ARG5=$ARG5 ARG6=$ARG6 ARG7='$ARG7' ARG8=$ARG8 ARG9=$ARG9"
           qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=12,ngpus=1,mem="${memory}GB",jobfs=10GB,wd -qgpuvolta -N test_v100 \
-                -v ARG1="$DATASET_DIR" -v ARG2="$local_unique_name" -v ARG3="$WD" -v ARG4="$data_type" -v ARG5="$length" -v ARG6="$TYPE" -v ARG7="$IQTREE_ARGS" -v ARG8="$NUM_TREES" -v ARG9="$TREE_MODE" "$WD"/test/iqtree/test_script_iqtree.sh
+                -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9 "$WD"/test/iqtree/test_script_iqtree.sh
 
 #
 #      if [ "$A100_GPU" == true ]; then
 #        memory=$(echo "$mem_factor * 0.5 * 64" | bc)
 #         qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=16,ngpus=1,mem="64GB",jobfs=10GB,wd -qdgxa100 -N test_a100 \
-#                -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="A100",ARG6="$length",ARG7="$TYPE" "$WD"/test/test_script_poc.sh
+#                -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7 "$WD"/test/test_script_poc.sh
 #      fi
 #
 #      if [ "$H200" == true ]; then
 #        if [ "$ALL_NODE" == true ]; then
 #              memory=$((mem_factor * 4 * 48))
 #              qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=48,ngpus=4,mem="${memory}GB",jobfs=10GB,wd -qgpuhopper -N test_h200_all \
-#                                    -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="H200",ARG6="$length",ARG7="$TYPE" "$WD"/test/h200/run_test_per_gpu.sh
+#                                    -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7 "$WD"/test/h200/run_test_per_gpu.sh
 #          else
 #                memory=$((mem_factor * 1 * 48))
 #                qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=12,ngpus=1,mem="${memory}GB",jobfs=10GB,wd -qgpuhopper -N test_h200 \
-#                          -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="H200",ARG6="$length",ARG7="$TYPE" "$WD"/test/test_script_poc.sh
+#                          -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7 "$WD"/test/test_script_poc.sh
 #          fi
 #      fi
       elif [ "$IQTREE" == true ]; then
           memory=$((mem_factor * 1 * 20))
-          echo "[qsub] CPU: walltime=$wall_time mem=${memory}GB IQTREE_ARGS='$IQTREE_ARGS' NUM_TREES=$NUM_TREES TREE_MODE=$TREE_MODE"
+          export ARG1="$DATASET_DIR" ARG2="$local_unique_name" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$TYPE" ARG7="$IQTREE_ARGS" ARG8="$NUM_TREES" ARG9="$TREE_MODE"
+          echo "[qsub] CPU: walltime=$wall_time mem=${memory}GB ARG1=$ARG1 ARG2=$ARG2 ARG3=$ARG3 ARG4=$ARG4 ARG5=$ARG5 ARG6=$ARG6 ARG7='$ARG7' ARG8=$ARG8 ARG9=$ARG9"
          qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=1,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree \
-                -v ARG1="$DATASET_DIR" -v ARG2="$local_unique_name" -v ARG3="$WD" -v ARG4="$data_type" -v ARG5="$length" -v ARG6="$TYPE" -v ARG7="$IQTREE_ARGS" -v ARG8="$NUM_TREES" -v ARG9="$TREE_MODE" "$WD"/test/iqtree/test_script_iqtree.sh
+                -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9 "$WD"/test/iqtree/test_script_iqtree.sh
       fi
 
       if [ "$IQTREE_OPENMP" == true ]; then
@@ -85,9 +87,10 @@ for r in $(seq 1 $repeat); do
           # run1 → run${r} so repetitions produce distinct output names
           omp_unique_base="${UNIQUE_NAME%_${TYPE}}"
           omp_unique="${omp_unique_base/run1/run${r}}"
-          echo "[qsub] OMP: walltime=$wall_time mem=${memory}GB threads=$IQTREE_THREADS IQTREE_ARGS='$IQTREE_ARGS' NUM_TREES=$NUM_TREES TREE_MODE=$TREE_MODE"
+          export ARG1="$DATASET_DIR" ARG2="$omp_unique" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$IQTREE_THREADS" ARG7="$IQTREE_AUTO" ARG8="$IQTREE_ARGS" ARG9="$NUM_TREES" ARG10="$TREE_MODE"
+          echo "[qsub] OMP: walltime=$wall_time mem=${memory}GB ARG1=$ARG1 ARG2=$ARG2 ARG3=$ARG3 ARG4=$ARG4 ARG5=$ARG5 ARG6=$ARG6 ARG7=$ARG7 ARG8='$ARG8' ARG9=$ARG9 ARG10=$ARG10"
          qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=$IQTREE_THREADS,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree_omp \
-                -v ARG1="$DATASET_DIR" -v ARG2="$omp_unique" -v ARG3="$WD" -v ARG4="$data_type" -v ARG5="$length" -v ARG6="$IQTREE_THREADS" -v ARG7="$IQTREE_AUTO" -v ARG8="$IQTREE_ARGS" -v ARG9="$NUM_TREES" -v ARG10="$TREE_MODE" "$WD"/test/iqtree/test_script_iqtree_omp.sh
+                -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9,ARG10 "$WD"/test/iqtree/test_script_iqtree_omp.sh
       fi
   done
 done
