@@ -198,9 +198,23 @@ pipeline {
 
                     lines.eachWithIndex { line, idx ->
 
-                        // Split by comma — minimum 11 columns required,
-                        // optional 12th column (taxa) for complex dataset layouts
-                        def parts = line.split(',')
+                        // Split by comma, respecting double-quoted fields
+                        // (e.g. iqtree_args may contain commas: "-m GTR{1.0,2.0}")
+                        def parts = []
+                        def current = new StringBuilder()
+                        boolean inQuotes = false
+                        for (int ci = 0; ci < line.length(); ci++) {
+                            char ch = line.charAt(ci)
+                            if (ch == '"' as char) {
+                                inQuotes = !inQuotes
+                            } else if (ch == ',' as char && !inQuotes) {
+                                parts << current.toString()
+                                current = new StringBuilder()
+                            } else {
+                                current.append(ch)
+                            }
+                        }
+                        parts << current.toString()  // last field
                         if (parts.size() < 11) {
                             echo "WARNING: skipping malformed row ${idx + 2}: '${line}'"
                             return
