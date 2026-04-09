@@ -75,6 +75,11 @@ pipeline {
             defaultValue: false,
             description:  'Enable profiling in child builds.'
         )
+        booleanParam(
+            name:         'ENERGY_PROFILE',
+            defaultValue: false,
+            description:  'Enable energy profiling (Linaro Forge perf-report) in child builds.'
+        )
     }
 
     stages {
@@ -314,7 +319,7 @@ pipeline {
                                     booleanParam(name: 'IQTREE_OPENMP', value: cIqtreeOmp.toBoolean()),
                                     booleanParam(name: 'CLONE_IQTREE',  value: false),
                                     booleanParam(name: 'PROFILE',        value: params.PROFILE),
-                                    booleanParam(name: 'ENERGY_PROFILE', value: false),
+                                    booleanParam(name: 'ENERGY_PROFILE', value: params.ENERGY_PROFILE),
                                     string(name: 'IQTREE_THREADS',      value: cCpuNodes),
                                     string(name: 'AUTO',                 value: cAuto),
                                     string(name: 'MEM_FACTOR',            value: cMemFactor),
