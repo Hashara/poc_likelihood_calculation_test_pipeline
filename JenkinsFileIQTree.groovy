@@ -43,7 +43,11 @@ pipeline {
         string(name: 'WALL_TIME_FACTOR', defaultValue: "1", description: "wall time multiplier (1 = 10 minutes)")
 
         string(name: 'REPETITIONS', defaultValue: '1', description: 'Number of repetitions of each analysis')
-        booleanParam(name: 'PROFILE', defaultValue: false, description: 'Profile runs with nsight')
+        booleanParam(name: 'PROFILE', defaultValue: false, description: 'Profile runs with nsight (legacy: both nsys + ncu together)')
+        booleanParam(name: 'PROFILE_NSYS', defaultValue: false, description: 'Nsys timeline profiling only (~5-10% overhead, suitable for full runs)')
+        booleanParam(name: 'PROFILE_NCU', defaultValue: false, description: 'NCU kernel metrics only (~10-50x overhead, use short datasets or kernel filters)')
+        string(name: 'NCU_LAUNCH_COUNT', defaultValue: '0', description: 'NCU: max kernel launches to profile (0 = all, 20-50 recommended)')
+        string(name: 'NCU_KERNEL_FILTER', defaultValue: '', description: 'NCU: kernel name regex filter (e.g. batchedInternal|derivKernel)')
         booleanParam(name: 'ENERGY_PROFILE', defaultValue: false, description: 'Profile energy consumption with forge')
         string(name: 'RUN_ALIASES', defaultValue: 'run', description: 'Unique name for this run')
         string(name: 'NUM_TREES', defaultValue: '10', description: 'Number of tree folders (tree_1..tree_N) to iterate over in the dataset')
@@ -89,6 +93,10 @@ pipeline {
         WALL_TIME_FACTOR="${params.WALL_TIME_FACTOR}"
         REPETITIONS = "${params.REPETITIONS}"
         PROFILE = "${params.PROFILE}"
+        PROFILE_NSYS = "${params.PROFILE_NSYS}"
+        PROFILE_NCU = "${params.PROFILE_NCU}"
+        NCU_LAUNCH_COUNT = "${params.NCU_LAUNCH_COUNT}"
+        NCU_KERNEL_FILTER = "${params.NCU_KERNEL_FILTER}"
         ENERGY_PROFILE = "${params.ENERGY_PROFILE}"
         LEN_BASED = "${params.LEN_BASED}"
         NUM_TREES = "${params.NUM_TREES}"
@@ -185,6 +193,88 @@ pipeline {
             }
         }
 
+        stage('Nsys Profiling'){
+            when {
+                expression { return params.PROFILE_NSYS == true }
+            }
+            steps{
+                script{
+                    def backends = []
+
+                    if (params.VANILA) backends << "VANILA"
+                    if (params.CUDA)    backends << "CUDA"
+                    if (params.OPENACC) backends << "OPENACC"
+                    if (params.OPENACC_PROFILE) backends << "OPENACC_PROFILE"
+
+                    if (backends.isEmpty()) {
+                        error("No backend selected for Nsys profiling. Enable at least one of VANILA, CUDA, OPENACC, OPENACC_PROFILE")
+                    }
+
+                    echo "Nsys profiling backends: ${backends}"
+
+                    for (backend in backends) {
+
+                        echo "Nsys profiling backend: ${backend}"
+
+                        sh """
+                        ssh ${NCI_ALIAS} << EOF
+                        cd ${WORKDIR}
+                        echo "Nsys profiling ${backend}..."
+                        sh ${WORKDIR}/qsub/iqtree/profile_nsys_qsub_script.sh \
+                            ${IQTREE} ${V100} ${A100} ${WORKDIR} \
+                            ${DATASET_PATH} ${RUN_ALIASES}_nsys_${backend} \
+                            ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} \
+                            ${PROJECT_NAME} ${backend} ${H200} \
+                            "${IQTREE_ARGS}" ${WALL_TIME_FACTOR} ${TREE_MODE}
+
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('NCU Profiling'){
+            when {
+                expression { return params.PROFILE_NCU == true }
+            }
+            steps{
+                script{
+                    def backends = []
+
+                    if (params.VANILA) backends << "VANILA"
+                    if (params.CUDA)    backends << "CUDA"
+                    if (params.OPENACC) backends << "OPENACC"
+                    if (params.OPENACC_PROFILE) backends << "OPENACC_PROFILE"
+
+                    if (backends.isEmpty()) {
+                        error("No backend selected for NCU profiling. Enable at least one of VANILA, CUDA, OPENACC, OPENACC_PROFILE")
+                    }
+
+                    echo "NCU profiling backends: ${backends}"
+
+                    for (backend in backends) {
+
+                        echo "NCU profiling backend: ${backend}"
+
+                        sh """
+                        ssh ${NCI_ALIAS} << EOF
+                        cd ${WORKDIR}
+                        export NCU_LAUNCH_COUNT=${NCU_LAUNCH_COUNT}
+                        export NCU_KERNEL_FILTER="${NCU_KERNEL_FILTER}"
+                        echo "NCU profiling ${backend} (launch_count=${NCU_LAUNCH_COUNT}, filter='${NCU_KERNEL_FILTER}')..."
+                        sh ${WORKDIR}/qsub/iqtree/profile_ncu_qsub_script.sh \
+                            ${IQTREE} ${V100} ${A100} ${WORKDIR} \
+                            ${DATASET_PATH} ${RUN_ALIASES}_ncu_${backend} \
+                            ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} \
+                            ${PROJECT_NAME} ${backend} ${H200} \
+                            "${IQTREE_ARGS}" ${WALL_TIME_FACTOR} ${TREE_MODE}
+
+                        """
+                    }
+                }
+            }
+        }
+
         stage('Energy profiling'){
             when {
                 expression { return params.ENERGY_PROFILE == true }
@@ -227,7 +317,7 @@ pipeline {
 
         stage('run tests'){
             when {
-                expression { return params.PROFILE == false && params.ENERGY_PROFILE == false }
+                expression { return params.PROFILE == false && params.PROFILE_NSYS == false && params.PROFILE_NCU == false && params.ENERGY_PROFILE == false }
             }
             steps{
                 script{
