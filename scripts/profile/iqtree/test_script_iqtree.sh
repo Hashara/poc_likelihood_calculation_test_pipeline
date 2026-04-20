@@ -11,6 +11,7 @@ executable_type=("iqtree")
 
 TYPE=$ARG6
 IQTREE_ARGS=$ARG7
+TREE_MODE=${ARG8:-te}
 
 executable_path=""
 if [ "$TYPE" == "VANILA" ]; then
@@ -35,7 +36,16 @@ for i in $(seq 1 $iter); do
 
   cd "$TAXA_DIR" || { echo "Failed to change directory to $TAXA_DIR"; exit 1; }
 
+    # Build tree args based on TREE_MODE
+    tree_file="tree_${i}.full.treefile"
+    case "$TREE_MODE" in
+      te)   tree_args="-te $tree_file" ;;
+      t)    tree_args="-t $tree_file" ;;
+      none) tree_args="" ;;
+    esac
+
     echo "Current directory: $(pwd)"
+    echo "Tree mode: $TREE_MODE → tree_args: $tree_args"
 
         echo "Running profiling for length: $length taxa: $taxa_size"
 
@@ -47,13 +57,13 @@ for i in $(seq 1 $iter); do
                 echo "Running nsys + ncu profiling for tree: $i length: $length with $type ($TYPE)"
                 if [ "$AA_or_DNA" = "AA" ]; then
                     echo "Using amino acid data"
-                    nsys profile --trace=cuda,openacc,nvtx --gpu-metrics-device=all --cuda-memory-usage=true --stats=true -o profile_report_${UNIQUE_NAME}_tree${i}_aa $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} ${IQTREE_ARGS}
-                    ncu --set full -f -o ncu_report_${UNIQUE_NAME}_tree${i}_aa $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix outputncu_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} ${IQTREE_ARGS}
+                    nsys profile --trace=cuda,openacc,nvtx --gpu-metrics-device=all --cuda-memory-usage=true --stats=true -o profile_report_${UNIQUE_NAME}_tree${i}_aa $executable_path -s alignment_${length}.phy $tree_args --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} ${IQTREE_ARGS}
+                    ncu --set full -f -o ncu_report_${UNIQUE_NAME}_tree${i}_aa $executable_path -s alignment_${length}.phy $tree_args --prefix outputncu_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} ${IQTREE_ARGS}
 
                 elif [ "$AA_or_DNA" = "DNA" ]; then
                     echo "Using DNA data"
-                    nsys profile --trace=cuda,openacc,nvtx --gpu-metrics-device=all --cuda-memory-usage=true --stats=true -o profile_report_${UNIQUE_NAME}_tree${i}_dna $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} ${IQTREE_ARGS}
-                    ncu --set full -f -o ncu_report_${UNIQUE_NAME}_tree${i}_dna $executable_path -s alignment_${length}.phy -te tree_${i}.full.treefile --prefix outputncu_${UNIQUE_NAME}_${taxa_size}_${length}_${type} ${IQTREE_ARGS}
+                    nsys profile --trace=cuda,openacc,nvtx --gpu-metrics-device=all --cuda-memory-usage=true --stats=true -o profile_report_${UNIQUE_NAME}_tree${i}_dna $executable_path -s alignment_${length}.phy $tree_args --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} ${IQTREE_ARGS}
+                    ncu --set full -f -o ncu_report_${UNIQUE_NAME}_tree${i}_dna $executable_path -s alignment_${length}.phy $tree_args --prefix outputncu_${UNIQUE_NAME}_${taxa_size}_${length}_${type} ${IQTREE_ARGS}
 
                 fi
 

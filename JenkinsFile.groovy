@@ -32,12 +32,14 @@ pipeline {
         booleanParam(name: 'ALL_NODE', defaultValue: false, description: 'Use whole node and execute parallely')
 
         booleanParam(name: 'EIGEN', defaultValue: false, description: 'Use eigne')
-        string(name: 'FACTOR',defaultValue: "1", description: "memory/time multipler")
+        string(name: 'MEM_FACTOR',defaultValue: "1", description: "memory multiplier (1 = base memory per GPU type)")
+        string(name: 'WALL_TIME_FACTOR', defaultValue: "1", description: "wall time multiplier (1 = 10 minutes)")
 
         string(name: 'REPETITIONS', defaultValue: '1', description: 'Number of repetitions of each analysis')
         booleanParam(name: 'PROFILE', defaultValue: false, description: 'Profile runs with nsight')
         booleanParam(name: 'ENERGY_PROFILE', defaultValue: false, description: 'Profile energy consumption with forge')
         string(name: 'RUN_ALIASES', defaultValue: 'run', description: 'Unique name for this run')
+        string(name: 'TREE_MODE', defaultValue: 'te', description: 'Tree arg mode: te (-te TREEFILE), t (-t TREEFILE), none (no tree args)')
 
     }
 
@@ -67,12 +69,14 @@ pipeline {
         H200 = "${params.H200}"
         ALL_NODE = "${params.ALL_NODE}"
         LENGTH="${params.LENGTH}"
-        FACTOR="${params.FACTOR}"
+        MEM_FACTOR="${params.MEM_FACTOR}"
+        WALL_TIME_FACTOR="${params.WALL_TIME_FACTOR}"
         REPETITIONS = "${params.REPETITIONS}"
         PROFILE = "${params.PROFILE}"
         ENERGY_PROFILE = "${params.ENERGY_PROFILE}"
         LEN_BASED = "${params.LEN_BASED}"
         EIGEN="${params.EIGEN}"
+        TREE_MODE="${params.TREE_MODE}"
     }
 
     stages{
@@ -159,7 +163,7 @@ pipeline {
                     ssh ${NCI_ALIAS} << EOF
                     cd ${WORKDIR}
                     echo "Profiling..."
-                    sh ${WORKDIR}/qsub/profile_qsub_script.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${PROJECT_NAME}
+                    sh ${WORKDIR}/qsub/profile_qsub_script.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} ${PROJECT_NAME} ${WALL_TIME_FACTOR}
     
                     """
                 }
@@ -175,7 +179,7 @@ pipeline {
                     ssh ${NCI_ALIAS} << EOF
                     cd ${WORKDIR}
                     echo "Energy profiling..."
-                    sh ${WORKDIR}/qsub/energy_measure_qsub_script.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${PROJECT_NAME}
+                    sh ${WORKDIR}/qsub/energy_measure_qsub_script.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${PROJECT_NAME} ${WALL_TIME_FACTOR}
     
                     """
                 }
@@ -202,7 +206,7 @@ pipeline {
                         ssh ${NCI_ALIAS} << EOF
                         cd ${WORKDIR}
                         echo "Running..."
-                        sh ${WORKDIR}/qsub/qsub_script_lenbased.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${H200}
+                        sh ${WORKDIR}/qsub/qsub_script_lenbased.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${H200} ${WALL_TIME_FACTOR}
         
                         """
                     } else if (params.SPECIFIC_TREE) {
@@ -211,7 +215,7 @@ pipeline {
                         ssh ${NCI_ALIAS} << EOF
                         cd ${WORKDIR}
                         echo "Running..."
-                        sh ${WORKDIR}/qsub/qsub_script_specific.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${TYPE} ${H200}
+                        sh ${WORKDIR}/qsub/qsub_script_specific.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${TYPE} ${H200} ${WALL_TIME_FACTOR}
         
                         """
                     }
@@ -230,7 +234,7 @@ pipeline {
                         ssh ${NCI_ALIAS} << EOF
                         cd ${WORKDIR}
                         echo "Running..."
-                        sh ${WORKDIR}/qsub/qsub_script.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${TYPE} ${H200} ${ALL_NODE} ${EIGEN}
+                        sh ${WORKDIR}/qsub/qsub_script.sh ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${TYPE} ${H200} ${ALL_NODE} ${EIGEN} ${WALL_TIME_FACTOR}
         
                         """
                     }

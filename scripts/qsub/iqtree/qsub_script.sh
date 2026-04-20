@@ -11,7 +11,7 @@ UNIQUE_NAME=$6
 AA=$7
 DNA=$8
 length=$9
-factor=${10}
+mem_factor=${10}
 repeat=${11}
 
 IQTREE_OPENMP=${12}
@@ -24,6 +24,9 @@ TYPE=${16}
 H200=${17}
 ALL_NODE=${18}
 IQTREE_ARGS=${19}
+NUM_TREES=${20:-10}
+wall_time_factor=${21:-1}
+TREE_MODE=${22:-te}
 
 data_types=()
 if [ "$AA" == true ]; then
@@ -33,21 +36,10 @@ if [ "$DNA" == true ]; then
     data_types+=("DNA")
 fi
 
-base_walltime="00:05:00"
-if [ "$V100_GPU" == true ] || [ "$A100_GPU" == true ] || [ "$H200" == true ]; then
-  base_walltime="00:05:00"
-else
-  base_walltime="00:10:00"
-fi
+# wall_time_factor=1 → 10 minutes (600 seconds)
+scaled_seconds=$((wall_time_factor * 600))
 
-# Convert HH:MM:SS to total seconds
-IFS=: read -r h m s <<< "$base_walltime"
-total_seconds=$((10#$h * 3600 + 10#$m * 60 + 10#$s))
-
-# Multiply by factor
-scaled_seconds=$((total_seconds * factor))
-
-# Convert back to HH:MM:SS
+# Convert to HH:MM:SS
 printf -v wall_time "%02d:%02d:%02d" \
   $((scaled_seconds / 3600)) \
   $(((scaled_seconds % 3600) / 60)) \
@@ -57,42 +49,48 @@ for r in $(seq 1 $repeat); do
     local_unique_name="${UNIQUE_NAME}_run${r}"
   for data_type in "${data_types[@]}"; do
       if [ "$V100_GPU" == true ]; then
-        memory=$((factor * 1 * 48))
+        memory=$((mem_factor * 1 * 48))
+          export ARG1="$DATASET_DIR" ARG2="$local_unique_name" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$TYPE" ARG7="$IQTREE_ARGS" ARG8="$NUM_TREES" ARG9="$TREE_MODE"
+          echo "[qsub] V100: walltime=$wall_time mem=${memory}GB ARG1=$ARG1 ARG2=$ARG2 ARG3=$ARG3 ARG4=$ARG4 ARG5=$ARG5 ARG6=$ARG6 ARG7='$ARG7' ARG8=$ARG8 ARG9=$ARG9"
           qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=12,ngpus=1,mem="${memory}GB",jobfs=10GB,wd -qgpuvolta -N test_v100 \
-                -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length",ARG6="$TYPE",ARG7="$IQTREE_ARGS" "$WD"/test/iqtree/test_script_iqtree.sh
+                -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9 "$WD"/test/iqtree/test_script_iqtree.sh
 
 #
 #      if [ "$A100_GPU" == true ]; then
-#        memory=$(echo "$factor * 0.5 * 64" | bc)
+#        memory=$(echo "$mem_factor * 0.5 * 64" | bc)
 #         qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=16,ngpus=1,mem="64GB",jobfs=10GB,wd -qdgxa100 -N test_a100 \
-#                -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="A100",ARG6="$length",ARG7="$TYPE" "$WD"/test/test_script_poc.sh
+#                -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7 "$WD"/test/test_script_poc.sh
 #      fi
 #
 #      if [ "$H200" == true ]; then
 #        if [ "$ALL_NODE" == true ]; then
-#              memory=$((factor * 4 * 48))
+#              memory=$((mem_factor * 4 * 48))
 #              qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=48,ngpus=4,mem="${memory}GB",jobfs=10GB,wd -qgpuhopper -N test_h200_all \
-#                                    -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="H200",ARG6="$length",ARG7="$TYPE" "$WD"/test/h200/run_test_per_gpu.sh
+#                                    -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7 "$WD"/test/h200/run_test_per_gpu.sh
 #          else
-#                memory=$((factor * 1 * 48))
+#                memory=$((mem_factor * 1 * 48))
 #                qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=12,ngpus=1,mem="${memory}GB",jobfs=10GB,wd -qgpuhopper -N test_h200 \
-#                          -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="H200",ARG6="$length",ARG7="$TYPE" "$WD"/test/test_script_poc.sh
+#                          -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7 "$WD"/test/test_script_poc.sh
 #          fi
 #      fi
       elif [ "$IQTREE" == true ]; then
-          memory=$((factor * 1 * 20))
+          memory=$((mem_factor * 1 * 20))
+          export ARG1="$DATASET_DIR" ARG2="$local_unique_name" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$TYPE" ARG7="$IQTREE_ARGS" ARG8="$NUM_TREES" ARG9="$TREE_MODE"
+          echo "[qsub] CPU: walltime=$wall_time mem=${memory}GB ARG1=$ARG1 ARG2=$ARG2 ARG3=$ARG3 ARG4=$ARG4 ARG5=$ARG5 ARG6=$ARG6 ARG7='$ARG7' ARG8=$ARG8 ARG9=$ARG9"
          qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=1,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree \
-                -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length",ARG6="$TYPE",ARG7="$IQTREE_ARGS" "$WD"/test/iqtree/test_script_iqtree.sh
+                -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9 "$WD"/test/iqtree/test_script_iqtree.sh
       fi
 
       if [ "$IQTREE_OPENMP" == true ]; then
-          memory=$((factor * IQTREE_THREADS * 4))
-          wall_time="1:00:00"
-          # Strip the _${TYPE} suffix that the child pipeline appended so the
-          # OMP test receives the clean RUN_ALIASES prefix (e.g. run_DNA_GTR_OMP_10_...)
-          omp_unique="${UNIQUE_NAME%_${TYPE}}"
+          memory=$((mem_factor * IQTREE_THREADS * 4))
+          # Strip _${TYPE} suffix appended by child pipeline, then substitute
+          # run1 → run${r} so repetitions produce distinct output names
+          omp_unique_base="${UNIQUE_NAME%_${TYPE}}"
+          omp_unique="${omp_unique_base/run1/run${r}}"
+          export ARG1="$DATASET_DIR" ARG2="$omp_unique" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$IQTREE_THREADS" ARG7="$IQTREE_AUTO" ARG8="$IQTREE_ARGS" ARG9="$NUM_TREES" ARG10="$TREE_MODE"
+          echo "[qsub] OMP: walltime=$wall_time mem=${memory}GB ARG1=$ARG1 ARG2=$ARG2 ARG3=$ARG3 ARG4=$ARG4 ARG5=$ARG5 ARG6=$ARG6 ARG7=$ARG7 ARG8='$ARG8' ARG9=$ARG9 ARG10=$ARG10"
          qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=$IQTREE_THREADS,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree_omp \
-                -vARG1="$DATASET_DIR",ARG2="$omp_unique",ARG3="$WD",ARG4="$data_type",ARG5="$length",ARG6="$IQTREE_THREADS",ARG7="$IQTREE_AUTO",ARG8="$IQTREE_ARGS" "$WD"/test/iqtree/test_script_iqtree_omp.sh
+                -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9,ARG10 "$WD"/test/iqtree/test_script_iqtree_omp.sh
       fi
   done
 done

@@ -4,21 +4,27 @@
 // Reads a YAML + CSV from a config repo and invokes iqtree_cuda_test_pipeline
 // in parallel for every row in the CSV.
 //
-// Parameters (5 inputs)
+// Parameters (8 inputs)
 // ─────────────────────
 //   CONFIG_REPO_URL    Git URL of the config repository
 //   CONFIG_REPO_BRANCH Branch of the config repository  (default: master)
 //   CONFIG_YAML_PATH   Relative path to pipeline_config.yaml inside the repo
 //   CONFIG_CSV_PATH    Relative path to test_matrix.csv  inside the repo
+//   WORKDIR            Working directory on the cluster (e.g. /scratch/dx61/workdir)
 //   REPETITIONS        Override execution.repetitions from YAML (leave blank = use YAML)
+//   RUN_ALIASES        Prefix for per-row run alias identifier (default: run)
+//   PROFILE            Enable profiling in child builds (default: false)
 //
-// YAML  → common params: cluster, execution settings, all_node flag, dataset base path
-// CSV   → per-test params: data_type, alignment_length, tree_type, execution_type, iqtree_args, model, gpu_type, iqtree_omp, cpu_nodes, auto
+// YAML  → common params: cluster, execution settings, all_node flag, dataset base path, num_trees (workdir now a param)
+// RUN_ALIASES param → prefix for per-row run alias (was previously in YAML as general.run_aliases)
+// CSV   → per-test params: data_type, alignment_length, tree_type, execution_type, iqtree_args, model, gpu_type, iqtree_omp, cpu_nodes, auto, factor, taxa (optional), wall_time_factor (optional), tree_mode (optional: te|t|none)
 //
 // Per-row runtime construction
 // ────────────────────────────
-//   DATASET_PATH = general.parent_dataset_path / data_type / tree_type / model
-//   IQTREE_ARGS  = "-m <model> <csv_iqtree_args>"
+//   DATASET_PATH = general.parent_dataset_path / <dataset_path_pattern>
+//                  default pattern: {data_type}/{tree_type}/{model}
+//                  complex pattern: {data_type}/{model}/taxa_{taxa}/len_{alignment_length}
+//   IQTREE_ARGS  = <csv_iqtree_args>  (model is NOT auto-prepended; use iqtree_args column if needed)
 //   RUN_ALIASES  = "<run_aliases>_<data_type>_<model>_<execution_type>_<row_index>"
 // =============================================================================
 
@@ -47,10 +53,32 @@ pipeline {
             description:  'Relative path to the test-matrix CSV inside the config repo'
         )
         string(
+            name:         'WORKDIR',
+            defaultValue: '',
+            description:  'Working directory on the cluster (e.g. /scratch/dx61/workdir). ' +
+                          'Scripts are copied here and child builds use it as their workdir.'
+        )
+        string(
             name:         'REPETITIONS',
             defaultValue: '',
             description:  'Number of times each test row is repeated on the cluster. ' +
                           'Overrides execution.repetitions in the YAML when set. Leave blank to use YAML value.'
+        )
+        string(
+            name:         'RUN_ALIASES',
+            defaultValue: 'run',
+            description:  'Prefix for the run alias identifier (e.g. "run", "D1"). ' +
+                          'Used to construct per-row RUN_ALIASES passed to child builds.'
+        )
+        booleanParam(
+            name:         'PROFILE',
+            defaultValue: false,
+            description:  'Enable profiling in child builds.'
+        )
+        booleanParam(
+            name:         'ENERGY_PROFILE',
+            defaultValue: false,
+            description:  'Enable energy profiling (Linaro Forge perf-report) in child builds.'
         )
     }
 
@@ -63,9 +91,13 @@ pipeline {
                     if (!params.CONFIG_REPO_URL?.trim()) {
                         error('CONFIG_REPO_URL is required — provide the Git URL of the config repository.')
                     }
+                    if (!params.WORKDIR?.trim()) {
+                        error('WORKDIR is required — provide the working directory on the cluster.')
+                    }
                     echo "Config repo : ${params.CONFIG_REPO_URL} @ ${params.CONFIG_REPO_BRANCH}"
                     echo "YAML        : ${params.CONFIG_YAML_PATH}"
                     echo "CSV         : ${params.CONFIG_CSV_PATH}"
+                    echo "WORKDIR     : ${params.WORKDIR}"
                 }
             }
         }
@@ -88,10 +120,10 @@ pipeline {
                 script {
                     def cfg      = readYaml file: "config_repo/${params.CONFIG_YAML_PATH}"
                     def nciAlias = cfg.general?.nci_alias ?: ''
-                    def workdir  = cfg.general?.workdir   ?: ''
+                    def workdir  = params.WORKDIR?.trim() ?: ''
 
                     if (!nciAlias || !workdir) {
-                        error('YAML must define general.nci_alias and general.workdir')
+                        error('YAML must define general.nci_alias and WORKDIR parameter must be set')
                     }
 
                     sh "scp -r scripts/* ${nciAlias}:${workdir}"
@@ -108,15 +140,23 @@ pipeline {
                     def cfg = readYaml file: "config_repo/${params.CONFIG_YAML_PATH}"
 
                     // Required
-                    def workdir           = cfg.general?.workdir             ?: ''
+                    def workdir           = params.WORKDIR?.trim()           ?: ''
                     def projectName       = cfg.general?.project_name        ?: ''
                     def nciAlias          = cfg.general?.nci_alias           ?: ''
                     def parentDatasetPath = cfg.general?.parent_dataset_path ?: ''
-                    def runAliasPrefix    = cfg.general?.run_aliases         ?: 'run'
+                    def runAliasPrefix    = params.RUN_ALIASES?.trim() ?: 'run'
+
+                    // Dataset path pattern — controls how DATASET_PATH is built per row
+                    // Default: legacy format  {data_type}/{tree_type}/{model}
+                    // Complex: e.g.           {data_type}/{model}/taxa_{taxa}/len_{alignment_length}
+                    def datasetPathPattern = cfg.general?.dataset_path_pattern ?: '{data_type}/{tree_type}/{model}'
+
+                    // Number of tree folders (tree_1..tree_N) — common to all rows
+                    def numTrees = (cfg.general?.num_trees ?: 10).toString()
 
                     if (!workdir || !projectName || !nciAlias || !parentDatasetPath) {
-                        error('YAML must define: general.workdir, general.project_name, ' +
-                              'general.nci_alias, general.parent_dataset_path')
+                        error('WORKDIR parameter must be set. YAML must define: ' +
+                              'general.project_name, general.nci_alias, general.parent_dataset_path')
                     }
 
                     // Optional with defaults
@@ -135,9 +175,11 @@ pipeline {
                     echo "  project_name       : ${projectName}"
                     echo "  nci_alias          : ${nciAlias}"
                     echo "  parent_dataset_path: ${parentDatasetPath}"
+                    echo "  dataset_path_pattern: ${datasetPathPattern}"
                     echo "  repetitions        : ${repetitions} ${params.REPETITIONS?.trim() ? '(param override)' : '(from YAML)'}"
                     echo "  fail_fast          : ${failFast}"
                     echo "  all_node           : ${allNode}"
+                    echo "  num_trees          : ${numTrees}"
                     echo "=================================="
 
                     // ── Load CSV ─────────────────────────────────────────────
@@ -161,35 +203,61 @@ pipeline {
 
                     lines.eachWithIndex { line, idx ->
 
-                        // Split with limit 10: iqtree_args (col 5) may contain spaces;
-                        // remaining cols must not contain spaces
-                        def parts = line.split(',', 10)
-                        if (parts.size() < 10) {
+                        // Split by comma, respecting double-quoted fields
+                        // (e.g. iqtree_args may contain commas: "-m GTR{1.0,2.0}")
+                        def parts = []
+                        def current = new StringBuilder()
+                        boolean inQuotes = false
+                        for (int ci = 0; ci < line.length(); ci++) {
+                            char ch = line.charAt(ci)
+                            if (ch == '"' as char) {
+                                inQuotes = !inQuotes
+                            } else if (ch == ',' as char && !inQuotes) {
+                                parts << current.toString()
+                                current = new StringBuilder()
+                            } else {
+                                current.append(ch)
+                            }
+                        }
+                        parts << current.toString()  // last field
+                        if (parts.size() < 11) {
                             echo "WARNING: skipping malformed row ${idx + 2}: '${line}'"
                             return
                         }
 
                         def dataType   = parts[0].trim()   // DNA | AA
                         def alignLen   = parts[1].trim()   // e.g. 100000
-                        def treeType   = parts[2].trim()   // rooted | unrooted
+                        def treeType   = parts[2].trim()   // rooted | unrooted | none
                         def execType   = parts[3].trim()   // VANILA | CUDA | OPENACC | OPENACC_PROFILE
                         def iqtreeArgs = parts[4].trim()   // e.g. -blfix
-                        def model      = parts[5].trim()   // e.g. GTR | Poisson
+                        def model      = parts[5].trim()   // e.g. GTR | GTR+I+G4 | LG+R4
                         def gpuType    = parts[6].trim()   // none | V100 | A100 | H200
                         def iqtreeOmp  = parts[7].trim()   // true | false
                         def cpuNodes   = parts[8].trim()   // integer, e.g. 4
                         def auto       = parts[9].trim()   // true | false
+                        def memFactor  = parts[10].trim()  // integer, memory multiplier
+                        def taxa           = parts.size() > 11 ? parts[11].trim() : ''  // optional, e.g. 100
+                        def wallTimeFactor = parts.size() > 12 ? parts[12].trim() : '1' // optional, default 1 (1=10min)
+                        def treeMode       = parts.size() > 13 ? parts[13].trim() : 'te' // optional, default te (te|t|none)
 
                         // Per-row GPU arch derivation
                         def gpuArch    = gpuArchMap[gpuType] ?: ''
 
-                        // Constructed values
-                        def datasetPath    = "${parentDatasetPath}/${dataType}/${treeType}/${model}"
-                        def fullIqtreeArgs = "-m ${model} ${iqtreeArgs}"
+                        // Constructed values — dataset path uses the YAML pattern
+                        def datasetPath = "${parentDatasetPath}/" + datasetPathPattern
+                            .replace('{data_type}', dataType)
+                            .replace('{tree_type}', treeType)
+                            .replace('{model}', model)
+                            .replace('{taxa}', taxa)
+                            .replace('{alignment_length}', alignLen)
+
+                        def fullIqtreeArgs = iqtreeArgs
                         // OMP rows use OMP_{cpuNodes} as the exec label; all others use execType
                         def execLabel      = iqtreeOmp.toBoolean() ? "OMP_${cpuNodes}" : execType
-                        def runAlias       = "${runAliasPrefix}_${dataType}_${model}_${execLabel}_run1_tree_1_${alignLen}_iqtree3"
-                        def stageName      = "Row ${idx + 1} | ${dataType} | ${model} | ${execLabel} | ${gpuType}"
+                        def taxaSuffix     = taxa ? "_taxa${taxa}" : ''
+                        def runAlias       = "${runAliasPrefix}_${dataType}_${model}_${execLabel}${taxaSuffix}_run1_tree_1_${alignLen}_iqtree3"
+                        def stageName      = "Row ${idx + 1} | ${dataType} | ${model} | ${execLabel} | ${gpuType}" +
+                                             (taxa ? " | taxa_${taxa}" : '')
 
                         // Capture loop variables for the closure
                         def cDataType    = dataType
@@ -203,6 +271,9 @@ pipeline {
                         def cIqtreeOmp   = iqtreeOmp
                         def cCpuNodes    = cpuNodes
                         def cAuto        = auto
+                        def cMemFactor       = memFactor
+                        def cWallTimeFactor  = wallTimeFactor
+                        def cTreeMode        = treeMode
 
                         parallelStages[stageName] = {
                             echo "▶ ${stageName}"
@@ -247,12 +318,15 @@ pipeline {
                                     booleanParam(name: 'SPECIFIC_TREE', value: false),
                                     booleanParam(name: 'IQTREE_OPENMP', value: cIqtreeOmp.toBoolean()),
                                     booleanParam(name: 'CLONE_IQTREE',  value: false),
-                                    booleanParam(name: 'PROFILE',        value: false),
-                                    booleanParam(name: 'ENERGY_PROFILE', value: false),
+                                    booleanParam(name: 'PROFILE',        value: params.PROFILE),
+                                    booleanParam(name: 'ENERGY_PROFILE', value: params.ENERGY_PROFILE),
                                     string(name: 'IQTREE_THREADS',      value: cCpuNodes),
                                     string(name: 'AUTO',                 value: cAuto),
-                                    string(name: 'FACTOR',               value: '1'),
+                                    string(name: 'MEM_FACTOR',            value: cMemFactor),
+                                    string(name: 'WALL_TIME_FACTOR',     value: cWallTimeFactor),
+                                    string(name: 'TREE_MODE',            value: cTreeMode),
                                     string(name: 'GPU_ARCH',             value: cGpuArch),
+                                    string(name: 'NUM_TREES',            value: numTrees),
                                     string(name: 'IQ_TREE_GIT_BRANCH',  value: 'main'),
                                 ],
                                 wait:      true,
