@@ -259,9 +259,9 @@ pipeline {
                         sh """
                         ssh ${NCI_ALIAS} << EOF
                         cd ${WORKDIR}
-                        export NCU_LAUNCH_COUNT=${NCU_LAUNCH_COUNT}
-                        export NCU_KERNEL_FILTER="${NCU_KERNEL_FILTER}"
-                        echo "NCU profiling ${backend} (launch_count=${NCU_LAUNCH_COUNT}, filter='${NCU_KERNEL_FILTER}')..."
+                        export NCU_LAUNCH_COUNT=${env.NCU_LAUNCH_COUNT}
+                        export NCU_KERNEL_FILTER="${env.NCU_KERNEL_FILTER}"
+                        echo "NCU profiling ${backend} (launch_count=${env.NCU_LAUNCH_COUNT}, filter='${env.NCU_KERNEL_FILTER}')..."
                         sh ${WORKDIR}/qsub/iqtree/profile_ncu_qsub_script.sh \
                             ${IQTREE} ${V100} ${A100} ${WORKDIR} \
                             ${DATASET_PATH} ${RUN_ALIASES}_ncu_${backend} \
