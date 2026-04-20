@@ -25,6 +25,7 @@ TREE_MODE=${ARG8:-te}
 NCU_SET=${NCU_SET:-full}                          # metrics set: full, detailed, basic
 NCU_LAUNCH_COUNT=${NCU_LAUNCH_COUNT:-0}           # 0 = profile ALL launches (slow!)
 NCU_KERNEL_FILTER=${NCU_KERNEL_FILTER:-""}        # regex filter, e.g. "batchedInternal|derivKernel"
+[ "$NCU_KERNEL_FILTER" = "null" ] && NCU_KERNEL_FILTER=""
 NCU_SKIP_COUNT=${NCU_SKIP_COUNT:-0}               # skip first N kernel launches (warmup)
 
 executable_path=""
