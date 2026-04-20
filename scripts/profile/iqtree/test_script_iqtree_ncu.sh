@@ -66,7 +66,7 @@ for i in $(seq 1 $iter); do
     echo "  NCU_KERNEL_FILTER='$NCU_KERNEL_FILTER' NCU_SKIP_COUNT=$NCU_SKIP_COUNT"
 
     # Build NCU command with optional filters
-    NCU_CMD="ncu --set $NCU_SET -f"
+    NCU_CMD="ncu --set $NCU_SET --target-processes all -f"
 
     if [ "$NCU_LAUNCH_COUNT" -gt 0 ]; then
         NCU_CMD="$NCU_CMD --launch-count $NCU_LAUNCH_COUNT"
