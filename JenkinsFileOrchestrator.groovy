@@ -17,7 +17,7 @@
 //
 // YAML  → common params: cluster, execution settings, all_node flag, dataset base path, num_trees (workdir now a param)
 // RUN_ALIASES param → prefix for per-row run alias (was previously in YAML as general.run_aliases)
-// CSV   → per-test params: data_type, alignment_length, tree_type, execution_type, iqtree_args, model, gpu_type, iqtree_omp, cpu_nodes, auto, factor, taxa (optional), wall_time_factor (optional), tree_mode (optional: te|t|none)
+// CSV   → per-test params: data_type, alignment_length, tree_type, execution_type, iqtree_args, model, gpu_type, iqtree_omp, cpu_nodes, auto, factor, taxa (optional), wall_time_factor (optional), tree_mode (optional: te|t|none), unique_name (optional: appended to RUN_ALIASES)
 //
 // Per-row runtime construction
 // ────────────────────────────
@@ -236,9 +236,10 @@ pipeline {
                         def cpuNodes   = parts[8].trim()   // integer, e.g. 4
                         def auto       = parts[9].trim()   // true | false
                         def memFactor  = parts[10].trim()  // integer, memory multiplier
-                        def taxa           = parts.size() > 11 ? parts[11].trim() : ''  // optional, e.g. 100
-                        def wallTimeFactor = parts.size() > 12 ? parts[12].trim() : '1' // optional, default 1 (1=10min)
+                        def taxa           = parts.size() > 11 ? parts[11].trim() : ''   // optional, e.g. 100
+                        def wallTimeFactor = parts.size() > 12 ? parts[12].trim() : '1'  // optional, default 1 (1=10min)
                         def treeMode       = parts.size() > 13 ? parts[13].trim() : 'te' // optional, default te (te|t|none)
+                        def uniqueName     = parts.size() > 14 ? parts[14].trim() : ''   // optional, appended to run alias
 
                         // Per-row GPU arch derivation
                         def gpuArch    = gpuArchMap[gpuType] ?: ''
@@ -255,7 +256,8 @@ pipeline {
                         // OMP rows use OMP_{cpuNodes} as the exec label; all others use execType
                         def execLabel      = iqtreeOmp.toBoolean() ? "OMP_${cpuNodes}" : execType
                         def taxaSuffix     = taxa ? "_taxa${taxa}" : ''
-                        def runAlias       = "${runAliasPrefix}_${dataType}_${model}_${execLabel}${taxaSuffix}_run1_tree_1_${alignLen}_iqtree3"
+                        def uniqueNameSuffix = uniqueName ? "_${uniqueName}" : ''
+                        def runAlias         = "${runAliasPrefix}_${dataType}_${model}_${execLabel}${taxaSuffix}_run1_tree_1_${alignLen}_iqtree3${uniqueNameSuffix}"
                         def stageName      = "Row ${idx + 1} | ${dataType} | ${model} | ${execLabel} | ${gpuType}" +
                                              (taxa ? " | taxa_${taxa}" : '')
 
@@ -274,12 +276,14 @@ pipeline {
                         def cMemFactor       = memFactor
                         def cWallTimeFactor  = wallTimeFactor
                         def cTreeMode        = treeMode
+                        def cUniqueName      = uniqueName
 
                         parallelStages[stageName] = {
                             echo "▶ ${stageName}"
                             echo "  DATASET_PATH : ${cDatasetPath}"
                             echo "  IQTREE_ARGS  : ${cFullArgs}"
                             echo "  RUN_ALIASES  : ${cRunAlias}"
+                            if (cUniqueName) echo "  UNIQUE_NAME  : ${cUniqueName}"
                             echo "  GPU_TYPE     : ${cGpuType}"
                             echo "  GPU_ARCH     : ${cGpuArch ?: '(multi-arch default)'}"
                             echo "  IQTREE_OMP   : ${cIqtreeOmp}"
