@@ -48,6 +48,7 @@ pipeline {
         booleanParam(name: 'PROFILE_NCU', defaultValue: false, description: 'NCU kernel metrics only (~10-50x overhead, use short datasets or kernel filters)')
         string(name: 'NCU_LAUNCH_COUNT', defaultValue: '0', description: 'NCU: max kernel launches to profile (0 = all, 20-50 recommended)')
         string(name: 'NCU_KERNEL_FILTER', defaultValue: '', description: 'NCU: kernel name regex filter (e.g. batchedInternal|derivKernel)')
+        string(name: 'NCU_SKIP_COUNT', defaultValue: '0', description: 'NCU: skip first N kernel launches before profiling begins (useful to bypass warmup / reach mid-tree levels)')
         booleanParam(name: 'ENERGY_PROFILE', defaultValue: false, description: 'Profile energy consumption with forge')
         string(name: 'RUN_ALIASES', defaultValue: 'run', description: 'Unique name for this run')
         string(name: 'NUM_TREES', defaultValue: '10', description: 'Number of tree folders (tree_1..tree_N) to iterate over in the dataset')
@@ -97,6 +98,7 @@ pipeline {
         PROFILE_NCU = "${params.PROFILE_NCU}"
         NCU_LAUNCH_COUNT = "${params.NCU_LAUNCH_COUNT ?: '0'}"
         NCU_KERNEL_FILTER = "${params.NCU_KERNEL_FILTER ?: ''}"
+        NCU_SKIP_COUNT = "${params.NCU_SKIP_COUNT ?: '0'}"
         ENERGY_PROFILE = "${params.ENERGY_PROFILE}"
         LEN_BASED = "${params.LEN_BASED}"
         NUM_TREES = "${params.NUM_TREES}"
@@ -261,7 +263,8 @@ pipeline {
                         cd ${WORKDIR}
                         export NCU_LAUNCH_COUNT=${env.NCU_LAUNCH_COUNT ?: '0'}
                         export NCU_KERNEL_FILTER="${env.NCU_KERNEL_FILTER ?: ''}"
-                        echo "NCU profiling ${backend} (launch_count=${env.NCU_LAUNCH_COUNT ?: '0'}, filter='${env.NCU_KERNEL_FILTER ?: ''}')..."
+                        export NCU_SKIP_COUNT=${env.NCU_SKIP_COUNT ?: '0'}
+                        echo "NCU profiling ${backend} (launch_count=${env.NCU_LAUNCH_COUNT ?: '0'}, filter='${env.NCU_KERNEL_FILTER ?: ''}', skip_count=${env.NCU_SKIP_COUNT ?: '0'})..."
                         sh ${WORKDIR}/qsub/iqtree/profile_ncu_qsub_script.sh \
                             ${IQTREE} ${V100} ${A100} ${WORKDIR} \
                             ${DATASET_PATH} ${RUN_ALIASES}_ncu_${backend} \
