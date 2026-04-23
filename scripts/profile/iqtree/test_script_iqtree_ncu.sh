@@ -37,6 +37,10 @@ elif [ "$TYPE" == "OPENACC_PROFILE" ]; then
   executable_path="$WD/builds/build-nvhpc-prof-openacc/iqtree3"
 elif [ "$TYPE" == "OPENACC" ]; then
   executable_path="$WD/builds/build-nvhpc-openacc/iqtree3"
+elif [ "$TYPE" == "OPENACC_DEBUG" ]; then
+  executable_path="$WD/builds/build-nvhpc-debug-openacc/iqtree3"
+elif [ "$TYPE" == "OPENACC_DEBUG_PROFILE" ]; then
+  executable_path="$WD/builds/build-nvhpc-debug-prof-openacc/iqtree3"
 fi
 
 iter=1
