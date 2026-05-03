@@ -14,6 +14,21 @@ TYPE=$ARG6
 IQTREE_ARGS=$ARG7
 NUM_TREES=${ARG8:-10}
 TREE_MODE=${ARG9:-te}
+GPU_TYPE=${ARG10:-}  # v100|a100|h200 (lowercase) — picks per-arch build dir; empty = multi-arch fallback
+
+# Resolve OpenACC binary: prefer per-arch dir (build-nvhpc-openacc-${GPU_TYPE}/),
+# fall back to multi-arch dir (build-nvhpc-openacc/) when per-arch missing or
+# GPU_TYPE not set (CPU/legacy callers).
+resolve_openacc_binary() {
+    local base=$1
+    local per_arch="$WD/builds/${base}-${GPU_TYPE}/iqtree3"
+    local multi="$WD/builds/${base}/iqtree3"
+    if [ -n "$GPU_TYPE" ] && [ -f "$per_arch" ]; then
+        echo "$per_arch"
+    else
+        echo "$multi"
+    fi
+}
 
 executable_path=""
 if [ "$TYPE" == "VANILA" ]; then
@@ -21,14 +36,15 @@ if [ "$TYPE" == "VANILA" ]; then
 elif [ "$TYPE" == "CUDA" ]; then
   executable_path="$WD/builds/build-nvhpc-cuda/iqtree3"
 elif [ "$TYPE" == "OPENACC_PROFILE" ]; then
-  executable_path="$WD/builds/build-nvhpc-prof-openacc/iqtree3"
+  executable_path=$(resolve_openacc_binary "build-nvhpc-prof-openacc")
 elif [ "$TYPE" == "OPENACC" ]; then
-  executable_path="$WD/builds/build-nvhpc-openacc/iqtree3"
+  executable_path=$(resolve_openacc_binary "build-nvhpc-openacc")
 elif [ "$TYPE" == "OPENACC_DEBUG" ]; then
-  executable_path="$WD/builds/build-nvhpc-debug-openacc/iqtree3"
+  executable_path=$(resolve_openacc_binary "build-nvhpc-debug-openacc")
 elif [ "$TYPE" == "OPENACC_DEBUG_PROFILE" ]; then
-  executable_path="$WD/builds/build-nvhpc-debug-prof-openacc/iqtree3"
+  executable_path=$(resolve_openacc_binary "build-nvhpc-debug-prof-openacc")
 fi
+echo "GPU_TYPE='$GPU_TYPE' TYPE='$TYPE' -> executable_path='$executable_path'"
 
 echo "Number of trees: $NUM_TREES"
 
