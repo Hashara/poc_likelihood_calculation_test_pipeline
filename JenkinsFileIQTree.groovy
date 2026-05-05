@@ -23,6 +23,7 @@ pipeline {
         booleanParam(name: 'OPENACC_PROFILE', defaultValue: false, description: 'OpenACC with profiling instrumentation?')
         booleanParam(name: 'OPENACC_DEBUG', defaultValue: false, description: 'OpenACC with debug build?')
         booleanParam(name: 'OPENACC_DEBUG_PROFILE', defaultValue: false, description: 'OpenACC with debug build + profiling instrumentation?')
+        booleanParam(name: 'CLANG_VANILA', defaultValue: false, description: 'Clang CPU build (vanilla, no GPU acceleration)?')
         string(name: 'GPU_ARCH', defaultValue: '', description: 'GPU architecture for OpenACC build (e.g. cc70 for V100, cc80 for A100, cc90 for H100). Empty = multi-arch default (cc70,cc80,cc90)')
 
 
@@ -74,6 +75,7 @@ pipeline {
         OPENACC_PROFILE="${params.OPENACC_PROFILE}"
         OPENACC_DEBUG="${params.OPENACC_DEBUG}"
         OPENACC_DEBUG_PROFILE="${params.OPENACC_DEBUG_PROFILE}"
+        CLANG_VANILA="${params.CLANG_VANILA}"
         GPU_ARCH="${params.GPU_ARCH}"
 
 
@@ -144,6 +146,7 @@ pipeline {
                                 booleanParam(name: 'OPENACC_PROFILE', value: params.OPENACC_PROFILE),
                                 booleanParam(name: 'OPENACC_DEBUG', value: params.OPENACC_DEBUG),
                                 booleanParam(name: 'OPENACC_DEBUG_PROFILE', value: params.OPENACC_DEBUG_PROFILE),
+                                booleanParam(name: 'CLANG_VANILA', value: params.CLANG_VANILA),
                                 string(name: 'GPU_ARCH', value: params.GPU_ARCH)
                         ],wait:true
                 }
@@ -175,9 +178,10 @@ pipeline {
                     if (params.OPENACC_PROFILE) backends << "OPENACC_PROFILE"
                     if (params.OPENACC_DEBUG) backends << "OPENACC_DEBUG"
                     if (params.OPENACC_DEBUG_PROFILE) backends << "OPENACC_DEBUG_PROFILE"
+                    if (params.CLANG_VANILA) backends << "CLANG_VANILA"
 
                     if (backends.isEmpty()) {
-                        error("No backend selected for profiling. Enable at least one of VANILA, CUDA, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE")
+                        error("No backend selected for profiling. Enable at least one of VANILA, CUDA, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE, CLANG_VANILA")
                     }
 
                     echo "Profiling backends: ${backends}"
@@ -217,9 +221,10 @@ pipeline {
                     if (params.OPENACC_PROFILE) backends << "OPENACC_PROFILE"
                     if (params.OPENACC_DEBUG) backends << "OPENACC_DEBUG"
                     if (params.OPENACC_DEBUG_PROFILE) backends << "OPENACC_DEBUG_PROFILE"
+                    if (params.CLANG_VANILA) backends << "CLANG_VANILA"
 
                     if (backends.isEmpty()) {
-                        error("No backend selected for Nsys profiling. Enable at least one of VANILA, CUDA, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE")
+                        error("No backend selected for Nsys profiling. Enable at least one of VANILA, CUDA, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE, CLANG_VANILA")
                     }
 
                     echo "Nsys profiling backends: ${backends}"
@@ -259,9 +264,10 @@ pipeline {
                     if (params.OPENACC_PROFILE) backends << "OPENACC_PROFILE"
                     if (params.OPENACC_DEBUG) backends << "OPENACC_DEBUG"
                     if (params.OPENACC_DEBUG_PROFILE) backends << "OPENACC_DEBUG_PROFILE"
+                    if (params.CLANG_VANILA) backends << "CLANG_VANILA"
 
                     if (backends.isEmpty()) {
-                        error("No backend selected for NCU profiling. Enable at least one of VANILA, CUDA, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE")
+                        error("No backend selected for NCU profiling. Enable at least one of VANILA, CUDA, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE, CLANG_VANILA")
                     }
 
                     echo "NCU profiling backends: ${backends}"
@@ -303,9 +309,10 @@ pipeline {
                     if (params.OPENACC_PROFILE) backends << "OPENACC_PROFILE"
                     if (params.OPENACC_DEBUG) backends << "OPENACC_DEBUG"
                     if (params.OPENACC_DEBUG_PROFILE) backends << "OPENACC_DEBUG_PROFILE"
+                    if (params.CLANG_VANILA) backends << "CLANG_VANILA"
 
                     if (backends.isEmpty()) {
-                        error("No backend selected for energy profiling. Enable at least one of VANILA, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE")
+                        error("No backend selected for energy profiling. Enable at least one of VANILA, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE, CLANG_VANILA")
                     }
 
                     echo "Energy profiling backends: ${backends}"
@@ -346,9 +353,10 @@ pipeline {
                     if (params.OPENACC_PROFILE) backends << "OPENACC_PROFILE"
                     if (params.OPENACC_DEBUG) backends << "OPENACC_DEBUG"
                     if (params.OPENACC_DEBUG_PROFILE) backends << "OPENACC_DEBUG_PROFILE"
+                    if (params.CLANG_VANILA) backends << "CLANG_VANILA"
 
                     if (backends.isEmpty()) {
-                        error("No backend selected. Enable at least one of VANILA, CUDA, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE")
+                        error("No backend selected. Enable at least one of VANILA, CUDA, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE, CLANG_VANILA")
                     }
 
                     echo "Selected backends: ${backends}"
