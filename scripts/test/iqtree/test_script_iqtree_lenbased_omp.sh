@@ -11,6 +11,7 @@ IQTREE_THREADS=$ARG6
 IQTREE_AUTO=$ARG7
 IQTREE_ARGS=$ARG8
 TREE_MODE=${ARG9:-te}
+TYPE=${ARG10:-VANILA}
 
 if [ "$IQTREE_AUTO" == "true" ]; then
     IQTREE_THREADS="AUTO"
@@ -47,7 +48,11 @@ for length in "${lengths[@]}"; do
 
         #loop through each executable type
         for type in "${executable_type[@]}"; do
-            executable_path="$WD/builds/build-vanila/iqtree3"
+            if [ "$TYPE" == "CLANG_VANILA" ]; then
+                executable_path="$WD/builds/build-clang-vanila/iqtree3"
+            else
+                executable_path="$WD/builds/build-vanila/iqtree3"
+            fi
             echo "Using executable: $executable_path"
 
             if [ -f "$executable_path" ]; then

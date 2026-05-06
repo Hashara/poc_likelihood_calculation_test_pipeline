@@ -71,7 +71,7 @@ for r in $(seq 1 $repeat); do
                     -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8 "$WD"/energy_measure/iqtree/test_script_iqtree.sh
           fi
 
-      elif [ "$TYPE" == "VANILA" ]; then
+      elif [ "$TYPE" == "VANILA" ] || [ "$TYPE" == "CLANG_VANILA" ]; then
           # VANILA is CPU-only, use normal queue
           memory=$((mem_factor * 1 * 20))
           export ARG1="$DATASET_DIR" ARG2="$local_unique_name" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$TYPE" ARG7="$IQTREE_ARGS" ARG8="$TREE_MODE"

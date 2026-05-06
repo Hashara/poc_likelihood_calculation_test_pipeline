@@ -42,7 +42,14 @@ for r in $(seq 1 $repeat); do
     local_unique_name="${UNIQUE_NAME}_run${r}"
   for data_type in "${data_types[@]}"; do
 
-      if [ "$TYPE" == "OPENACC" ] || [ "$TYPE" == "OPENACC_PROFILE" ] || [ "$TYPE" == "OPENACC_DEBUG" ] || [ "$TYPE" == "OPENACC_DEBUG_PROFILE" ] || [ "$TYPE" == "CUDA" ]; then
+      if [ "$TYPE" == "VANILA" ] || [ "$TYPE" == "CLANG_VANILA" ]; then
+          # CPU-only backends — use normal queue
+          memory=$((mem_factor * 1 * 20))
+          export ARG1="$DATASET_DIR" ARG2="$local_unique_name" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$TYPE" ARG7="$IQTREE_ARGS" ARG8="$TREE_MODE"
+          echo "[qsub] Nsys CPU: walltime=$wall_time mem=${memory}GB data=$data_type len=$length"
+          qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=1,mem="${memory}GB",jobfs=200GB,wd -qnormal -N nsys_cpu_${data_type}_${length} \
+                -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8 "$WD"/profile/iqtree/test_script_iqtree_nsys.sh
+      elif [ "$TYPE" == "OPENACC" ] || [ "$TYPE" == "OPENACC_PROFILE" ] || [ "$TYPE" == "OPENACC_DEBUG" ] || [ "$TYPE" == "OPENACC_DEBUG_PROFILE" ] || [ "$TYPE" == "CUDA" ]; then
           if [ "$V100_GPU" == true ]; then
             memory=$((mem_factor * 1 * 48))
               export ARG1="$DATASET_DIR" ARG2="$local_unique_name" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$TYPE" ARG7="$IQTREE_ARGS" ARG8="$TREE_MODE"

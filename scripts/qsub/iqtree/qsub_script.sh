@@ -86,10 +86,10 @@ for r in $(seq 1 $repeat); do
           # run1 → run${r} so repetitions produce distinct output names
           omp_unique_base="${UNIQUE_NAME%_${TYPE}}"
           omp_unique="${omp_unique_base/run1/run${r}}"
-          export ARG1="$DATASET_DIR" ARG2="$omp_unique" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$IQTREE_THREADS" ARG7="$IQTREE_AUTO" ARG8="$IQTREE_ARGS" ARG9="$NUM_TREES" ARG10="$TREE_MODE"
-          echo "[qsub] OMP: walltime=$wall_time mem=${memory}GB ARG1=$ARG1 ARG2=$ARG2 ARG3=$ARG3 ARG4=$ARG4 ARG5=$ARG5 ARG6=$ARG6 ARG7=$ARG7 ARG8='$ARG8' ARG9=$ARG9 ARG10=$ARG10"
+          export ARG1="$DATASET_DIR" ARG2="$omp_unique" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$IQTREE_THREADS" ARG7="$IQTREE_AUTO" ARG8="$IQTREE_ARGS" ARG9="$NUM_TREES" ARG10="$TREE_MODE" ARG11="$TYPE"
+          echo "[qsub] OMP: walltime=$wall_time mem=${memory}GB ARG1=$ARG1 ARG2=$ARG2 ARG3=$ARG3 ARG4=$ARG4 ARG5=$ARG5 ARG6=$ARG6 ARG7=$ARG7 ARG8='$ARG8' ARG9=$ARG9 ARG10=$ARG10 ARG11=$ARG11"
          qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=$IQTREE_THREADS,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree_omp \
-                -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9,ARG10 "$WD"/test/iqtree/test_script_iqtree_omp.sh
+                -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9,ARG10,ARG11 "$WD"/test/iqtree/test_script_iqtree_omp.sh
       fi
   done
 done

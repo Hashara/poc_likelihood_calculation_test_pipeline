@@ -50,6 +50,8 @@ elif [ "$TYPE" == "OPENACC_DEBUG" ]; then
   executable_path=$(resolve_openacc_binary "build-nvhpc-debug-openacc")
 elif [ "$TYPE" == "OPENACC_DEBUG_PROFILE" ]; then
   executable_path=$(resolve_openacc_binary "build-nvhpc-debug-prof-openacc")
+elif [ "$TYPE" == "CLANG_VANILA" ]; then
+  executable_path="$WD/builds/build-clang-vanila/iqtree3"
 fi
 echo "GPU_TYPE='$GPU_TYPE' TYPE='$TYPE' -> executable_path='$executable_path'"
 
