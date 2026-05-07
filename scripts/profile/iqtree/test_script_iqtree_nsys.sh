@@ -28,6 +28,14 @@ elif [ "$TYPE" == "OPENACC_DEBUG" ]; then
   executable_path="$WD/builds/build-nvhpc-debug-openacc/iqtree3"
 elif [ "$TYPE" == "OPENACC_DEBUG_PROFILE" ]; then
   executable_path="$WD/builds/build-nvhpc-debug-prof-openacc/iqtree3"
+elif [ "$TYPE" == "OPENMP_GPU" ]; then
+  executable_path="$WD/builds/build-nvhpc-openmp-gpu/iqtree3"
+elif [ "$TYPE" == "OPENMP_GPU_PROFILE" ]; then
+  executable_path="$WD/builds/build-nvhpc-prof-openmp-gpu/iqtree3"
+elif [ "$TYPE" == "OPENMP_GPU_DEBUG" ]; then
+  executable_path="$WD/builds/build-nvhpc-debug-openmp-gpu/iqtree3"
+elif [ "$TYPE" == "OPENMP_GPU_DEBUG_PROFILE" ]; then
+  executable_path="$WD/builds/build-nvhpc-debug-prof-openmp-gpu/iqtree3"
 elif [ "$TYPE" == "CLANG_VANILA" ]; then
   executable_path="$WD/builds/build-clang-vanila/iqtree3"
 fi

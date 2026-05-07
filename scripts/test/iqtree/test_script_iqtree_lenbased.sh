@@ -50,6 +50,14 @@ elif [ "$TYPE" == "OPENACC_DEBUG" ]; then
   executable_path=$(resolve_openacc_binary "build-nvhpc-debug-openacc")
 elif [ "$TYPE" == "OPENACC_DEBUG_PROFILE" ]; then
   executable_path=$(resolve_openacc_binary "build-nvhpc-debug-prof-openacc")
+elif [ "$TYPE" == "OPENMP_GPU" ]; then
+  executable_path=$(resolve_openacc_binary "build-nvhpc-openmp-gpu")
+elif [ "$TYPE" == "OPENMP_GPU_PROFILE" ]; then
+  executable_path=$(resolve_openacc_binary "build-nvhpc-prof-openmp-gpu")
+elif [ "$TYPE" == "OPENMP_GPU_DEBUG" ]; then
+  executable_path=$(resolve_openacc_binary "build-nvhpc-debug-openmp-gpu")
+elif [ "$TYPE" == "OPENMP_GPU_DEBUG_PROFILE" ]; then
+  executable_path=$(resolve_openacc_binary "build-nvhpc-debug-prof-openmp-gpu")
 elif [ "$TYPE" == "CLANG_VANILA" ]; then
   executable_path="$WD/builds/build-clang-vanila/iqtree3"
 fi
