@@ -159,7 +159,10 @@ pipeline {
                                 booleanParam(name: 'OPENMP_GPU_DEBUG', value: params.OPENMP_GPU_DEBUG),
                                 booleanParam(name: 'OPENMP_GPU_DEBUG_PROFILE', value: params.OPENMP_GPU_DEBUG_PROFILE),
                                 booleanParam(name: 'CLANG_VANILA', value: params.CLANG_VANILA),
-                                string(name: 'GPU_ARCH', value: params.GPU_ARCH)
+                                string(name: 'GPU_ARCH', value: params.GPU_ARCH),
+                                booleanParam(name: 'V100', value: params.V100),
+                                booleanParam(name: 'A100', value: params.A100),
+                                booleanParam(name: 'H200', value: params.H200)
                         ],wait:true
                 }
             }
