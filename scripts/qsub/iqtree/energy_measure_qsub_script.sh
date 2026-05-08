@@ -94,6 +94,9 @@ for r in $(seq 1 $repeat); do
 
       if [ "$IQTREE_OPENMP" == true ]; then
           memory=$((mem_factor * IQTREE_THREADS * MEM_PER_CPU))
+          if [ "$NORMALSR" == true ] && [ "$IQTREE_THREADS" == "104" ]; then
+              memory=500
+          fi
           export ARG1="$DATASET_DIR" ARG2="$local_unique_name" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$IQTREE_THREADS" ARG7="$TYPE" ARG8="$IQTREE_ARGS" ARG9="$TREE_MODE"
           echo "[qsub] energy OMP: walltime=$wall_time mem=${memory}GB ARG1=$ARG1 ARG2=$ARG2 ARG3=$ARG3 ARG4=$ARG4 ARG5=$ARG5 ARG6=$ARG6 ARG7=$ARG7 ARG8='$ARG8' ARG9=$ARG9"
          qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=$IQTREE_THREADS,mem="${memory}GB",jobfs=10GB,wd -q${CPU_QUEUE} -N energy_iqtree_omp_${TYPE} \

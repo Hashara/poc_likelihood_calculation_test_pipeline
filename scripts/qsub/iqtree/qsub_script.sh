@@ -94,6 +94,9 @@ for r in $(seq 1 $repeat); do
 
       if [ "$IQTREE_OPENMP" == true ]; then
           memory=$((mem_factor * IQTREE_THREADS * MEM_PER_CPU))
+          if [ "$NORMALSR" == true ] && [ "$IQTREE_THREADS" == "104" ]; then
+              memory=500
+          fi
           # Strip _${TYPE} suffix appended by child pipeline, then substitute
           # run1 → run${r} so repetitions produce distinct output names
           omp_unique_base="${UNIQUE_NAME%_${TYPE}}"
