@@ -27,6 +27,18 @@ IQTREE_ARGS=${19}
 NUM_TREES=${20:-10}
 wall_time_factor=${21:-1}
 TREE_MODE=${22:-te}
+NORMALSR=${23:-false}
+
+# Determine CPU queue name and per-CPU memory ratio
+# normal: 190 GB / 48 CPUs = ~3.96 GB/CPU → 4 GB
+# normalsr: 500 GB / 104 CPUs = ~4.81 GB/CPU → 5 GB
+if [ "$NORMALSR" == true ]; then
+    CPU_QUEUE="normalsr"
+    MEM_PER_CPU=5
+else
+    CPU_QUEUE="normal"
+    MEM_PER_CPU=4
+fi
 
 data_types=()
 if [ "$AA" == true ]; then
@@ -76,19 +88,19 @@ for r in $(seq 1 $repeat); do
           memory=$((mem_factor * 1 * 20))
           export ARG1="$DATASET_DIR" ARG2="$local_unique_name" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$TYPE" ARG7="$IQTREE_ARGS" ARG8="$NUM_TREES" ARG9="$TREE_MODE" ARG10=""
           echo "[qsub] CPU: walltime=$wall_time mem=${memory}GB ARG1=$ARG1 ARG2=$ARG2 ARG3=$ARG3 ARG4=$ARG4 ARG5=$ARG5 ARG6=$ARG6 ARG7='$ARG7' ARG8=$ARG8 ARG9=$ARG9"
-         qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=1,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree \
+         qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=1,mem="${memory}GB",jobfs=10GB,wd -q${CPU_QUEUE} -N test_iqtree \
                 -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9,ARG10 "$WD"/test/iqtree/test_script_iqtree.sh
       fi
 
       if [ "$IQTREE_OPENMP" == true ]; then
-          memory=$((mem_factor * IQTREE_THREADS * 4))
+          memory=$((mem_factor * IQTREE_THREADS * MEM_PER_CPU))
           # Strip _${TYPE} suffix appended by child pipeline, then substitute
           # run1 → run${r} so repetitions produce distinct output names
           omp_unique_base="${UNIQUE_NAME%_${TYPE}}"
           omp_unique="${omp_unique_base/run1/run${r}}"
           export ARG1="$DATASET_DIR" ARG2="$omp_unique" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$IQTREE_THREADS" ARG7="$IQTREE_AUTO" ARG8="$IQTREE_ARGS" ARG9="$NUM_TREES" ARG10="$TREE_MODE" ARG11="$TYPE"
           echo "[qsub] OMP: walltime=$wall_time mem=${memory}GB ARG1=$ARG1 ARG2=$ARG2 ARG3=$ARG3 ARG4=$ARG4 ARG5=$ARG5 ARG6=$ARG6 ARG7=$ARG7 ARG8='$ARG8' ARG9=$ARG9 ARG10=$ARG10 ARG11=$ARG11"
-         qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=$IQTREE_THREADS,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree_omp \
+         qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=$IQTREE_THREADS,mem="${memory}GB",jobfs=10GB,wd -q${CPU_QUEUE} -N test_iqtree_omp \
                 -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9,ARG10,ARG11 "$WD"/test/iqtree/test_script_iqtree_omp.sh
       fi
   done

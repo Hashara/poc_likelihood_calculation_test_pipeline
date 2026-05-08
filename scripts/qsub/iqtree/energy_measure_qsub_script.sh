@@ -23,6 +23,18 @@ H200=${16}
 IQTREE_ARGS=${17}
 wall_time_factor=${18:-1}
 TREE_MODE=${19:-te}
+NORMALSR=${20:-false}
+
+# Determine CPU queue name and per-CPU memory ratio
+# normal: 190 GB / 48 CPUs = ~3.96 GB/CPU → 4 GB
+# normalsr: 500 GB / 104 CPUs = ~4.81 GB/CPU → 5 GB
+if [ "$NORMALSR" == true ]; then
+    CPU_QUEUE="normalsr"
+    MEM_PER_CPU=5
+else
+    CPU_QUEUE="normal"
+    MEM_PER_CPU=4
+fi
 
 data_types=()
 if [ "$AA" == true ]; then
@@ -76,15 +88,15 @@ for r in $(seq 1 $repeat); do
           memory=$((mem_factor * 1 * 20))
           export ARG1="$DATASET_DIR" ARG2="$local_unique_name" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$TYPE" ARG7="$IQTREE_ARGS" ARG8="$TREE_MODE"
           echo "[qsub] energy CPU: walltime=$wall_time mem=${memory}GB ARG1=$ARG1 ARG2=$ARG2 ARG3=$ARG3 ARG4=$ARG4 ARG5=$ARG5 ARG6=$ARG6 ARG7='$ARG7' ARG8=$ARG8"
-         qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=1,mem="${memory}GB",jobfs=10GB,wd -qnormal -N energy_iqtree_${TYPE} \
+         qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=1,mem="${memory}GB",jobfs=10GB,wd -q${CPU_QUEUE} -N energy_iqtree_${TYPE} \
                 -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8 "$WD"/energy_measure/iqtree/test_script_iqtree.sh
       fi
 
       if [ "$IQTREE_OPENMP" == true ]; then
-          memory=$((mem_factor * IQTREE_THREADS * 4))
+          memory=$((mem_factor * IQTREE_THREADS * MEM_PER_CPU))
           export ARG1="$DATASET_DIR" ARG2="$local_unique_name" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$IQTREE_THREADS" ARG7="$TYPE" ARG8="$IQTREE_ARGS" ARG9="$TREE_MODE"
           echo "[qsub] energy OMP: walltime=$wall_time mem=${memory}GB ARG1=$ARG1 ARG2=$ARG2 ARG3=$ARG3 ARG4=$ARG4 ARG5=$ARG5 ARG6=$ARG6 ARG7=$ARG7 ARG8='$ARG8' ARG9=$ARG9"
-         qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=$IQTREE_THREADS,mem="${memory}GB",jobfs=10GB,wd -qnormal -N energy_iqtree_omp_${TYPE} \
+         qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=$IQTREE_THREADS,mem="${memory}GB",jobfs=10GB,wd -q${CPU_QUEUE} -N energy_iqtree_omp_${TYPE} \
                 -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9 "$WD"/energy_measure/iqtree/test_script_iqtree_omp.sh
       fi
   done

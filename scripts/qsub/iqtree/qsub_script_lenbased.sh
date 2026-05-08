@@ -24,6 +24,18 @@ IQTREE_ARGS=${18}
 NUM_TREES=${19:-10}
 wall_time_factor=${20:-1}
 TREE_MODE=${21:-te}
+NORMALSR=${22:-false}
+
+# Determine CPU queue name and per-CPU memory ratio
+# normal: 190 GB / 48 CPUs = ~3.96 GB/CPU → 4 GB
+# normalsr: 500 GB / 104 CPUs = ~4.81 GB/CPU → 5 GB
+if [ "$NORMALSR" == true ]; then
+    CPU_QUEUE="normalsr"
+    MEM_PER_CPU=5
+else
+    CPU_QUEUE="normal"
+    MEM_PER_CPU=4
+fi
 
 data_types=()
 if [ "$AA" = true ]; then
@@ -74,16 +86,16 @@ for r in $(seq 1 $repeat); do
               memory=$((mem_factor * 1 * 20))
               export ARG1="$DATASET_DIR" ARG2="$local_unique_name" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$TYPE" ARG7="$IQTREE_ARGS" ARG8="$TREE_MODE" ARG9=""
               echo "[qsub] lenbased CPU: walltime=$wall_time mem=${memory}GB ARG1=$ARG1 ARG2=$ARG2 ARG3=$ARG3 ARG4=$ARG4 ARG5=$ARG5 ARG6=$ARG6 ARG7='$ARG7' ARG8=$ARG8"
-              qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=1,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree \
+              qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=1,mem="${memory}GB",jobfs=10GB,wd -q${CPU_QUEUE} -N test_iqtree \
                 -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9 "$WD"/test/iqtree/test_script_iqtree_lenbased.sh
           fi
       fi
 
       if [ "$IQTREE_OPENMP" == true ]; then
-          memory=$((mem_factor * IQTREE_THREADS * 4))
+          memory=$((mem_factor * IQTREE_THREADS * MEM_PER_CPU))
           export ARG1="$DATASET_DIR" ARG2="$local_unique_name" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$IQTREE_THREADS" ARG7="$IQTREE_AUTO" ARG8="$IQTREE_ARGS" ARG9="$TREE_MODE" ARG10="$TYPE"
           echo "[qsub] lenbased OMP: walltime=$wall_time mem=${memory}GB ARG1=$ARG1 ARG2=$ARG2 ARG3=$ARG3 ARG4=$ARG4 ARG5=$ARG5 ARG6=$ARG6 ARG7=$ARG7 ARG8='$ARG8' ARG9=$ARG9 ARG10=$ARG10"
-         qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=$IQTREE_THREADS,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree_omp \
+         qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=$IQTREE_THREADS,mem="${memory}GB",jobfs=10GB,wd -q${CPU_QUEUE} -N test_iqtree_omp \
                 -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9,ARG10 "$WD"/test/iqtree/test_script_iqtree_lenbased_omp.sh
       fi
   done
