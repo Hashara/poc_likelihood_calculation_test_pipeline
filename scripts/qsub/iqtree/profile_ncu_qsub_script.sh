@@ -80,7 +80,7 @@ for r in $(seq 1 $repeat); do
                 "$WD"/profile/iqtree/test_script_iqtree_ncu.sh
       elif [ "$TYPE" == "OPENACC" ] || [ "$TYPE" == "OPENACC_PROFILE" ] || [ "$TYPE" == "OPENACC_DEBUG" ] || [ "$TYPE" == "OPENACC_DEBUG_PROFILE" ] || [ "$TYPE" == "OPENMP_GPU" ] || [ "$TYPE" == "OPENMP_GPU_PROFILE" ] || [ "$TYPE" == "OPENMP_GPU_DEBUG" ] || [ "$TYPE" == "OPENMP_GPU_DEBUG_PROFILE" ] || [ "$TYPE" == "CUDA" ]; then
           if [ "$V100_GPU" == true ]; then
-            memory=$((mem_factor * 1 * 48))
+            memory=100
               export ARG1="$DATASET_DIR" ARG2="$local_unique_name" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$TYPE" ARG7="$IQTREE_ARGS" ARG8="$TREE_MODE" ARG9="v100"
               echo "[qsub] NCU V100: walltime=$wall_time mem=${memory}GB data=$data_type len=$length"
               echo "  NCU_SET=$NCU_SET NCU_LAUNCH_COUNT=$NCU_LAUNCH_COUNT NCU_KERNEL_FILTER='$NCU_KERNEL_FILTER'"
