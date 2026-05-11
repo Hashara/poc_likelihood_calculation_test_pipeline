@@ -16,15 +16,22 @@ IQTREE_ARGS=$ARG7
 TREE_MODE=${ARG8:-te}
 GPU_TYPE=${ARG9:-}  # v100|a100|h200 (lowercase) — picks per-arch build dir; empty = multi-arch fallback
 
-# Resolve OpenACC/GPU binary: prefer per-arch dir (build-nvhpc-openacc-${GPU_TYPE}/),
-# fall back to multi-arch dir (build-nvhpc-openacc/) when per-arch missing or
-# GPU_TYPE not set (CPU/legacy callers).
+# Resolve OpenACC/GPU binary: when GPU_TYPE is set, REQUIRE the per-arch dir
+# (build-nvhpc-openacc-${GPU_TYPE}/); fail loudly if missing rather than silently
+# falling back to multi-arch (which masks "build not done" errors). When GPU_TYPE
+# is unset (legacy/CPU callers), use the multi-arch dir.
 resolve_openacc_binary() {
     local base=$1
     local per_arch="$WD/builds/${base}-${GPU_TYPE}/iqtree3"
     local multi="$WD/builds/${base}/iqtree3"
-    if [ -n "$GPU_TYPE" ] && [ -f "$per_arch" ]; then
-        echo "$per_arch"
+    if [ -n "$GPU_TYPE" ]; then
+        if [ -f "$per_arch" ]; then
+            echo "$per_arch"
+        else
+            echo "ERROR: per-arch binary missing for GPU_TYPE='$GPU_TYPE': $per_arch" >&2
+            echo "       (no fallback to multi-arch dir when GPU_TYPE is set; build the per-arch binary first)" >&2
+            echo "$per_arch"  # return per-arch path so caller's '[ ! -f ]' check reports the right path
+        fi
     else
         echo "$multi"
     fi
