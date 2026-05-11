@@ -80,6 +80,31 @@ pipeline {
             defaultValue: false,
             description:  'Enable energy profiling (Linaro Forge perf-report) in child builds.'
         )
+        booleanParam(
+            name:         'PROFILE_NSYS',
+            defaultValue: false,
+            description:  'Run nsys timeline profiling (~5-10% overhead, suitable for full runs).'
+        )
+        booleanParam(
+            name:         'PROFILE_NCU',
+            defaultValue: false,
+            description:  'Run ncu kernel-detail profiling (~10-50x overhead, use NCU_LAUNCH_COUNT to limit).'
+        )
+        string(
+            name:         'NCU_LAUNCH_COUNT',
+            defaultValue: '0',
+            description:  'NCU: max kernel launches to profile (0 = all, 20-50 recommended).'
+        )
+        string(
+            name:         'NCU_KERNEL_FILTER',
+            defaultValue: '',
+            description:  'NCU: kernel name regex filter (e.g. batchedInternal|reductionKernel).'
+        )
+        string(
+            name:         'NCU_SKIP_COUNT',
+            defaultValue: '0',
+            description:  'NCU: skip first N kernel launches before profiling begins.'
+        )
     }
 
     stages {
@@ -332,6 +357,11 @@ pipeline {
                                     booleanParam(name: 'IQTREE_OPENMP', value: cIqtreeOmp.toBoolean()),
                                     booleanParam(name: 'CLONE_IQTREE',  value: false),
                                     booleanParam(name: 'PROFILE',        value: params.PROFILE),
+                                    booleanParam(name: 'PROFILE_NSYS',  value: params.PROFILE_NSYS),
+                                    booleanParam(name: 'PROFILE_NCU',   value: params.PROFILE_NCU),
+                                    string(name: 'NCU_LAUNCH_COUNT',    value: params.NCU_LAUNCH_COUNT),
+                                    string(name: 'NCU_KERNEL_FILTER',   value: params.NCU_KERNEL_FILTER),
+                                    string(name: 'NCU_SKIP_COUNT',      value: params.NCU_SKIP_COUNT),
                                     booleanParam(name: 'ENERGY_PROFILE', value: params.ENERGY_PROFILE),
                                     string(name: 'IQTREE_THREADS',      value: cCpuNodes),
                                     string(name: 'AUTO',                 value: cAuto),
