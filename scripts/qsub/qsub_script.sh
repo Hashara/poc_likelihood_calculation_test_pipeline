@@ -26,6 +26,28 @@ ALL_NODE=${18}
 EIGEN=${19}
 wall_time_factor=${20:-1}
 
+# Optional: comma-separated KEY=VAL env vars to set on the iqtree qsub job's
+# environment via the qsub -v clause. Common uses:
+#   OMP_TARGET_OFFLOAD=MANDATORY  — force OPENMP_GPU builds to abort on
+#                                    silent host fallback (otherwise the
+#                                    binary silently runs on CPU and produces
+#                                    misleading lnL).
+#   OMP_NUM_THREADS=N             — pin host OMP thread count.
+#   NVCOMPILER_ACC_NOTIFY=1       — print every OpenACC kernel launch to stderr.
+# Multiple: OMP_TARGET_OFFLOAD=MANDATORY,OMP_NUM_THREADS=8 (no spaces).
+# Default empty string keeps existing OpenACC-mirror behavior unchanged.
+# Position #25 to avoid colliding with existing positional args (NUM_TREES
+# at #21, WALL_TIME_FACTOR at #22, TREE_MODE at #23, NORMALSR at #24).
+ENV_VARS=${25:-}
+
+ENV_VAR_PREFIX=""
+if [ -n "$ENV_VARS" ]; then
+    # Append a trailing comma so it concatenates cleanly with the existing
+    # ARG1=...,ARG2=... list inside the qsub -v string.
+    ENV_VAR_PREFIX="${ENV_VARS},"
+    echo "qsub_script: extra env vars set on iqtree dispatches: $ENV_VARS"
+fi
+
 data_types=()
 if [ "$AA" == true ]; then
     data_types+=("AA")
@@ -72,13 +94,13 @@ for r in $(seq 1 $repeat); do
       if [ "$IQTREE" == true ]; then
           memory=$((mem_factor * 1 * 20))
          qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=1,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree \
-                -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length" "$WD"/test/test_script_iqtree.sh
+                -v"${ENV_VAR_PREFIX}ARG1=$DATASET_DIR,ARG2=$local_unique_name,ARG3=$WD,ARG4=$data_type,ARG5=$length" "$WD"/test/test_script_iqtree.sh
       fi
 
       if [ "$IQTREE_OPENMP" == true ]; then
           memory=$((mem_factor * IQTREE_THREADS * 4))
          qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=$IQTREE_THREADS,mem="${memory}GB",jobfs=10GB,wd -qnormal -N test_iqtree_omp \
-                -vARG1="$DATASET_DIR",ARG2="$local_unique_name",ARG3="$WD",ARG4="$data_type",ARG5="$length",ARG6="$IQTREE_THREADS",ARG7="$IQTREE_AUTO" "$WD"/test/test_script_iqtree_omp.sh
+                -v"${ENV_VAR_PREFIX}ARG1=$DATASET_DIR,ARG2=$local_unique_name,ARG3=$WD,ARG4=$data_type,ARG5=$length,ARG6=$IQTREE_THREADS,ARG7=$IQTREE_AUTO" "$WD"/test/test_script_iqtree_omp.sh
       fi
   done
 done

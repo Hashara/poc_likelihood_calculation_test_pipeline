@@ -61,6 +61,7 @@ pipeline {
         string(name: 'RUN_ALIASES', defaultValue: 'run', description: 'Unique name for this run')
         string(name: 'NUM_TREES', defaultValue: '10', description: 'Number of tree folders (tree_1..tree_N) to iterate over in the dataset')
         string(name: 'TREE_MODE', defaultValue: 'te', description: 'Tree arg mode: te (-te TREEFILE), t (-t TREEFILE), none (no tree args)')
+        string(name: 'ENV_VARS', defaultValue: '', description: 'Comma-separated KEY=VALUE env vars to set on iqtree runs (no spaces). Examples: OMP_TARGET_OFFLOAD=MANDATORY (force OPENMP_GPU builds to abort on silent host fallback), OMP_NUM_THREADS=8, NVCOMPILER_ACC_NOTIFY=1. Multiple: OMP_TARGET_OFFLOAD=MANDATORY,OMP_NUM_THREADS=8. Empty = none.')
 
     }
 
@@ -439,7 +440,8 @@ pipeline {
                             ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} \
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} \
                             ${PROJECT_NAME} ${backend} ${H200} ${ALL_NODE} \
-                            "${IQTREE_ARGS}" ${NUM_TREES} ${WALL_TIME_FACTOR} ${TREE_MODE} ${NORMALSR}
+                            "${IQTREE_ARGS}" ${NUM_TREES} ${WALL_TIME_FACTOR} ${TREE_MODE} ${NORMALSR} \
+                            "${params.ENV_VARS}"
 
                         """
                         }
