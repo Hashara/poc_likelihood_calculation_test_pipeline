@@ -121,11 +121,6 @@ pipeline {
             description:  'Nsys: CPU sampling mode (none|process-tree|system-wide). Default none — GPU-bound workloads do not need CPU stacks.'
         )
         string(
-            name:         'NSYS_OSRT_THRESHOLD',
-            defaultValue: '10000',
-            description:  'Nsys: only trace OS-runtime syscalls longer than N microseconds (drops short stat/read/lseek noise).'
-        )
-        string(
             name:         'ENV_VARS',
             defaultValue: '',
             description:  'Extra comma-separated KEY=VALUE env vars forwarded to child iqtree runs (e.g. OMP_TARGET_OFFLOAD=MANDATORY). Composes with NSYS_*/NCU_* knobs above.'
@@ -394,7 +389,6 @@ pipeline {
                                         params.NSYS_DELAY            != '0'      ? "NSYS_DELAY=${params.NSYS_DELAY}"                       : null,
                                         params.NSYS_DURATION         != '0'      ? "NSYS_DURATION=${params.NSYS_DURATION}"                 : null,
                                         params.NSYS_SAMPLE           != 'none'   ? "NSYS_SAMPLE=${params.NSYS_SAMPLE}"                     : null,
-                                        params.NSYS_OSRT_THRESHOLD   != '10000'  ? "NSYS_OSRT_THRESHOLD=${params.NSYS_OSRT_THRESHOLD}"     : null,
                                         params.ENV_VARS?.trim()                  ? params.ENV_VARS.trim()                                  : null,
                                     ] - null).join(',')),
                                     booleanParam(name: 'ENERGY_PROFILE', value: params.ENERGY_PROFILE),

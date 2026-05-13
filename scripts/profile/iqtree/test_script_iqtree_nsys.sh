@@ -93,12 +93,12 @@ for i in $(seq 1 $iter); do
     # Size-tight defaults: capture kernel/OpenACC trace + H2D bytes only.
     # Drop --gpu-metrics-device, --stats (sqlite), CPU sampling, and CUDA
     # backtraces — these inflated the 1M ModelFinder report to 7GB+20GB.
-    # Long-run knobs (overridable via env): NSYS_SAMPLE, NSYS_OSRT_THRESHOLD,
-    # NSYS_DURATION (seconds, 0=unbounded), NSYS_DELAY (seconds before capture
-    # starts — set this to skip init parsimony/ModelFinder when only tree
-    # search matters).
+    # Long-run knobs (overridable via env): NSYS_SAMPLE,
+    # NSYS_DURATION (seconds, 0=unbounded — cap capture so .nsys-rep gets
+    # written before PBS walltime SIGKILL on long runs),
+    # NSYS_DELAY (seconds before capture starts — set this to skip init
+    # parsimony/ModelFinder when only tree search matters).
     NSYS_SAMPLE=${NSYS_SAMPLE:-none}
-    NSYS_OSRT_THRESHOLD=${NSYS_OSRT_THRESHOLD:-10000}
     NSYS_DURATION=${NSYS_DURATION:-0}
     NSYS_DELAY=${NSYS_DELAY:-0}
 
@@ -111,7 +111,6 @@ for i in $(seq 1 $iter); do
             --trace=cuda,openacc,nvtx \
             --sample=${NSYS_SAMPLE} \
             --cudabacktrace=none \
-            --osrt-threshold=${NSYS_OSRT_THRESHOLD} \
             --cuda-memory-usage=true \
             ${NSYS_EXTRA} \
             -o nsys_report_${UNIQUE_NAME}_tree${i}_aa \
@@ -123,7 +122,6 @@ for i in $(seq 1 $iter); do
             --trace=cuda,openacc,nvtx \
             --sample=${NSYS_SAMPLE} \
             --cudabacktrace=none \
-            --osrt-threshold=${NSYS_OSRT_THRESHOLD} \
             --cuda-memory-usage=true \
             ${NSYS_EXTRA} \
             -o nsys_report_${UNIQUE_NAME}_tree${i}_dna \
