@@ -105,6 +105,31 @@ pipeline {
             defaultValue: '0',
             description:  'NCU: skip first N kernel launches before profiling begins.'
         )
+        string(
+            name:         'NSYS_DELAY',
+            defaultValue: '0',
+            description:  'Nsys: delay capture start by N seconds (skip init/ModelFinder for tree-search-only profiles).'
+        )
+        string(
+            name:         'NSYS_DURATION',
+            defaultValue: '0',
+            description:  'Nsys: bound capture to N seconds (0 = unbounded; cap long runs).'
+        )
+        string(
+            name:         'NSYS_SAMPLE',
+            defaultValue: 'none',
+            description:  'Nsys: CPU sampling mode (none|process-tree|system-wide). Default none — GPU-bound workloads do not need CPU stacks.'
+        )
+        string(
+            name:         'NSYS_OSRT_THRESHOLD',
+            defaultValue: '10000',
+            description:  'Nsys: only trace OS-runtime syscalls longer than N microseconds (drops short stat/read/lseek noise).'
+        )
+        string(
+            name:         'ENV_VARS',
+            defaultValue: '',
+            description:  'Extra comma-separated KEY=VALUE env vars forwarded to child iqtree runs (e.g. OMP_TARGET_OFFLOAD=MANDATORY). Composes with NSYS_*/NCU_* knobs above.'
+        )
     }
 
     stages {
@@ -362,6 +387,16 @@ pipeline {
                                     string(name: 'NCU_LAUNCH_COUNT',    value: params.NCU_LAUNCH_COUNT),
                                     string(name: 'NCU_KERNEL_FILTER',   value: params.NCU_KERNEL_FILTER),
                                     string(name: 'NCU_SKIP_COUNT',      value: params.NCU_SKIP_COUNT),
+                                    // Compose NSYS_* knobs + user ENV_VARS into the single ENV_VARS
+                                    // string the child build passes to profile_{nsys,ncu}_qsub_script.sh.
+                                    // Non-default values only — keeps the qsub -v list minimal.
+                                    string(name: 'ENV_VARS', value: ([
+                                        params.NSYS_DELAY            != '0'      ? "NSYS_DELAY=${params.NSYS_DELAY}"                       : null,
+                                        params.NSYS_DURATION         != '0'      ? "NSYS_DURATION=${params.NSYS_DURATION}"                 : null,
+                                        params.NSYS_SAMPLE           != 'none'   ? "NSYS_SAMPLE=${params.NSYS_SAMPLE}"                     : null,
+                                        params.NSYS_OSRT_THRESHOLD   != '10000'  ? "NSYS_OSRT_THRESHOLD=${params.NSYS_OSRT_THRESHOLD}"     : null,
+                                        params.ENV_VARS?.trim()                  ? params.ENV_VARS.trim()                                  : null,
+                                    ] - null).join(',')),
                                     booleanParam(name: 'ENERGY_PROFILE', value: params.ENERGY_PROFILE),
                                     string(name: 'IQTREE_THREADS',      value: cCpuNodes),
                                     string(name: 'AUTO',                 value: cAuto),
