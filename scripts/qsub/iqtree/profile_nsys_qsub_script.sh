@@ -22,6 +22,29 @@ IQTREE_ARGS=${15}
 wall_time_factor=${16:-1}
 TREE_MODE=${17:-te}
 NORMALSR=${18:-false}
+# ARG19: comma-separated KEY=VALUE env vars (e.g. NSYS_DELAY=120,NSYS_DURATION=1800).
+# Mirrors the ENV_VARS plumbing in scripts/qsub/qsub_script.sh:40-50. Empty = none.
+ENV_VARS=${19:-}
+
+# Build an "export-and-name-list" pair for qsub -v.
+# qsub -v accepts either KEY=VALUE pairs or just names (forwards current env).
+# This script uses the names-only form (matches existing -v ARG1,ARG2,...).
+# We export each parsed env var so qsub forwards its value, and append the
+# name to ENV_VAR_NAMES so it joins the -v list cleanly.
+ENV_VAR_NAMES=""
+if [ -n "$ENV_VARS" ]; then
+    echo "profile_nsys_qsub_script: extra env vars: $ENV_VARS"
+    IFS=',' read -ra _pairs <<< "$ENV_VARS"
+    for _kv in "${_pairs[@]}"; do
+        # split on first '='
+        _k="${_kv%%=*}"
+        _v="${_kv#*=}"
+        [ -z "$_k" ] && continue
+        export "$_k"="$_v"
+        ENV_VAR_NAMES="${ENV_VAR_NAMES},${_k}"
+    done
+    unset _pairs _kv _k _v
+fi
 
 # Determine CPU queue name and per-CPU memory ratio
 # normal: 190 GB / 48 CPUs = ~3.96 GB/CPU → 4 GB
@@ -58,14 +81,14 @@ for r in $(seq 1 $repeat); do
           export ARG1="$DATASET_DIR" ARG2="$local_unique_name" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$TYPE" ARG7="$IQTREE_ARGS" ARG8="$TREE_MODE"
           echo "[qsub] Nsys CPU: walltime=$wall_time mem=${memory}GB data=$data_type len=$length"
           qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=1,mem="${memory}GB",jobfs=200GB,wd -q${CPU_QUEUE} -N nsys_cpu_${data_type}_${length} \
-                -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8 "$WD"/profile/iqtree/test_script_iqtree_nsys.sh
+                -v "ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8${ENV_VAR_NAMES}" "$WD"/profile/iqtree/test_script_iqtree_nsys.sh
       elif [ "$TYPE" == "OPENACC" ] || [ "$TYPE" == "OPENACC_PROFILE" ] || [ "$TYPE" == "OPENACC_DEBUG" ] || [ "$TYPE" == "OPENACC_DEBUG_PROFILE" ] || [ "$TYPE" == "OPENMP_GPU" ] || [ "$TYPE" == "OPENMP_GPU_PROFILE" ] || [ "$TYPE" == "OPENMP_GPU_DEBUG" ] || [ "$TYPE" == "OPENMP_GPU_DEBUG_PROFILE" ] || [ "$TYPE" == "CUDA" ]; then
           if [ "$V100_GPU" == true ]; then
             memory=100
               export ARG1="$DATASET_DIR" ARG2="$local_unique_name" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$TYPE" ARG7="$IQTREE_ARGS" ARG8="$TREE_MODE" ARG9="v100"
               echo "[qsub] Nsys V100: walltime=$wall_time mem=${memory}GB data=$data_type len=$length"
               qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=12,ngpus=1,mem="${memory}GB",jobfs=200GB,wd -qgpuvolta -N nsys_v100_${data_type}_${length} \
-                    -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9 "$WD"/profile/iqtree/test_script_iqtree_nsys.sh
+                    -v "ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9${ENV_VAR_NAMES}" "$WD"/profile/iqtree/test_script_iqtree_nsys.sh
           fi
 
           if [ "$A100_GPU" == true ]; then
@@ -73,7 +96,7 @@ for r in $(seq 1 $repeat); do
               export ARG1="$DATASET_DIR" ARG2="$local_unique_name" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$TYPE" ARG7="$IQTREE_ARGS" ARG8="$TREE_MODE" ARG9="a100"
               echo "[qsub] Nsys A100: walltime=$wall_time mem=${memory}GB data=$data_type len=$length"
              qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=16,ngpus=1,mem="64GB",jobfs=200GB,wd -qdgxa100 -N nsys_a100_${data_type}_${length} \
-                    -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9 "$WD"/profile/iqtree/test_script_iqtree_nsys.sh
+                    -v "ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9${ENV_VAR_NAMES}" "$WD"/profile/iqtree/test_script_iqtree_nsys.sh
           fi
 
           if [ "$H200" == true ]; then
@@ -81,7 +104,7 @@ for r in $(seq 1 $repeat); do
               export ARG1="$DATASET_DIR" ARG2="$local_unique_name" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$TYPE" ARG7="$IQTREE_ARGS" ARG8="$TREE_MODE" ARG9="h200"
               echo "[qsub] Nsys H200: walltime=$wall_time mem=${memory}GB data=$data_type len=$length"
              qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=12,ngpus=1,mem="${memory}GB",jobfs=200GB,wd -qgpuhopper -N nsys_h200_${data_type}_${length} \
-                    -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9 "$WD"/profile/iqtree/test_script_iqtree_nsys.sh
+                    -v "ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9${ENV_VAR_NAMES}" "$WD"/profile/iqtree/test_script_iqtree_nsys.sh
           fi
       fi
   done

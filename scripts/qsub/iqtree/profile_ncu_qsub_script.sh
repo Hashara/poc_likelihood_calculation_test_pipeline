@@ -33,6 +33,26 @@ IQTREE_ARGS=${15}
 wall_time_factor=${16:-10}
 TREE_MODE=${17:-te}
 NORMALSR=${18:-false}
+# ARG19: comma-separated KEY=VALUE env vars from Jenkins (e.g.
+# NCU_KERNEL_FILTER=batchedTipTip_Rev|batchedTipInternal_Rev,NCU_LAUNCH_COUNT=50,NCU_SKIP_COUNT=200).
+# Mirrors the ENV_VARS plumbing in scripts/qsub/qsub_script.sh:40-50. Empty = none.
+# Parsed BEFORE the NCU_* defaults below so caller-provided values win without
+# the defaults overwriting them.
+ENV_VARS=${19:-}
+
+ENV_VAR_NAMES=""
+if [ -n "$ENV_VARS" ]; then
+    echo "profile_ncu_qsub_script: extra env vars: $ENV_VARS"
+    IFS=',' read -ra _pairs <<< "$ENV_VARS"
+    for _kv in "${_pairs[@]}"; do
+        _k="${_kv%%=*}"
+        _v="${_kv#*=}"
+        [ -z "$_k" ] && continue
+        export "$_k"="$_v"
+        ENV_VAR_NAMES="${ENV_VAR_NAMES},${_k}"
+    done
+    unset _pairs _kv _k _v
+fi
 
 # Determine CPU queue name and per-CPU memory ratio
 # normal: 190 GB / 48 CPUs = ~3.96 GB/CPU → 4 GB
@@ -43,7 +63,8 @@ else
     CPU_QUEUE="normal"
 fi
 
-# NCU-specific options (pass via environment or override here)
+# NCU-specific options (pass via environment or override here).
+# Already-set values from ENV_VARS above are preserved via ${VAR:-default}.
 export NCU_SET=${NCU_SET:-full}
 export NCU_LAUNCH_COUNT=${NCU_LAUNCH_COUNT:-0}
 export NCU_KERNEL_FILTER=${NCU_KERNEL_FILTER:-""}
@@ -76,7 +97,7 @@ for r in $(seq 1 $repeat); do
           echo "[qsub] NCU CPU: walltime=$wall_time mem=${memory}GB data=$data_type len=$length"
           echo "  NCU_SET=$NCU_SET NCU_LAUNCH_COUNT=$NCU_LAUNCH_COUNT NCU_KERNEL_FILTER='$NCU_KERNEL_FILTER'"
           qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=1,mem="${memory}GB",jobfs=200GB,wd -q${CPU_QUEUE} -N ncu_cpu_${data_type}_${length} \
-                -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,NCU_SET,NCU_LAUNCH_COUNT,NCU_KERNEL_FILTER,NCU_SKIP_COUNT \
+                -v "ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,NCU_SET,NCU_LAUNCH_COUNT,NCU_KERNEL_FILTER,NCU_SKIP_COUNT${ENV_VAR_NAMES}" \
                 "$WD"/profile/iqtree/test_script_iqtree_ncu.sh
       elif [ "$TYPE" == "OPENACC" ] || [ "$TYPE" == "OPENACC_PROFILE" ] || [ "$TYPE" == "OPENACC_DEBUG" ] || [ "$TYPE" == "OPENACC_DEBUG_PROFILE" ] || [ "$TYPE" == "OPENMP_GPU" ] || [ "$TYPE" == "OPENMP_GPU_PROFILE" ] || [ "$TYPE" == "OPENMP_GPU_DEBUG" ] || [ "$TYPE" == "OPENMP_GPU_DEBUG_PROFILE" ] || [ "$TYPE" == "CUDA" ]; then
           if [ "$V100_GPU" == true ]; then
@@ -85,7 +106,7 @@ for r in $(seq 1 $repeat); do
               echo "[qsub] NCU V100: walltime=$wall_time mem=${memory}GB data=$data_type len=$length"
               echo "  NCU_SET=$NCU_SET NCU_LAUNCH_COUNT=$NCU_LAUNCH_COUNT NCU_KERNEL_FILTER='$NCU_KERNEL_FILTER'"
               qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=12,ngpus=1,mem="${memory}GB",jobfs=200GB,wd -qgpuvolta -N ncu_v100_${data_type}_${length} \
-                    -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9,NCU_SET,NCU_LAUNCH_COUNT,NCU_KERNEL_FILTER,NCU_SKIP_COUNT \
+                    -v "ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9,NCU_SET,NCU_LAUNCH_COUNT,NCU_KERNEL_FILTER,NCU_SKIP_COUNT${ENV_VAR_NAMES}" \
                     "$WD"/profile/iqtree/test_script_iqtree_ncu.sh
           fi
 
@@ -95,7 +116,7 @@ for r in $(seq 1 $repeat); do
               echo "[qsub] NCU A100: walltime=$wall_time mem=${memory}GB data=$data_type len=$length"
               echo "  NCU_SET=$NCU_SET NCU_LAUNCH_COUNT=$NCU_LAUNCH_COUNT NCU_KERNEL_FILTER='$NCU_KERNEL_FILTER'"
              qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=16,ngpus=1,mem="64GB",jobfs=200GB,wd -qdgxa100 -N ncu_a100_${data_type}_${length} \
-                    -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9,NCU_SET,NCU_LAUNCH_COUNT,NCU_KERNEL_FILTER,NCU_SKIP_COUNT \
+                    -v "ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9,NCU_SET,NCU_LAUNCH_COUNT,NCU_KERNEL_FILTER,NCU_SKIP_COUNT${ENV_VAR_NAMES}" \
                     "$WD"/profile/iqtree/test_script_iqtree_ncu.sh
           fi
 
@@ -105,7 +126,7 @@ for r in $(seq 1 $repeat); do
               echo "[qsub] NCU H200: walltime=$wall_time mem=${memory}GB data=$data_type len=$length"
               echo "  NCU_SET=$NCU_SET NCU_LAUNCH_COUNT=$NCU_LAUNCH_COUNT NCU_KERNEL_FILTER='$NCU_KERNEL_FILTER'"
              qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=12,ngpus=1,mem="${memory}GB",jobfs=200GB,wd -qgpuhopper -N ncu_h200_${data_type}_${length} \
-                    -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9,NCU_SET,NCU_LAUNCH_COUNT,NCU_KERNEL_FILTER,NCU_SKIP_COUNT \
+                    -v "ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9,NCU_SET,NCU_LAUNCH_COUNT,NCU_KERNEL_FILTER,NCU_SKIP_COUNT${ENV_VAR_NAMES}" \
                     "$WD"/profile/iqtree/test_script_iqtree_ncu.sh
           fi
       fi

@@ -90,12 +90,30 @@ for i in $(seq 1 $iter); do
 
     echo "Running Nsys profiling for tree: $i length: $length ($AA_or_DNA, $TYPE)"
 
+    # Size-tight defaults: capture kernel/OpenACC trace + H2D bytes only.
+    # Drop --gpu-metrics-device, --stats (sqlite), CPU sampling, and CUDA
+    # backtraces — these inflated the 1M ModelFinder report to 7GB+20GB.
+    # Long-run knobs (overridable via env): NSYS_SAMPLE, NSYS_OSRT_THRESHOLD,
+    # NSYS_DURATION (seconds, 0=unbounded), NSYS_DELAY (seconds before capture
+    # starts — set this to skip init parsimony/ModelFinder when only tree
+    # search matters).
+    NSYS_SAMPLE=${NSYS_SAMPLE:-none}
+    NSYS_OSRT_THRESHOLD=${NSYS_OSRT_THRESHOLD:-10000}
+    NSYS_DURATION=${NSYS_DURATION:-0}
+    NSYS_DELAY=${NSYS_DELAY:-0}
+
+    NSYS_EXTRA=""
+    [ "$NSYS_DURATION" != "0" ] && NSYS_EXTRA="$NSYS_EXTRA --duration=$NSYS_DURATION"
+    [ "$NSYS_DELAY" != "0" ]    && NSYS_EXTRA="$NSYS_EXTRA --delay=$NSYS_DELAY"
+
     if [ "$AA_or_DNA" = "AA" ]; then
         nsys profile \
             --trace=cuda,openacc,nvtx \
-            --gpu-metrics-device=all \
+            --sample=${NSYS_SAMPLE} \
+            --cudabacktrace=none \
+            --osrt-threshold=${NSYS_OSRT_THRESHOLD} \
             --cuda-memory-usage=true \
-            --stats=true \
+            ${NSYS_EXTRA} \
             -o nsys_report_${UNIQUE_NAME}_tree${i}_aa \
             $executable_path -s alignment_${length}.phy $tree_args \
             --prefix output_nsys_${UNIQUE_NAME}_${taxa_size}_${length}_aa \
@@ -103,9 +121,11 @@ for i in $(seq 1 $iter); do
     elif [ "$AA_or_DNA" = "DNA" ]; then
         nsys profile \
             --trace=cuda,openacc,nvtx \
-            --gpu-metrics-device=all \
+            --sample=${NSYS_SAMPLE} \
+            --cudabacktrace=none \
+            --osrt-threshold=${NSYS_OSRT_THRESHOLD} \
             --cuda-memory-usage=true \
-            --stats=true \
+            ${NSYS_EXTRA} \
             -o nsys_report_${UNIQUE_NAME}_tree${i}_dna \
             $executable_path -s alignment_${length}.phy $tree_args \
             --prefix output_nsys_${UNIQUE_NAME}_${taxa_size}_${length}_dna \

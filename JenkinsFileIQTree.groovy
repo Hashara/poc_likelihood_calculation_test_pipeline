@@ -268,7 +268,8 @@ pipeline {
                             ${DATASET_PATH} ${RUN_ALIASES}_nsys_${backend} \
                             ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} \
                             ${PROJECT_NAME} ${backend} ${H200} \
-                            "${IQTREE_ARGS}" ${WALL_TIME_FACTOR} ${TREE_MODE} ${NORMALSR}
+                            "${IQTREE_ARGS}" ${WALL_TIME_FACTOR} ${TREE_MODE} ${NORMALSR} \
+                            "${params.ENV_VARS}"
 
                         """
                     }
@@ -318,7 +319,8 @@ pipeline {
                             ${DATASET_PATH} ${RUN_ALIASES}_ncu_${backend} \
                             ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} \
                             ${PROJECT_NAME} ${backend} ${H200} \
-                            "${IQTREE_ARGS}" ${WALL_TIME_FACTOR} ${TREE_MODE} ${NORMALSR}
+                            "${IQTREE_ARGS}" ${WALL_TIME_FACTOR} ${TREE_MODE} ${NORMALSR} \
+                            "${params.ENV_VARS}"
 
                         """
                     }
