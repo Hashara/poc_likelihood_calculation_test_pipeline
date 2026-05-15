@@ -12,6 +12,18 @@ executable_type=("iqtree")
 TYPE=$ARG6
 IQTREE_ARGS=$ARG7
 TREE_MODE=${ARG8:-te}
+GPU_TYPE=${ARG9:-}  # v100|a100|h200 (lowercase) — picks per-arch build dir; empty = multi-arch fallback
+
+resolve_openacc_binary() {
+    local base=$1
+    local per_arch="$WD/builds/${base}-${GPU_TYPE}/iqtree3"
+    local multi="$WD/builds/${base}/iqtree3"
+    if [ -n "$GPU_TYPE" ] && [ -f "$per_arch" ]; then
+        echo "$per_arch"
+    else
+        echo "$multi"
+    fi
+}
 
 executable_path=""
 if [ "$TYPE" == "VANILA" ]; then
@@ -19,26 +31,27 @@ if [ "$TYPE" == "VANILA" ]; then
 elif [ "$TYPE" == "CUDA" ]; then
   executable_path="$WD/builds/build-nvhpc-cuda/iqtree3"
 elif [ "$TYPE" == "OPENACC_PROFILE" ]; then
-  executable_path="$WD/builds/build-nvhpc-prof-openacc/iqtree3"
+  executable_path=$(resolve_openacc_binary "build-nvhpc-prof-openacc")
 elif [ "$TYPE" == "OPENACC" ]; then
-  executable_path="$WD/builds/build-nvhpc-openacc/iqtree3"
+  executable_path=$(resolve_openacc_binary "build-nvhpc-openacc")
 elif [ "$TYPE" == "OPENACC_DEBUG" ]; then
-  executable_path="$WD/builds/build-nvhpc-debug-openacc/iqtree3"
+  executable_path=$(resolve_openacc_binary "build-nvhpc-debug-openacc")
 elif [ "$TYPE" == "OPENACC_DEBUG_PROFILE" ]; then
-  executable_path="$WD/builds/build-nvhpc-debug-prof-openacc/iqtree3"
+  executable_path=$(resolve_openacc_binary "build-nvhpc-debug-prof-openacc")
 elif [ "$TYPE" == "OPENMP_GPU" ]; then
-  executable_path="$WD/builds/build-nvhpc-openmp-gpu/iqtree3"
+  executable_path=$(resolve_openacc_binary "build-nvhpc-openmp-gpu")
 elif [ "$TYPE" == "OPENMP_GPU_PROFILE" ]; then
-  executable_path="$WD/builds/build-nvhpc-prof-openmp-gpu/iqtree3"
+  executable_path=$(resolve_openacc_binary "build-nvhpc-prof-openmp-gpu")
 elif [ "$TYPE" == "OPENMP_GPU_DEBUG" ]; then
-  executable_path="$WD/builds/build-nvhpc-debug-openmp-gpu/iqtree3"
+  executable_path=$(resolve_openacc_binary "build-nvhpc-debug-openmp-gpu")
 elif [ "$TYPE" == "OPENMP_GPU_DEBUG_PROFILE" ]; then
-  executable_path="$WD/builds/build-nvhpc-debug-prof-openmp-gpu/iqtree3"
+  executable_path=$(resolve_openacc_binary "build-nvhpc-debug-prof-openmp-gpu")
 elif [ "$TYPE" == "CLANG_VANILA" ]; then
   executable_path="$WD/builds/build-clang-vanila/iqtree3"
 elif [ "$TYPE" == "INTEL_VANILA" ]; then
   executable_path="$WD/builds/build-intel-vanila/iqtree3"
 fi
+echo "GPU_TYPE='$GPU_TYPE' TYPE='$TYPE' -> executable_path='$executable_path'"
 
 iter=10
 module load linaro-forge/24.0.2
