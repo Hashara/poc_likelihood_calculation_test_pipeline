@@ -51,6 +51,8 @@ for i in $(seq 1 $NUM_TREES); do
         for type in "${executable_type[@]}"; do
             if [ "$TYPE" == "CLANG_VANILA" ]; then
                 executable_path="$WD/builds/build-clang-vanila/iqtree3"
+            elif [ "$TYPE" == "INTEL_VANILA" ]; then
+                executable_path="$WD/builds/build-intel-vanila/iqtree3"
             else
                 executable_path="$WD/builds/build-vanila/iqtree3"
             fi

@@ -33,6 +33,8 @@ elif [ "$TYPE" == "OPENMP_GPU_DEBUG_PROFILE" ]; then
   executable_path="$WD/builds/build-nvhpc-debug-prof-openmp-gpu/iqtree3"
 elif [ "$TYPE" == "CLANG_VANILA" ]; then
   executable_path="$WD/builds/build-clang-vanila/iqtree3"
+elif [ "$TYPE" == "INTEL_VANILA" ]; then
+  executable_path="$WD/builds/build-intel-vanila/iqtree3"
 fi
 
 iter=10

@@ -28,6 +28,7 @@ pipeline {
         booleanParam(name: 'OPENMP_GPU_DEBUG', defaultValue: false, description: 'OpenMP GPU with debug build?')
         booleanParam(name: 'OPENMP_GPU_DEBUG_PROFILE', defaultValue: false, description: 'OpenMP GPU with debug build + profiling instrumentation?')
         booleanParam(name: 'CLANG_VANILA', defaultValue: false, description: 'Clang CPU build (vanilla, no GPU acceleration)?')
+        booleanParam(name: 'INTEL_VANILA', defaultValue: false, description: 'Intel CPU build (vanilla, no GPU acceleration). Forces normalsr queue (Sapphire Rapids).')
         string(name: 'GPU_ARCH', defaultValue: '', description: 'GPU architecture for OpenACC build (e.g. cc70 for V100, cc80 for A100, cc90 for H100). Empty = multi-arch default (cc70,cc80,cc90)')
 
 
@@ -86,6 +87,7 @@ pipeline {
         OPENMP_GPU_DEBUG="${params.OPENMP_GPU_DEBUG}"
         OPENMP_GPU_DEBUG_PROFILE="${params.OPENMP_GPU_DEBUG_PROFILE}"
         CLANG_VANILA="${params.CLANG_VANILA}"
+        INTEL_VANILA="${params.INTEL_VANILA}"
         GPU_ARCH="${params.GPU_ARCH}"
 
 
@@ -162,6 +164,7 @@ pipeline {
                                 booleanParam(name: 'OPENMP_GPU_DEBUG', value: params.OPENMP_GPU_DEBUG),
                                 booleanParam(name: 'OPENMP_GPU_DEBUG_PROFILE', value: params.OPENMP_GPU_DEBUG_PROFILE),
                                 booleanParam(name: 'CLANG_VANILA', value: params.CLANG_VANILA),
+                                booleanParam(name: 'INTEL_VANILA', value: params.INTEL_VANILA),
                                 string(name: 'GPU_ARCH', value: params.GPU_ARCH),
                                 booleanParam(name: 'V100', value: params.V100),
                                 booleanParam(name: 'A100', value: params.A100),
@@ -201,9 +204,10 @@ pipeline {
                     if (params.OPENMP_GPU_DEBUG) backends << "OPENMP_GPU_DEBUG"
                     if (params.OPENMP_GPU_DEBUG_PROFILE) backends << "OPENMP_GPU_DEBUG_PROFILE"
                     if (params.CLANG_VANILA) backends << "CLANG_VANILA"
+                    if (params.INTEL_VANILA) backends << "INTEL_VANILA"
 
                     if (backends.isEmpty()) {
-                        error("No backend selected for profiling. Enable at least one of VANILA, CUDA, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE, OPENMP_GPU, OPENMP_GPU_PROFILE, OPENMP_GPU_DEBUG, OPENMP_GPU_DEBUG_PROFILE, CLANG_VANILA")
+                        error("No backend selected for profiling. Enable at least one of VANILA, CUDA, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE, OPENMP_GPU, OPENMP_GPU_PROFILE, OPENMP_GPU_DEBUG, OPENMP_GPU_DEBUG_PROFILE, CLANG_VANILA, INTEL_VANILA")
                     }
 
                     echo "Profiling backends: ${backends}"
@@ -211,6 +215,9 @@ pipeline {
                     for (backend in backends) {
 
                         echo "Profiling backend: ${backend}"
+
+                        // INTEL_VANILA binary is built for Sapphire Rapids — force normalsr queue
+                        def effectiveNormalsr = (backend == "INTEL_VANILA") ? "true" : "${NORMALSR}"
 
                         sh """
                         ssh ${NCI_ALIAS} << EOF
@@ -221,7 +228,7 @@ pipeline {
                             ${DATASET_PATH} ${RUN_ALIASES}_profile_${backend} \
                             ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} \
                             ${PROJECT_NAME} ${backend} ${H200} \
-                            "${IQTREE_ARGS}" ${WALL_TIME_FACTOR} ${TREE_MODE} ${NORMALSR}
+                            "${IQTREE_ARGS}" ${WALL_TIME_FACTOR} ${TREE_MODE} ${effectiveNormalsr}
 
                         """
                     }
@@ -248,9 +255,10 @@ pipeline {
                     if (params.OPENMP_GPU_DEBUG) backends << "OPENMP_GPU_DEBUG"
                     if (params.OPENMP_GPU_DEBUG_PROFILE) backends << "OPENMP_GPU_DEBUG_PROFILE"
                     if (params.CLANG_VANILA) backends << "CLANG_VANILA"
+                    if (params.INTEL_VANILA) backends << "INTEL_VANILA"
 
                     if (backends.isEmpty()) {
-                        error("No backend selected for Nsys profiling. Enable at least one of VANILA, CUDA, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE, OPENMP_GPU, OPENMP_GPU_PROFILE, OPENMP_GPU_DEBUG, OPENMP_GPU_DEBUG_PROFILE, CLANG_VANILA")
+                        error("No backend selected for Nsys profiling. Enable at least one of VANILA, CUDA, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE, OPENMP_GPU, OPENMP_GPU_PROFILE, OPENMP_GPU_DEBUG, OPENMP_GPU_DEBUG_PROFILE, CLANG_VANILA, INTEL_VANILA")
                     }
 
                     echo "Nsys profiling backends: ${backends}"
@@ -258,6 +266,9 @@ pipeline {
                     for (backend in backends) {
 
                         echo "Nsys profiling backend: ${backend}"
+
+                        // INTEL_VANILA binary is built for Sapphire Rapids — force normalsr queue
+                        def effectiveNormalsr = (backend == "INTEL_VANILA") ? "true" : "${NORMALSR}"
 
                         sh """
                         ssh ${NCI_ALIAS} << EOF
@@ -268,7 +279,7 @@ pipeline {
                             ${DATASET_PATH} ${RUN_ALIASES}_nsys_${backend} \
                             ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} \
                             ${PROJECT_NAME} ${backend} ${H200} \
-                            "${IQTREE_ARGS}" ${WALL_TIME_FACTOR} ${TREE_MODE} ${NORMALSR} \
+                            "${IQTREE_ARGS}" ${WALL_TIME_FACTOR} ${TREE_MODE} ${effectiveNormalsr} \
                             "${params.ENV_VARS}"
 
                         """
@@ -296,9 +307,10 @@ pipeline {
                     if (params.OPENMP_GPU_DEBUG) backends << "OPENMP_GPU_DEBUG"
                     if (params.OPENMP_GPU_DEBUG_PROFILE) backends << "OPENMP_GPU_DEBUG_PROFILE"
                     if (params.CLANG_VANILA) backends << "CLANG_VANILA"
+                    if (params.INTEL_VANILA) backends << "INTEL_VANILA"
 
                     if (backends.isEmpty()) {
-                        error("No backend selected for NCU profiling. Enable at least one of VANILA, CUDA, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE, OPENMP_GPU, OPENMP_GPU_PROFILE, OPENMP_GPU_DEBUG, OPENMP_GPU_DEBUG_PROFILE, CLANG_VANILA")
+                        error("No backend selected for NCU profiling. Enable at least one of VANILA, CUDA, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE, OPENMP_GPU, OPENMP_GPU_PROFILE, OPENMP_GPU_DEBUG, OPENMP_GPU_DEBUG_PROFILE, CLANG_VANILA, INTEL_VANILA")
                     }
 
                     echo "NCU profiling backends: ${backends}"
@@ -306,6 +318,9 @@ pipeline {
                     for (backend in backends) {
 
                         echo "NCU profiling backend: ${backend}"
+
+                        // INTEL_VANILA binary is built for Sapphire Rapids — force normalsr queue
+                        def effectiveNormalsr = (backend == "INTEL_VANILA") ? "true" : "${NORMALSR}"
 
                         sh """
                         ssh ${NCI_ALIAS} << EOF
@@ -319,7 +334,7 @@ pipeline {
                             ${DATASET_PATH} ${RUN_ALIASES}_ncu_${backend} \
                             ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} \
                             ${PROJECT_NAME} ${backend} ${H200} \
-                            "${IQTREE_ARGS}" ${WALL_TIME_FACTOR} ${TREE_MODE} ${NORMALSR} \
+                            "${IQTREE_ARGS}" ${WALL_TIME_FACTOR} ${TREE_MODE} ${effectiveNormalsr} \
                             "${params.ENV_VARS}"
 
                         """
@@ -346,9 +361,10 @@ pipeline {
                     if (params.OPENMP_GPU_DEBUG) backends << "OPENMP_GPU_DEBUG"
                     if (params.OPENMP_GPU_DEBUG_PROFILE) backends << "OPENMP_GPU_DEBUG_PROFILE"
                     if (params.CLANG_VANILA) backends << "CLANG_VANILA"
+                    if (params.INTEL_VANILA) backends << "INTEL_VANILA"
 
                     if (backends.isEmpty()) {
-                        error("No backend selected for energy profiling. Enable at least one of VANILA, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE, CLANG_VANILA")
+                        error("No backend selected for energy profiling. Enable at least one of VANILA, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE, CLANG_VANILA, INTEL_VANILA")
                     }
 
                     echo "Energy profiling backends: ${backends}"
@@ -356,6 +372,9 @@ pipeline {
                     for (backend in backends) {
 
                         echo "Energy profiling backend: ${backend}"
+
+                        // INTEL_VANILA binary is built for Sapphire Rapids — force normalsr queue
+                        def effectiveNormalsr = (backend == "INTEL_VANILA") ? "true" : "${NORMALSR}"
 
                         sh """
                         ssh ${NCI_ALIAS} << EOF
@@ -367,7 +386,7 @@ pipeline {
                             ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} \
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} \
                             ${PROJECT_NAME} ${backend} ${H200} \
-                            "${IQTREE_ARGS}" ${WALL_TIME_FACTOR} ${TREE_MODE} ${NORMALSR}
+                            "${IQTREE_ARGS}" ${WALL_TIME_FACTOR} ${TREE_MODE} ${effectiveNormalsr}
 
                         """
                     }
@@ -394,9 +413,10 @@ pipeline {
                     if (params.OPENMP_GPU_DEBUG) backends << "OPENMP_GPU_DEBUG"
                     if (params.OPENMP_GPU_DEBUG_PROFILE) backends << "OPENMP_GPU_DEBUG_PROFILE"
                     if (params.CLANG_VANILA) backends << "CLANG_VANILA"
+                    if (params.INTEL_VANILA) backends << "INTEL_VANILA"
 
                     if (backends.isEmpty()) {
-                        error("No backend selected. Enable at least one of VANILA, CUDA, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE, OPENMP_GPU, OPENMP_GPU_PROFILE, OPENMP_GPU_DEBUG, OPENMP_GPU_DEBUG_PROFILE, CLANG_VANILA")
+                        error("No backend selected. Enable at least one of VANILA, CUDA, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE, OPENMP_GPU, OPENMP_GPU_PROFILE, OPENMP_GPU_DEBUG, OPENMP_GPU_DEBUG_PROFILE, CLANG_VANILA, INTEL_VANILA")
                     }
 
                     echo "Selected backends: ${backends}"
@@ -414,6 +434,10 @@ pipeline {
 
                             echo "Running backend: ${backend}"
                             echo "Running ...."
+
+                            // INTEL_VANILA binary is built for Sapphire Rapids — force normalsr queue
+                            def effectiveNormalsr = (backend == "INTEL_VANILA") ? "true" : "${NORMALSR}"
+
                             sh """
                             ssh ${NCI_ALIAS} << EOF
                             cd ${WORKDIR}
@@ -422,7 +446,7 @@ pipeline {
                             ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} \
                             ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} \
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${H200} \
-                            ${backend} "${IQTREE_ARGS}" ${NUM_TREES} ${WALL_TIME_FACTOR} ${TREE_MODE} ${NORMALSR}
+                            ${backend} "${IQTREE_ARGS}" ${NUM_TREES} ${WALL_TIME_FACTOR} ${TREE_MODE} ${effectiveNormalsr}
 
                             """
                         }
@@ -431,6 +455,9 @@ pipeline {
                         for (backend in backends) {
 
                             echo "Running backend: ${backend}"
+
+                            // INTEL_VANILA binary is built for Sapphire Rapids — force normalsr queue
+                            def effectiveNormalsr = (backend == "INTEL_VANILA") ? "true" : "${NORMALSR}"
 
                             sh """
                         ssh ${NCI_ALIAS} << EOF
@@ -442,7 +469,7 @@ pipeline {
                             ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} \
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} \
                             ${PROJECT_NAME} ${backend} ${H200} ${ALL_NODE} \
-                            "${IQTREE_ARGS}" ${NUM_TREES} ${WALL_TIME_FACTOR} ${TREE_MODE} ${NORMALSR} \
+                            "${IQTREE_ARGS}" ${NUM_TREES} ${WALL_TIME_FACTOR} ${TREE_MODE} ${effectiveNormalsr} \
                             "${params.ENV_VARS}"
 
                         """
