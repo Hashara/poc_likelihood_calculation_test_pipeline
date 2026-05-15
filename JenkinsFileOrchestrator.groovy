@@ -76,6 +76,11 @@ pipeline {
             description:  'Enable profiling in child builds.'
         )
         booleanParam(
+            name:         'RESERVE_FULL_NODE',
+            defaultValue: false,
+            description:  'Reserve the whole 104-CPU normalsr node but pass -nt 103 to iqtree (leave 1 core idle for OS). Only effective for rows with iqtree_omp=true, cpu_nodes=104, and normalsr enabled.'
+        )
+        booleanParam(
             name:         'ENERGY_PROFILE',
             defaultValue: false,
             description:  'Enable energy profiling (Linaro Forge perf-report) in child builds.'
@@ -401,6 +406,7 @@ pipeline {
                                     string(name: 'GPU_ARCH',             value: cGpuArch),
                                     // INTEL_VANILA binary targets Sapphire Rapids — force normalsr queue
                                     booleanParam(name: 'NORMALSR',       value: cNormalsr.toBoolean() || cExecType == 'INTEL_VANILA'),
+                                    booleanParam(name: 'RESERVE_FULL_NODE', value: params.RESERVE_FULL_NODE),
                                     string(name: 'NUM_TREES',            value: numTrees),
                                     string(name: 'IQ_TREE_GIT_BRANCH',  value: 'main'),
                                 ],

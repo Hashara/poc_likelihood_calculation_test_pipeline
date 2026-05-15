@@ -13,9 +13,12 @@ IQTREE_ARGS=$ARG8
 NUM_TREES=${ARG9:-10}
 TREE_MODE=${ARG10:-te}
 TYPE=${ARG11:-VANILA}
+# -nt value passed by qsub; falls back to ncpus when not supplied (legacy callers).
+# Whole-node normalsr reservation uses ncpus=104, -nt=103 (1 core reserved for OS).
+NT_THREADS=${ARG12:-$IQTREE_THREADS}
 
 if [ "$AUTO" == "true" ]; then
-    IQTREE_THREADS="AUTO"
+    NT_THREADS="AUTO"
     echo "Auto opertation for IQ-TREE threads enabled."
 fi
 
@@ -63,11 +66,11 @@ for i in $(seq 1 $NUM_TREES); do
                 omp_prefix="${UNIQUE_NAME/tree_1/tree_${i}}"
                 if [ "$AA_or_DNA" = "AA" ]; then
                     echo "Using amino acid data"
-                    $executable_path -s alignment_${length}.phy $tree_args --prefix output_${omp_prefix}_aa ${IQTREE_ARGS} -nt $IQTREE_THREADS
+                    $executable_path -s alignment_${length}.phy $tree_args --prefix output_${omp_prefix}_aa ${IQTREE_ARGS} -nt $NT_THREADS
 
                 elif [ "$AA_or_DNA" = "DNA" ]; then
                     echo "Using DNA data"
-                    $executable_path -s alignment_${length}.phy $tree_args --prefix output_${omp_prefix} ${IQTREE_ARGS} -nt $IQTREE_THREADS
+                    $executable_path -s alignment_${length}.phy $tree_args --prefix output_${omp_prefix} ${IQTREE_ARGS} -nt $NT_THREADS
 
                 fi
 

@@ -45,6 +45,7 @@ pipeline {
         booleanParam(name: 'A100', defaultValue: false, description: 'Use A100 GPUs')
         booleanParam(name: 'H200', defaultValue: false, description: 'Use H200 GPUs' )
         booleanParam(name: 'NORMALSR', defaultValue: false, description: 'Use normalsr queue instead of normal for CPU-only jobs (higher memory limits)')
+        booleanParam(name: 'RESERVE_FULL_NODE', defaultValue: false, description: 'Reserve the whole 104-CPU normalsr node but pass -nt 103 to iqtree (leave 1 core idle for OS). Only effective when NORMALSR=true and cpu_nodes=104.')
         booleanParam(name: 'ALL_NODE', defaultValue: false, description: 'Use whole node and execute parallely')
 
         string(name: 'IQTREE_ARGS', defaultValue: '-m Poisson -blfix --kernel-nonrev -vvv', description: 'Additional IQ-TREE arguments (e.g. -m Poisson -blfix --kernel-nonrev -vvv)')
@@ -104,6 +105,7 @@ pipeline {
         A100 = "${params.A100}"
         H200 = "${params.H200}"
         NORMALSR = "${params.NORMALSR}"
+        RESERVE_FULL_NODE = "${params.RESERVE_FULL_NODE}"
         ALL_NODE = "${params.ALL_NODE}"
 
         IQTREE_ARGS = "${params.IQTREE_ARGS}"
@@ -446,7 +448,7 @@ pipeline {
                             ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} \
                             ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} \
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} ${PROJECT_NAME} ${H200} \
-                            ${backend} "${IQTREE_ARGS}" ${NUM_TREES} ${WALL_TIME_FACTOR} ${TREE_MODE} ${effectiveNormalsr}
+                            ${backend} "${IQTREE_ARGS}" ${NUM_TREES} ${WALL_TIME_FACTOR} ${TREE_MODE} ${effectiveNormalsr} ${RESERVE_FULL_NODE}
 
                             """
                         }
@@ -470,7 +472,7 @@ pipeline {
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} \
                             ${PROJECT_NAME} ${backend} ${H200} ${ALL_NODE} \
                             "${IQTREE_ARGS}" ${NUM_TREES} ${WALL_TIME_FACTOR} ${TREE_MODE} ${effectiveNormalsr} \
-                            "${params.ENV_VARS}"
+                            "${params.ENV_VARS}" ${RESERVE_FULL_NODE}
 
                         """
                         }
