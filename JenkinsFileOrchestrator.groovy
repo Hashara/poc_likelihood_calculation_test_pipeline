@@ -168,7 +168,7 @@ pipeline {
         stage('Copy Scripts') {
             steps {
                 script {
-                    def cfg      = readYaml file: "config_repo/${params.CONFIG_YAML_PATH}"
+                    def cfg      = readYaml file: "config_repo/${params.CONFIG_YAML_PATH?.trim()}"
                     def nciAlias = cfg.general?.nci_alias ?: ''
                     def workdir  = params.WORKDIR?.trim() ?: ''
 
@@ -187,7 +187,9 @@ pipeline {
                 script {
 
                     // ── Load YAML ────────────────────────────────────────────
-                    def cfg = readYaml file: "config_repo/${params.CONFIG_YAML_PATH}"
+                    def yamlPath = params.CONFIG_YAML_PATH?.trim()
+                    def csvPath  = params.CONFIG_CSV_PATH?.trim()
+                    def cfg = readYaml file: "config_repo/${yamlPath}"
 
                     // Required
                     def workdir           = params.WORKDIR?.trim()           ?: ''
@@ -233,7 +235,7 @@ pipeline {
                     echo "=================================="
 
                     // ── Load CSV ─────────────────────────────────────────────
-                    def csvText  = readFile("config_repo/${params.CONFIG_CSV_PATH}")
+                    def csvText  = readFile("config_repo/${csvPath}")
                     def lines    = csvText.trim().split('\n') as List
 
                     // Drop header row
@@ -243,7 +245,7 @@ pipeline {
                     lines = lines.findAll { it?.trim() }
 
                     if (lines.isEmpty()) {
-                        error("CSV has no data rows: ${params.CONFIG_CSV_PATH}")
+                        error("CSV has no data rows: ${csvPath}")
                     }
 
                     echo "Loaded ${lines.size()} test row(s) — launching in parallel"
