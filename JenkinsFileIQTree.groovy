@@ -388,7 +388,7 @@ pipeline {
                             ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} \
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} \
                             ${PROJECT_NAME} ${backend} ${H200} \
-                            "${IQTREE_ARGS}" ${WALL_TIME_FACTOR} ${TREE_MODE} ${effectiveNormalsr}
+                            "${IQTREE_ARGS}" ${WALL_TIME_FACTOR} ${TREE_MODE} ${effectiveNormalsr} ${RESERVE_FULL_NODE}
 
                         """
                     }

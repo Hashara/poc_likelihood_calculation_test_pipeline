@@ -24,6 +24,7 @@ IQTREE_ARGS=${17}
 wall_time_factor=${18:-1}
 TREE_MODE=${19:-te}
 NORMALSR=${20:-false}
+RESERVE_FULL_NODE=${21:-false}
 
 # Determine CPU queue name and per-CPU memory ratio
 # normal: 190 GB / 48 CPUs = ~3.96 GB/CPU → 4 GB
@@ -86,23 +87,35 @@ for r in $(seq 1 $repeat); do
           fi
 
       elif [ "$TYPE" == "VANILA" ] || [ "$TYPE" == "CLANG_VANILA" ] || [ "$TYPE" == "INTEL_VANILA" ]; then
-          # VANILA/CLANG_VANILA/INTEL_VANILA are CPU-only; INTEL_VANILA forces normalsr upstream
-          memory=$((mem_factor * 1 * 20))
-          export ARG1="$DATASET_DIR" ARG2="$local_unique_name" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$TYPE" ARG7="$IQTREE_ARGS" ARG8="$TREE_MODE"
-          echo "[qsub] energy CPU: walltime=$wall_time mem=${memory}GB ARG1=$ARG1 ARG2=$ARG2 ARG3=$ARG3 ARG4=$ARG4 ARG5=$ARG5 ARG6=$ARG6 ARG7='$ARG7' ARG8=$ARG8"
-         qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=1,mem="${memory}GB",jobfs=10GB,wd -q${CPU_QUEUE} -N energy_iqtree_${TYPE} \
-                -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8 "$WD"/energy_measure/iqtree/test_script_iqtree.sh
+          # VANILA/CLANG_VANILA/INTEL_VANILA are CPU-only; INTEL_VANILA forces normalsr upstream.
+          # Gate on $IQTREE so we don't double-submit a 1-cpu single-thread job alongside the
+          # IQTREE_OPENMP block below (orchestrator sets IQTREE=false when iqtree_omp=true).
+          if [ "$IQTREE" == true ]; then
+              memory=$((mem_factor * 1 * 20))
+              export ARG1="$DATASET_DIR" ARG2="$local_unique_name" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$TYPE" ARG7="$IQTREE_ARGS" ARG8="$TREE_MODE"
+              echo "[qsub] energy CPU: walltime=$wall_time mem=${memory}GB ARG1=$ARG1 ARG2=$ARG2 ARG3=$ARG3 ARG4=$ARG4 ARG5=$ARG5 ARG6=$ARG6 ARG7='$ARG7' ARG8=$ARG8"
+              qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=1,mem="${memory}GB",jobfs=10GB,wd -q${CPU_QUEUE} -N energy_iqtree_${TYPE} \
+                    -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8 "$WD"/energy_measure/iqtree/test_script_iqtree.sh
+          fi
       fi
 
       if [ "$IQTREE_OPENMP" == true ]; then
           memory=$((mem_factor * IQTREE_THREADS * MEM_PER_CPU))
+          # Cap memory at 500 GB whenever 104 threads on normalsr (full node memory budget)
           if [ "$NORMALSR" == true ] && [ "$IQTREE_THREADS" == "104" ]; then
               memory=500
           fi
-          export ARG1="$DATASET_DIR" ARG2="$local_unique_name" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$IQTREE_THREADS" ARG7="$TYPE" ARG8="$IQTREE_ARGS" ARG9="$TREE_MODE"
-          echo "[qsub] energy OMP: walltime=$wall_time mem=${memory}GB ARG1=$ARG1 ARG2=$ARG2 ARG3=$ARG3 ARG4=$ARG4 ARG5=$ARG5 ARG6=$ARG6 ARG7=$ARG7 ARG8='$ARG8' ARG9=$ARG9"
+          # Whole-node reservation (opt-in): keep ncpus=104 but pass -nt 103 to iqtree
+          # so one core is left idle for the OS.
+          if [ "$RESERVE_FULL_NODE" == true ] && [ "$NORMALSR" == true ] && [ "$IQTREE_THREADS" == "104" ]; then
+              iqtree_nt=103
+          else
+              iqtree_nt=$IQTREE_THREADS
+          fi
+          export ARG1="$DATASET_DIR" ARG2="$local_unique_name" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$IQTREE_THREADS" ARG7="$TYPE" ARG8="$IQTREE_ARGS" ARG9="$TREE_MODE" ARG10="$iqtree_nt"
+          echo "[qsub] energy OMP: walltime=$wall_time mem=${memory}GB ncpus=$IQTREE_THREADS nt=$iqtree_nt ARG1=$ARG1 ARG2=$ARG2 ARG3=$ARG3 ARG4=$ARG4 ARG5=$ARG5 ARG6=$ARG6 ARG7=$ARG7 ARG8='$ARG8' ARG9=$ARG9 ARG10=$ARG10"
          qsub -P${PROJECT_NAME} -lwalltime=$wall_time,ncpus=$IQTREE_THREADS,mem="${memory}GB",jobfs=10GB,wd -q${CPU_QUEUE} -N energy_iqtree_omp_${TYPE} \
-                -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9 "$WD"/energy_measure/iqtree/test_script_iqtree_omp.sh
+                -v ARG1,ARG2,ARG3,ARG4,ARG5,ARG6,ARG7,ARG8,ARG9,ARG10 "$WD"/energy_measure/iqtree/test_script_iqtree_omp.sh
       fi
   done
 done

@@ -11,6 +11,9 @@ IQTREE_THREADS=$ARG6
 TYPE=$ARG7
 IQTREE_ARGS=$ARG8
 TREE_MODE=${ARG9:-te}
+# -nt value passed by qsub; falls back to ncpus when not supplied (legacy callers).
+# Whole-node normalsr reservation uses ncpus=104, -nt=103 (1 core reserved for OS).
+NT_THREADS=${ARG10:-$IQTREE_THREADS}
 
 executable_type=("iqtree")
 
@@ -67,14 +70,14 @@ for i in $(seq 1 $iter); do
             echo "Using executable: $executable_path"
 
             if [ -f "$executable_path" ]; then
-                echo "Running energy measurement for tree: $i length: $length with $type ($TYPE) threads: $IQTREE_THREADS"
+                echo "Running energy measurement for tree: $i length: $length with $type ($TYPE) ncpus: $IQTREE_THREADS -nt: $NT_THREADS"
                 if [ "$AA_or_DNA" = "AA" ]; then
                     echo "Using amino acid data"
-                    perf-report --no-mpi --output=perf_report_${UNIQUE_NAME}_tree${i}_aa $executable_path -s alignment_${length}.phy $tree_args --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} ${IQTREE_ARGS} -nt $IQTREE_THREADS
+                    perf-report --no-mpi --output=perf_report_${UNIQUE_NAME}_tree${i}_aa $executable_path -s alignment_${length}.phy $tree_args --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} ${IQTREE_ARGS} -nt $NT_THREADS
 
                 elif [ "$AA_or_DNA" = "DNA" ]; then
                     echo "Using DNA data"
-                    perf-report --no-mpi --output=perf_report_${UNIQUE_NAME}_tree${i}_dna $executable_path -s alignment_${length}.phy $tree_args --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} ${IQTREE_ARGS} -nt $IQTREE_THREADS
+                    perf-report --no-mpi --output=perf_report_${UNIQUE_NAME}_tree${i}_dna $executable_path -s alignment_${length}.phy $tree_args --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} ${IQTREE_ARGS} -nt $NT_THREADS
 
                 fi
 
