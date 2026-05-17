@@ -94,9 +94,9 @@ for r in $(seq 1 $repeat); do
 
       if [ "$IQTREE_OPENMP" == true ]; then
           memory=$((mem_factor * IQTREE_THREADS * MEM_PER_CPU))
-          # Cap memory at 500 GB whenever 104 threads on normalsr (full node memory budget)
+          # Cap memory at 510 GB whenever 104 threads on normalsr (full node memory budget)
           if [ "$NORMALSR" == true ] && [ "$IQTREE_THREADS" == "104" ]; then
-              memory=500
+              memory=510
           fi
           # Whole-node reservation (opt-in): keep ncpus=104 but pass -nt 103 to iqtree
           # so one core is left idle for the OS.
