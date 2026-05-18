@@ -17,7 +17,7 @@
 //
 // YAML  → common params: cluster, execution settings, all_node flag, dataset base path, num_trees (workdir now a param)
 // RUN_ALIASES param → prefix for per-row run alias (was previously in YAML as general.run_aliases)
-// CSV   → per-test params: data_type, alignment_length, tree_type, execution_type, iqtree_args, model, gpu_type, iqtree_omp, cpu_nodes, auto, factor, taxa (optional), wall_time_factor (optional), tree_mode (optional: te|t|none), unique_name (optional: appended to RUN_ALIASES), normalsr (optional: true|false, default false; auto-forced true for INTEL_VANILA execution_type — Sapphire Rapids binary)
+// CSV   → per-test params: data_type, alignment_length, tree_type, execution_type, iqtree_args, model, gpu_type, iqtree_omp, cpu_nodes, auto, factor, taxa (optional), wall_time_factor (optional), tree_mode (optional: te|t|none), unique_name (optional: appended to RUN_ALIASES), normalsr (optional: true|false, default false). NOTE: INTEL_VANILA binary is built for Sapphire Rapids — set normalsr=true for those rows or the job will likely SIGILL on the normal queue (Cascade Lake).
 //
 // Per-row runtime construction
 // ────────────────────────────
@@ -406,8 +406,9 @@ pipeline {
                                     string(name: 'WALL_TIME_FACTOR',     value: cWallTimeFactor),
                                     string(name: 'TREE_MODE',            value: cTreeMode),
                                     string(name: 'GPU_ARCH',             value: cGpuArch),
-                                    // INTEL_VANILA binary targets Sapphire Rapids — force normalsr queue
-                                    booleanParam(name: 'NORMALSR',       value: cNormalsr.toBoolean() || cExecType == 'INTEL_VANILA'),
+                                    // NORMALSR is taken from the CSV as-is. Caller is responsible for setting
+                                    // normalsr=true on INTEL_VANILA rows (Sapphire Rapids binary).
+                                    booleanParam(name: 'NORMALSR',       value: cNormalsr.toBoolean()),
                                     booleanParam(name: 'RESERVE_FULL_NODE', value: params.RESERVE_FULL_NODE),
                                     string(name: 'NUM_TREES',            value: numTrees),
                                     string(name: 'IQ_TREE_GIT_BRANCH',  value: 'main'),

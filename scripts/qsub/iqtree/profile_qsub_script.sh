@@ -79,7 +79,7 @@ for r in $(seq 1 $repeat); do
           fi
 
       elif [ "$TYPE" == "VANILA" ] || [ "$TYPE" == "CLANG_VANILA" ] || [ "$TYPE" == "INTEL_VANILA" ]; then
-          # VANILA/CLANG_VANILA/INTEL_VANILA are CPU-only; INTEL_VANILA forces normalsr upstream
+          # VANILA/CLANG_VANILA/INTEL_VANILA are CPU-only; set NORMALSR=true upstream for INTEL_VANILA (Sapphire Rapids binary)
           memory=$((mem_factor * 1 * 20))
           export ARG1="$DATASET_DIR" ARG2="$local_unique_name" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$TYPE" ARG7="$IQTREE_ARGS" ARG8="$TREE_MODE"
           echo "[qsub] profile CPU: walltime=$wall_time mem=${memory}GB ARG1=$ARG1 ARG2=$ARG2 ARG3=$ARG3 ARG4=$ARG4 ARG5=$ARG5 ARG6=$ARG6 ARG7='$ARG7' ARG8=$ARG8"

@@ -87,7 +87,7 @@ for r in $(seq 1 $repeat); do
           fi
 
       elif [ "$TYPE" == "VANILA" ] || [ "$TYPE" == "CLANG_VANILA" ] || [ "$TYPE" == "INTEL_VANILA" ]; then
-          # VANILA/CLANG_VANILA/INTEL_VANILA are CPU-only; INTEL_VANILA forces normalsr upstream.
+          # VANILA/CLANG_VANILA/INTEL_VANILA are CPU-only; set NORMALSR=true upstream for INTEL_VANILA (Sapphire Rapids binary).
           # Gate on $IQTREE so we don't double-submit a 1-cpu single-thread job alongside the
           # IQTREE_OPENMP block below (orchestrator sets IQTREE=false when iqtree_omp=true).
           if [ "$IQTREE" == true ]; then

@@ -91,7 +91,7 @@ for r in $(seq 1 $repeat); do
   for data_type in "${data_types[@]}"; do
 
       if [ "$TYPE" == "VANILA" ] || [ "$TYPE" == "CLANG_VANILA" ] || [ "$TYPE" == "INTEL_VANILA" ]; then
-          # CPU-only backends — INTEL_VANILA forces normalsr upstream
+          # CPU-only backends — set NORMALSR=true upstream for INTEL_VANILA (Sapphire Rapids binary)
           memory=$((mem_factor * 1 * 20))
           export ARG1="$DATASET_DIR" ARG2="$local_unique_name" ARG3="$WD" ARG4="$data_type" ARG5="$length" ARG6="$TYPE" ARG7="$IQTREE_ARGS" ARG8="$TREE_MODE"
           echo "[qsub] NCU CPU: walltime=$wall_time mem=${memory}GB data=$data_type len=$length"

@@ -28,7 +28,7 @@ pipeline {
         booleanParam(name: 'OPENMP_GPU_DEBUG', defaultValue: false, description: 'OpenMP GPU with debug build?')
         booleanParam(name: 'OPENMP_GPU_DEBUG_PROFILE', defaultValue: false, description: 'OpenMP GPU with debug build + profiling instrumentation?')
         booleanParam(name: 'CLANG_VANILA', defaultValue: false, description: 'Clang CPU build (vanilla, no GPU acceleration)?')
-        booleanParam(name: 'INTEL_VANILA', defaultValue: false, description: 'Intel CPU build (vanilla, no GPU acceleration). Forces normalsr queue (Sapphire Rapids).')
+        booleanParam(name: 'INTEL_VANILA', defaultValue: false, description: 'Intel CPU build (vanilla, no GPU acceleration). Binary targets Sapphire Rapids — set NORMALSR=true to route to normalsr, otherwise the job runs on the normal queue (Cascade Lake) and will likely SIGILL.')
         string(name: 'GPU_ARCH', defaultValue: '', description: 'GPU architecture for OpenACC build (e.g. cc70 for V100, cc80 for A100, cc90 for H100). Empty = multi-arch default (cc70,cc80,cc90)')
 
 
@@ -218,8 +218,8 @@ pipeline {
 
                         echo "Profiling backend: ${backend}"
 
-                        // INTEL_VANILA binary is built for Sapphire Rapids — force normalsr queue
-                        def effectiveNormalsr = (backend == "INTEL_VANILA") ? "true" : "${NORMALSR}"
+                        // NORMALSR is honoured as set by the caller (INTEL_VANILA needs normalsr=true on Sapphire Rapids).
+                        def effectiveNormalsr = "${NORMALSR}"
 
                         sh """
                         ssh ${NCI_ALIAS} << EOF
@@ -269,8 +269,8 @@ pipeline {
 
                         echo "Nsys profiling backend: ${backend}"
 
-                        // INTEL_VANILA binary is built for Sapphire Rapids — force normalsr queue
-                        def effectiveNormalsr = (backend == "INTEL_VANILA") ? "true" : "${NORMALSR}"
+                        // NORMALSR is honoured as set by the caller (INTEL_VANILA needs normalsr=true on Sapphire Rapids).
+                        def effectiveNormalsr = "${NORMALSR}"
 
                         sh """
                         ssh ${NCI_ALIAS} << EOF
@@ -321,8 +321,8 @@ pipeline {
 
                         echo "NCU profiling backend: ${backend}"
 
-                        // INTEL_VANILA binary is built for Sapphire Rapids — force normalsr queue
-                        def effectiveNormalsr = (backend == "INTEL_VANILA") ? "true" : "${NORMALSR}"
+                        // NORMALSR is honoured as set by the caller (INTEL_VANILA needs normalsr=true on Sapphire Rapids).
+                        def effectiveNormalsr = "${NORMALSR}"
 
                         sh """
                         ssh ${NCI_ALIAS} << EOF
@@ -375,8 +375,8 @@ pipeline {
 
                         echo "Energy profiling backend: ${backend}"
 
-                        // INTEL_VANILA binary is built for Sapphire Rapids — force normalsr queue
-                        def effectiveNormalsr = (backend == "INTEL_VANILA") ? "true" : "${NORMALSR}"
+                        // NORMALSR is honoured as set by the caller (INTEL_VANILA needs normalsr=true on Sapphire Rapids).
+                        def effectiveNormalsr = "${NORMALSR}"
 
                         sh """
                         ssh ${NCI_ALIAS} << EOF
@@ -437,8 +437,8 @@ pipeline {
                             echo "Running backend: ${backend}"
                             echo "Running ...."
 
-                            // INTEL_VANILA binary is built for Sapphire Rapids — force normalsr queue
-                            def effectiveNormalsr = (backend == "INTEL_VANILA") ? "true" : "${NORMALSR}"
+                            // NORMALSR is honoured as set by the caller (INTEL_VANILA needs normalsr=true on Sapphire Rapids).
+                            def effectiveNormalsr = "${NORMALSR}"
 
                             sh """
                             ssh ${NCI_ALIAS} << EOF
@@ -458,8 +458,8 @@ pipeline {
 
                             echo "Running backend: ${backend}"
 
-                            // INTEL_VANILA binary is built for Sapphire Rapids — force normalsr queue
-                            def effectiveNormalsr = (backend == "INTEL_VANILA") ? "true" : "${NORMALSR}"
+                            // NORMALSR is honoured as set by the caller (INTEL_VANILA needs normalsr=true on Sapphire Rapids).
+                            def effectiveNormalsr = "${NORMALSR}"
 
                             sh """
                         ssh ${NCI_ALIAS} << EOF
