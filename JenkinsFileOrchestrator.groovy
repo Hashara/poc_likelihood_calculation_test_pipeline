@@ -17,7 +17,7 @@
 //
 // YAML  → common params: cluster, execution settings, all_node flag, dataset base path, num_trees (workdir now a param)
 // RUN_ALIASES param → prefix for per-row run alias (was previously in YAML as general.run_aliases)
-// CSV   → per-test params: data_type, alignment_length, tree_type, execution_type, iqtree_args, model, gpu_type, iqtree_omp, cpu_nodes, auto, factor, taxa (optional), wall_time_factor (optional), tree_mode (optional: te|t|none), unique_name (optional: appended to RUN_ALIASES), normalsr (optional: true|false, default false). NOTE: INTEL_VANILA binary is built for Sapphire Rapids — set normalsr=true for those rows or the job will likely SIGILL on the normal queue (Cascade Lake).
+// CSV   → per-test params: data_type, alignment_length, tree_type, execution_type, iqtree_args, model, gpu_type, iqtree_omp, cpu_nodes, auto, factor, taxa (optional), wall_time_factor (optional), tree_mode (optional: te|t|none), unique_name (optional: appended to RUN_ALIASES), normalsr (optional: true|false, default false). NOTE: INTEL_VANILA binary is built for Sapphire Rapids — set normalsr=true for those rows or the job will likely SIGILL on the normal queue (Cascade Lake). INTEL_VANILA_CLX is built for Cascade Lake — keep normalsr=false (runs on the normal queue).
 //
 // Per-row runtime construction
 // ────────────────────────────
@@ -371,6 +371,7 @@ pipeline {
                                     booleanParam(name: 'OPENMP_GPU_DEBUG_PROFILE', value: cExecType == 'OPENMP_GPU_DEBUG_PROFILE'),
                                     booleanParam(name: 'CLANG_VANILA',          value: cExecType == 'CLANG_VANILA'),
                                     booleanParam(name: 'INTEL_VANILA',          value: cExecType == 'INTEL_VANILA'),
+                                    booleanParam(name: 'INTEL_VANILA_CLX',      value: cExecType == 'INTEL_VANILA_CLX'),
                                     string(name: 'IQTREE_ARGS',  value: cFullArgs),
                                     string(name: 'DATASET_PATH', value: cDatasetPath),
                                     string(name: 'RUN_ALIASES',  value: cRunAlias),
