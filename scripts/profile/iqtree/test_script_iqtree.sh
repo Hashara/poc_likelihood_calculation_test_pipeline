@@ -38,6 +38,8 @@ elif [ "$TYPE" == "CLANG_VANILA" ]; then
   executable_path="$WD/builds/build-clang-vanila/iqtree3"
 elif [ "$TYPE" == "INTEL_VANILA" ]; then
   executable_path="$WD/builds/build-intel-vanila/iqtree3"
+elif [ "$TYPE" == "INTEL_VANILA_CLX" ]; then
+  executable_path="$WD/builds/build-intel-vanila-clx/iqtree3"
 fi
 
 iter=1
