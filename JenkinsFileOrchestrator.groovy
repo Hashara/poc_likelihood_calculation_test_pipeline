@@ -78,7 +78,7 @@ pipeline {
         booleanParam(
             name:         'RESERVE_FULL_NODE',
             defaultValue: false,
-            description:  'Reserve the whole 104-CPU normalsr node but pass -nt 103 to iqtree (leave 1 core idle for OS). Only effective for rows with iqtree_omp=true, cpu_nodes=104, and normalsr enabled.'
+            description:  'Reserve the whole CPU node but pass -nt (node CPUs - 1) to iqtree (leave 1 core idle for OS). Only effective for rows with iqtree_omp=true and either cpu_nodes=104+normalsr (-nt 103) or cpu_nodes=48 on the normal queue (-nt 47).'
         )
         booleanParam(
             name:         'ENERGY_PROFILE',

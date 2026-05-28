@@ -13,7 +13,8 @@ IQTREE_ARGS=$ARG8
 TREE_MODE=${ARG9:-te}
 TYPE=${ARG10:-VANILA}
 # -nt value passed by qsub; falls back to ncpus when not supplied (legacy callers).
-# Whole-node normalsr reservation uses ncpus=104, -nt=103 (1 core reserved for OS).
+# Whole-node reservation reserves all node cores but leaves 1 idle for the OS:
+# normalsr ncpus=104 → -nt=103, normal ncpus=48 → -nt=47.
 NT_THREADS=${ARG11:-$IQTREE_THREADS}
 
 if [ "$IQTREE_AUTO" == "true" ]; then

@@ -94,14 +94,19 @@ for r in $(seq 1 $repeat); do
 
       if [ "$IQTREE_OPENMP" == true ]; then
           memory=$((mem_factor * IQTREE_THREADS * MEM_PER_CPU))
-          # Cap memory at 510 GB whenever 104 threads on normalsr (full node memory budget)
+          # Cap memory at the full-node budget: normalsr 104 threads → 510 GB, normal 48 threads → 190 GB
           if [ "$NORMALSR" == true ] && [ "$IQTREE_THREADS" == "104" ]; then
               memory=510
+          elif [ "$NORMALSR" == false ] && [ "$IQTREE_THREADS" == "48" ]; then
+              memory=190
           fi
-          # Whole-node reservation (opt-in): keep ncpus=104 but pass -nt 103 to iqtree
-          # so one core is left idle for the OS.
+          # Whole-node reservation (opt-in): keep ncpus at the full node count but pass
+          # -nt = ncpus-1 to iqtree so one core is left idle for the OS.
+          # normalsr full node = 104 → -nt 103; normal full node = 48 → -nt 47.
           if [ "$RESERVE_FULL_NODE" == true ] && [ "$NORMALSR" == true ] && [ "$IQTREE_THREADS" == "104" ]; then
               iqtree_nt=103
+          elif [ "$RESERVE_FULL_NODE" == true ] && [ "$NORMALSR" == false ] && [ "$IQTREE_THREADS" == "48" ]; then
+              iqtree_nt=47
           else
               iqtree_nt=$IQTREE_THREADS
           fi

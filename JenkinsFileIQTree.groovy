@@ -46,7 +46,7 @@ pipeline {
         booleanParam(name: 'A100', defaultValue: false, description: 'Use A100 GPUs')
         booleanParam(name: 'H200', defaultValue: false, description: 'Use H200 GPUs' )
         booleanParam(name: 'NORMALSR', defaultValue: false, description: 'Use normalsr queue instead of normal for CPU-only jobs (higher memory limits)')
-        booleanParam(name: 'RESERVE_FULL_NODE', defaultValue: false, description: 'Reserve the whole 104-CPU normalsr node but pass -nt 103 to iqtree (leave 1 core idle for OS). Only effective when NORMALSR=true and cpu_nodes=104.')
+        booleanParam(name: 'RESERVE_FULL_NODE', defaultValue: false, description: 'Reserve the whole CPU node but pass -nt (node CPUs - 1) to iqtree (leave 1 core idle for OS). Effective for normalsr+cpu_nodes=104 (-nt 103) and normal+cpu_nodes=48 (-nt 47).')
         booleanParam(name: 'ALL_NODE', defaultValue: false, description: 'Use whole node and execute parallely')
 
         string(name: 'IQTREE_ARGS', defaultValue: '-m Poisson -blfix --kernel-nonrev -vvv', description: 'Additional IQ-TREE arguments (e.g. -m Poisson -blfix --kernel-nonrev -vvv)')
