@@ -22,6 +22,8 @@ if [ "$TYPE" == "VANILA" ]; then
   executable_path="$WD/builds/build-vanila/iqtree3"
 elif [ "$TYPE" == "CUDA" ]; then
   executable_path="$WD/builds/build-nvhpc-cuda/iqtree3"
+elif [ "$TYPE" == "IQTREE_GPU" ]; then
+  executable_path="$WD/builds/build-nvhpc-iqtree-gpu/iqtree3"
 elif [ "$TYPE" == "OPENACC_PROFILE" ]; then
   executable_path="$WD/builds/build-nvhpc-prof-openacc/iqtree3"
 elif [ "$TYPE" == "OPENACC" ]; then

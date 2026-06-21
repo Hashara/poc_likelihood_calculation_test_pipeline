@@ -19,6 +19,7 @@ pipeline {
         booleanParam(name: 'QSUB', defaultValue: true, description: 'QSUB?')
         booleanParam(name: 'VANILA', defaultValue: false, description: 'VANILA?')
         booleanParam(name: 'CUDA', defaultValue: true, description: 'CUDA integration?')
+        booleanParam(name: 'IQTREE_GPU', defaultValue: false, description: 'IQTREE_GPU (in-tree CUDA ModelFinder kernels)?')
         booleanParam(name: 'OPENACC', defaultValue: true, description: 'OPENACC integration?')
         booleanParam(name: 'OPENACC_PROFILE', defaultValue: false, description: 'OpenACC with profiling instrumentation?')
         booleanParam(name: 'OPENACC_DEBUG', defaultValue: false, description: 'OpenACC with debug build?')
@@ -80,6 +81,7 @@ pipeline {
 
         VANILA="${params.VANILA}"
         CUDA="${params.CUDA}"
+        IQTREE_GPU="${params.IQTREE_GPU}"
         OPENACC="${params.OPENACC}"
         OPENACC_PROFILE="${params.OPENACC_PROFILE}"
         OPENACC_DEBUG="${params.OPENACC_DEBUG}"
@@ -159,6 +161,7 @@ pipeline {
                                 booleanParam(name: 'QSUB', value: params.QSUB),
                                 booleanParam(name: 'VANILA', value: params.VANILA),
                                 booleanParam(name: 'CUDA', value: params.CUDA),
+                                booleanParam(name: 'IQTREE_GPU', value: params.IQTREE_GPU),
                                 booleanParam(name: 'OPENACC', value: params.OPENACC),
                                 booleanParam(name: 'OPENACC_PROFILE', value: params.OPENACC_PROFILE),
                                 booleanParam(name: 'OPENACC_DEBUG', value: params.OPENACC_DEBUG),
@@ -200,6 +203,7 @@ pipeline {
 
                     if (params.VANILA) backends << "VANILA"
                     if (params.CUDA)    backends << "CUDA"
+                    if (params.IQTREE_GPU) backends << "IQTREE_GPU"
                     if (params.OPENACC) backends << "OPENACC"
                     if (params.OPENACC_PROFILE) backends << "OPENACC_PROFILE"
                     if (params.OPENACC_DEBUG) backends << "OPENACC_DEBUG"
@@ -213,7 +217,7 @@ pipeline {
                     if (params.INTEL_VANILA_CLX) backends << "INTEL_VANILA_CLX"
 
                     if (backends.isEmpty()) {
-                        error("No backend selected for profiling. Enable at least one of VANILA, CUDA, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE, OPENMP_GPU, OPENMP_GPU_PROFILE, OPENMP_GPU_DEBUG, OPENMP_GPU_DEBUG_PROFILE, CLANG_VANILA, INTEL_VANILA, INTEL_VANILA_CLX")
+                        error("No backend selected for profiling. Enable at least one of VANILA, CUDA, IQTREE_GPU, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE, OPENMP_GPU, OPENMP_GPU_PROFILE, OPENMP_GPU_DEBUG, OPENMP_GPU_DEBUG_PROFILE, CLANG_VANILA, INTEL_VANILA, INTEL_VANILA_CLX")
                     }
 
                     echo "Profiling backends: ${backends}"
@@ -252,6 +256,7 @@ pipeline {
 
                     if (params.VANILA) backends << "VANILA"
                     if (params.CUDA)    backends << "CUDA"
+                    if (params.IQTREE_GPU) backends << "IQTREE_GPU"
                     if (params.OPENACC) backends << "OPENACC"
                     if (params.OPENACC_PROFILE) backends << "OPENACC_PROFILE"
                     if (params.OPENACC_DEBUG) backends << "OPENACC_DEBUG"
@@ -265,7 +270,7 @@ pipeline {
                     if (params.INTEL_VANILA_CLX) backends << "INTEL_VANILA_CLX"
 
                     if (backends.isEmpty()) {
-                        error("No backend selected for Nsys profiling. Enable at least one of VANILA, CUDA, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE, OPENMP_GPU, OPENMP_GPU_PROFILE, OPENMP_GPU_DEBUG, OPENMP_GPU_DEBUG_PROFILE, CLANG_VANILA, INTEL_VANILA, INTEL_VANILA_CLX")
+                        error("No backend selected for Nsys profiling. Enable at least one of VANILA, CUDA, IQTREE_GPU, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE, OPENMP_GPU, OPENMP_GPU_PROFILE, OPENMP_GPU_DEBUG, OPENMP_GPU_DEBUG_PROFILE, CLANG_VANILA, INTEL_VANILA, INTEL_VANILA_CLX")
                     }
 
                     echo "Nsys profiling backends: ${backends}"
@@ -305,6 +310,7 @@ pipeline {
 
                     if (params.VANILA) backends << "VANILA"
                     if (params.CUDA)    backends << "CUDA"
+                    if (params.IQTREE_GPU) backends << "IQTREE_GPU"
                     if (params.OPENACC) backends << "OPENACC"
                     if (params.OPENACC_PROFILE) backends << "OPENACC_PROFILE"
                     if (params.OPENACC_DEBUG) backends << "OPENACC_DEBUG"
@@ -318,7 +324,7 @@ pipeline {
                     if (params.INTEL_VANILA_CLX) backends << "INTEL_VANILA_CLX"
 
                     if (backends.isEmpty()) {
-                        error("No backend selected for NCU profiling. Enable at least one of VANILA, CUDA, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE, OPENMP_GPU, OPENMP_GPU_PROFILE, OPENMP_GPU_DEBUG, OPENMP_GPU_DEBUG_PROFILE, CLANG_VANILA, INTEL_VANILA, INTEL_VANILA_CLX")
+                        error("No backend selected for NCU profiling. Enable at least one of VANILA, CUDA, IQTREE_GPU, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE, OPENMP_GPU, OPENMP_GPU_PROFILE, OPENMP_GPU_DEBUG, OPENMP_GPU_DEBUG_PROFILE, CLANG_VANILA, INTEL_VANILA, INTEL_VANILA_CLX")
                     }
 
                     echo "NCU profiling backends: ${backends}"
@@ -413,6 +419,7 @@ pipeline {
 
                     if (params.VANILA) backends << "VANILA"
                     if (params.CUDA)    backends << "CUDA"
+                    if (params.IQTREE_GPU) backends << "IQTREE_GPU"
                     if (params.OPENACC) backends << "OPENACC"
                     if (params.OPENACC_PROFILE) backends << "OPENACC_PROFILE"
                     if (params.OPENACC_DEBUG) backends << "OPENACC_DEBUG"
@@ -426,7 +433,7 @@ pipeline {
                     if (params.INTEL_VANILA_CLX) backends << "INTEL_VANILA_CLX"
 
                     if (backends.isEmpty()) {
-                        error("No backend selected. Enable at least one of VANILA, CUDA, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE, OPENMP_GPU, OPENMP_GPU_PROFILE, OPENMP_GPU_DEBUG, OPENMP_GPU_DEBUG_PROFILE, CLANG_VANILA, INTEL_VANILA, INTEL_VANILA_CLX")
+                        error("No backend selected. Enable at least one of VANILA, CUDA, IQTREE_GPU, OPENACC, OPENACC_PROFILE, OPENACC_DEBUG, OPENACC_DEBUG_PROFILE, OPENMP_GPU, OPENMP_GPU_PROFILE, OPENMP_GPU_DEBUG, OPENMP_GPU_DEBUG_PROFILE, CLANG_VANILA, INTEL_VANILA, INTEL_VANILA_CLX")
                     }
 
                     echo "Selected backends: ${backends}"

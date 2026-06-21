@@ -280,7 +280,7 @@ pipeline {
                         def dataType   = parts[0].trim()   // DNA | AA
                         def alignLen   = parts[1].trim()   // e.g. 100000
                         def treeType   = parts[2].trim()   // rooted | unrooted | none
-                        def execType   = parts[3].trim()   // VANILA | CUDA | OPENACC | OPENACC_PROFILE
+                        def execType   = parts[3].trim()   // VANILA | CUDA | IQTREE_GPU | OPENACC | OPENACC_PROFILE
                         def iqtreeArgs = parts[4].trim()   // e.g. -blfix
                         def model      = parts[5].trim()   // e.g. GTR | GTR+I+G4 | LG+R4
                         def gpuType    = parts[6].trim()   // none | V100 | A100 | H200
@@ -361,6 +361,7 @@ pipeline {
                                     string(name: 'LENGTH',       value: cAlignLen),
                                     booleanParam(name: 'VANILA',                value: cExecType == 'VANILA'),
                                     booleanParam(name: 'CUDA',                  value: cExecType == 'CUDA'),
+                                    booleanParam(name: 'IQTREE_GPU',            value: cExecType == 'IQTREE_GPU'),
                                     booleanParam(name: 'OPENACC',               value: cExecType == 'OPENACC'),
                                     booleanParam(name: 'OPENACC_PROFILE',       value: cExecType == 'OPENACC_PROFILE'),
                                     booleanParam(name: 'OPENACC_DEBUG',         value: cExecType == 'OPENACC_DEBUG'),
