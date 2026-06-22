@@ -86,64 +86,130 @@ echo "GPU_TYPE='$GPU_TYPE' TYPE='$TYPE' -> executable_path='$executable_path'"
 iter=1
 module load nvhpc-profilers/22.11
 
-for i in $(seq 1 $iter); do
-  TAXA_DIR="${DATASET_DIR}/tree_${i}"
-  echo "Processing folder: $TAXA_DIR"
-  taxa_size=$(basename "$TAXA_DIR")
+# Shared dataset-layout helpers (simulated tree_<i>/ vs empirical single-file).
+source "$WD/test/iqtree/lib_dataset.sh"
 
-  cd "$TAXA_DIR" || { echo "Failed to change directory to $TAXA_DIR"; exit 1; }
+if dataset_dir_has_glob "$DATASET_DIR" "tree_*"; then
+  for i in $(seq 1 $iter); do
+    TAXA_DIR="${DATASET_DIR}/tree_${i}"
+    echo "Processing folder: $TAXA_DIR"
+    taxa_size=$(basename "$TAXA_DIR")
 
-    # Build tree args based on TREE_MODE
-    tree_file="tree_${i}.full.treefile"
-    case "$TREE_MODE" in
-      te)   tree_args="-te $tree_file" ;;
-      t)    tree_args="-t $tree_file" ;;
-      none) tree_args="" ;;
-    esac
+    cd "$TAXA_DIR" || { echo "Failed to change directory to $TAXA_DIR"; exit 1; }
 
-    if [ ! -f "$executable_path" ]; then
-        echo "Executable not found: $executable_path"
-        exit 1
-    fi
+      # Build tree args based on TREE_MODE
+      tree_file="tree_${i}.full.treefile"
+      case "$TREE_MODE" in
+        te)   tree_args="-te $tree_file" ;;
+        t)    tree_args="-t $tree_file" ;;
+        none) tree_args="" ;;
+      esac
 
-    echo "Running NCU profiling for tree: $i length: $length ($AA_or_DNA, $TYPE)"
-    echo "  NCU_SET=$NCU_SET NCU_LAUNCH_COUNT=$NCU_LAUNCH_COUNT"
-    echo "  NCU_KERNEL_FILTER='$NCU_KERNEL_FILTER' NCU_SKIP_COUNT=$NCU_SKIP_COUNT"
+      if [ ! -f "$executable_path" ]; then
+          echo "Executable not found: $executable_path"
+          exit 1
+      fi
 
-    # Build NCU command with optional filters
-    NCU_CMD="ncu --set $NCU_SET --target-processes all -f"
+      echo "Running NCU profiling for tree: $i length: $length ($AA_or_DNA, $TYPE)"
+      echo "  NCU_SET=$NCU_SET NCU_LAUNCH_COUNT=$NCU_LAUNCH_COUNT"
+      echo "  NCU_KERNEL_FILTER='$NCU_KERNEL_FILTER' NCU_SKIP_COUNT=$NCU_SKIP_COUNT"
 
-    if [ "$NCU_LAUNCH_COUNT" -gt 0 ]; then
-        NCU_CMD="$NCU_CMD --launch-count $NCU_LAUNCH_COUNT"
-    fi
+      # Build NCU command with optional filters
+      NCU_CMD="ncu --set $NCU_SET --target-processes all -f"
 
-    if [ -n "$NCU_KERNEL_FILTER" ]; then
-        NCU_CMD="$NCU_CMD --kernel-name '$NCU_KERNEL_FILTER'"
-    fi
+      if [ "$NCU_LAUNCH_COUNT" -gt 0 ]; then
+          NCU_CMD="$NCU_CMD --launch-count $NCU_LAUNCH_COUNT"
+      fi
 
-    if [ "$NCU_SKIP_COUNT" -gt 0 ]; then
-        NCU_CMD="$NCU_CMD --launch-skip $NCU_SKIP_COUNT"
-    fi
+      if [ -n "$NCU_KERNEL_FILTER" ]; then
+          NCU_CMD="$NCU_CMD --kernel-name '$NCU_KERNEL_FILTER'"
+      fi
 
-    if [ "$AA_or_DNA" = "AA" ]; then
-        eval $NCU_CMD \
-            -o ncu_report_${UNIQUE_NAME}_tree${i}_aa \
-            $executable_path -s alignment_${length}.phy $tree_args \
-            --prefix outputncu_${UNIQUE_NAME}_${taxa_size}_${length}_aa \
-            ${IQTREE_ARGS}
-    elif [ "$AA_or_DNA" = "DNA" ]; then
-        eval $NCU_CMD \
-            -o ncu_report_${UNIQUE_NAME}_tree${i}_dna \
-            $executable_path -s alignment_${length}.phy $tree_args \
-            --prefix outputncu_${UNIQUE_NAME}_${taxa_size}_${length}_dna \
-            ${IQTREE_ARGS}
-    fi
+      if [ "$NCU_SKIP_COUNT" -gt 0 ]; then
+          NCU_CMD="$NCU_CMD --launch-skip $NCU_SKIP_COUNT"
+      fi
 
-    if [ $? -ne 0 ]; then
-        echo "NCU run failed for length: $length ($AA_or_DNA)"
-        exit 1
-    fi
+      if [ "$AA_or_DNA" = "AA" ]; then
+          eval $NCU_CMD \
+              -o ncu_report_${UNIQUE_NAME}_tree${i}_aa \
+              $executable_path -s alignment_${length}.phy $tree_args \
+              --prefix outputncu_${UNIQUE_NAME}_${taxa_size}_${length}_aa \
+              ${IQTREE_ARGS}
+      elif [ "$AA_or_DNA" = "DNA" ]; then
+          eval $NCU_CMD \
+              -o ncu_report_${UNIQUE_NAME}_tree${i}_dna \
+              $executable_path -s alignment_${length}.phy $tree_args \
+              --prefix outputncu_${UNIQUE_NAME}_${taxa_size}_${length}_dna \
+              ${IQTREE_ARGS}
+      fi
 
-  cd - || { echo "Failed to return to previous directory"; exit 1; }
+      if [ $? -ne 0 ]; then
+          echo "NCU run failed for length: $length ($AA_or_DNA)"
+          exit 1
+      fi
+
+    cd - || { echo "Failed to return to previous directory"; exit 1; }
+    echo "--------------------------------------"
+  done
+else
+  # ── Empirical layout: single alignment file, run once (no iteration) ──
+  echo "Dataset layout: empirical — single alignment for $DATASET_DIR (iteration ignored)"
+
+  if [ ! -f "$executable_path" ]; then
+      echo "Executable not found: $executable_path"
+      exit 1
+  fi
+
+  ALIGN=$(resolve_empirical_alignment "$DATASET_DIR") || {
+      echo "No alignment file found for dataset '$DATASET_DIR'"
+      exit 1
+  }
+  aln_dir=$(dirname "$ALIGN")
+  aln_file=$(basename "$ALIGN")
+  echo "Empirical alignment: $ALIGN"
+
+  cd "$aln_dir" || { echo "Failed to change directory to $aln_dir"; exit 1; }
+
+  tree_args=$(empirical_tree_args "$TREE_MODE" "$aln_file")
+  echo "Tree mode: $TREE_MODE → tree_args: ${tree_args:-<full search>}"
+
+  echo "Running NCU profiling for empirical alignment: $aln_file length: $length ($AA_or_DNA, $TYPE)"
+  echo "  NCU_SET=$NCU_SET NCU_LAUNCH_COUNT=$NCU_LAUNCH_COUNT"
+  echo "  NCU_KERNEL_FILTER='$NCU_KERNEL_FILTER' NCU_SKIP_COUNT=$NCU_SKIP_COUNT"
+
+  # Build NCU command with optional filters
+  NCU_CMD="ncu --set $NCU_SET --target-processes all -f"
+
+  if [ "$NCU_LAUNCH_COUNT" -gt 0 ]; then
+      NCU_CMD="$NCU_CMD --launch-count $NCU_LAUNCH_COUNT"
+  fi
+
+  if [ -n "$NCU_KERNEL_FILTER" ]; then
+      NCU_CMD="$NCU_CMD --kernel-name '$NCU_KERNEL_FILTER'"
+  fi
+
+  if [ "$NCU_SKIP_COUNT" -gt 0 ]; then
+      NCU_CMD="$NCU_CMD --launch-skip $NCU_SKIP_COUNT"
+  fi
+
+  if [ "$AA_or_DNA" = "AA" ]; then
+      eval $NCU_CMD \
+          -o ncu_report_${UNIQUE_NAME}_${length}_aa \
+          $executable_path -s "$aln_file" $tree_args \
+          --prefix outputncu_${UNIQUE_NAME}_${length}_aa \
+          ${IQTREE_ARGS}
+  elif [ "$AA_or_DNA" = "DNA" ]; then
+      eval $NCU_CMD \
+          -o ncu_report_${UNIQUE_NAME}_${length}_dna \
+          $executable_path -s "$aln_file" $tree_args \
+          --prefix outputncu_${UNIQUE_NAME}_${length}_dna \
+          ${IQTREE_ARGS}
+  fi
+
+  if [ $? -ne 0 ]; then
+      echo "run failed for empirical alignment $ALIGN"
+      exit 1
+  fi
+
   echo "--------------------------------------"
-done
+fi

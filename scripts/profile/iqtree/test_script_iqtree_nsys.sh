@@ -72,6 +72,10 @@ echo "GPU_TYPE='$GPU_TYPE' TYPE='$TYPE' -> executable_path='$executable_path'"
 iter=1
 module load nvhpc-profilers/22.11
 
+# Shared dataset-layout helpers (simulated tree_<i>/ vs empirical single-file).
+source "$WD/test/iqtree/lib_dataset.sh"
+
+if dataset_dir_has_glob "$DATASET_DIR" "tree_*"; then
 for i in $(seq 1 $iter); do
   TAXA_DIR="${DATASET_DIR}/tree_${i}"
   echo "Processing folder: $TAXA_DIR"
@@ -144,3 +148,74 @@ for i in $(seq 1 $iter); do
   cd - || { echo "Failed to return to previous directory"; exit 1; }
   echo "--------------------------------------"
 done
+else
+  # ── Empirical layout: single alignment file, run once (iteration ignored) ──
+  echo "Dataset layout: empirical — single alignment for $DATASET_DIR (iteration ignored)"
+
+  if [ ! -f "$executable_path" ]; then
+    echo "Executable not found: $executable_path"
+    exit 1
+  fi
+
+  ALIGN=$(resolve_empirical_alignment "$DATASET_DIR") || {
+    echo "No alignment file found for dataset '$DATASET_DIR'"
+    exit 1
+  }
+  aln_dir=$(dirname "$ALIGN")
+  aln_file=$(basename "$ALIGN")
+  echo "Empirical alignment: $ALIGN"
+
+  cd "$aln_dir" || { echo "Failed to change directory to $aln_dir"; exit 1; }
+
+  tree_args=$(empirical_tree_args "$TREE_MODE" "$aln_file")
+  echo "Tree mode: $TREE_MODE → tree_args: ${tree_args:-<full search>}"
+
+  echo "Running Nsys profiling for empirical alignment: $aln_file ($AA_or_DNA, $TYPE)"
+
+  # Size-tight defaults: capture kernel/OpenACC trace + H2D bytes only.
+  # Drop --gpu-metrics-device, --stats (sqlite), CPU sampling, and CUDA
+  # backtraces — these inflated the 1M ModelFinder report to 7GB+20GB.
+  # Long-run knobs (overridable via env): NSYS_SAMPLE,
+  # NSYS_DURATION (seconds, 0=unbounded — cap capture so .nsys-rep gets
+  # written before PBS walltime SIGKILL on long runs),
+  # NSYS_DELAY (seconds before capture starts — set this to skip init
+  # parsimony/ModelFinder when only tree search matters).
+  NSYS_SAMPLE=${NSYS_SAMPLE:-none}
+  NSYS_DURATION=${NSYS_DURATION:-0}
+  NSYS_DELAY=${NSYS_DELAY:-0}
+
+  NSYS_EXTRA=""
+  [ "$NSYS_DURATION" != "0" ] && NSYS_EXTRA="$NSYS_EXTRA --duration=$NSYS_DURATION"
+  [ "$NSYS_DELAY" != "0" ]    && NSYS_EXTRA="$NSYS_EXTRA --delay=$NSYS_DELAY"
+
+  if [ "$AA_or_DNA" = "AA" ]; then
+      nsys profile \
+          --trace=cuda,openacc,nvtx \
+          --sample=${NSYS_SAMPLE} \
+          --cudabacktrace=none \
+          --cuda-memory-usage=true \
+          ${NSYS_EXTRA} \
+          -o nsys_report_${UNIQUE_NAME}_${length}_aa \
+          $executable_path -s "$aln_file" $tree_args \
+          --prefix output_nsys_${UNIQUE_NAME}_${length}_aa \
+          ${IQTREE_ARGS}
+  else
+      nsys profile \
+          --trace=cuda,openacc,nvtx \
+          --sample=${NSYS_SAMPLE} \
+          --cudabacktrace=none \
+          --cuda-memory-usage=true \
+          ${NSYS_EXTRA} \
+          -o nsys_report_${UNIQUE_NAME}_${length}_dna \
+          $executable_path -s "$aln_file" $tree_args \
+          --prefix output_nsys_${UNIQUE_NAME}_${length}_dna \
+          ${IQTREE_ARGS}
+  fi
+
+  if [ $? -ne 0 ]; then
+      echo "run failed for empirical alignment $ALIGN"
+      exit 1
+  fi
+
+  echo "--------------------------------------"
+fi

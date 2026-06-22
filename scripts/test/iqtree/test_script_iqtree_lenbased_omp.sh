@@ -35,6 +35,10 @@ case "$TREE_MODE" in
 esac
 echo "Tree mode: $TREE_MODE → tree_args: $tree_args"
 
+# Shared dataset-layout helpers (simulated alignment_<length>/ vs empirical single-file).
+source "$WD/test/iqtree/lib_dataset.sh"
+
+if dataset_dir_has_glob "$DATASET_DIR" "alignment_*"; then
 for length in "${lengths[@]}"; do
   TAXA_DIR="${DATASET_DIR}/alignment_${length}"
   echo "Processing folder: $TAXA_DIR"
@@ -94,3 +98,51 @@ for length in "${lengths[@]}"; do
   echo "--------------------------------------"
 
 done
+else
+  # ── Empirical layout: single alignment file, run once (lengths array ignored) ──
+  echo "Dataset layout: empirical — single alignment for $DATASET_DIR (lengths ignored)"
+
+  if [ "$TYPE" == "CLANG_VANILA" ]; then
+      executable_path="$WD/builds/build-clang-vanila/iqtree3"
+  elif [ "$TYPE" == "INTEL_VANILA" ]; then
+      executable_path="$WD/builds/build-intel-vanila/iqtree3"
+  elif [ "$TYPE" == "INTEL_VANILA_CLX" ]; then
+      executable_path="$WD/builds/build-intel-vanila-clx/iqtree3"
+  else
+      executable_path="$WD/builds/build-vanila/iqtree3"
+  fi
+  echo "Using executable: $executable_path"
+
+  if [ ! -f "$executable_path" ]; then
+    echo "Executable not found: $executable_path"
+    exit 1
+  fi
+
+  ALIGN=$(resolve_empirical_alignment "$DATASET_DIR") || {
+    echo "No alignment file found for dataset '$DATASET_DIR'"
+    exit 1
+  }
+  aln_dir=$(dirname "$ALIGN")
+  aln_file=$(basename "$ALIGN")
+  echo "Empirical alignment: $ALIGN"
+
+  cd "$aln_dir" || { echo "Failed to change directory to $aln_dir"; exit 1; }
+
+  tree_args=$(empirical_tree_args "$TREE_MODE" "$aln_file")
+  echo "Tree mode: $TREE_MODE → tree_args: ${tree_args:-<full search>}"
+
+  if [ "$AA_or_DNA" = "AA" ]; then
+      echo "Using amino acid data"
+      $executable_path -s "$aln_file" $tree_args --prefix output_${UNIQUE_NAME}_${length}_aa_iqtree ${IQTREE_ARGS} -nt $NT_THREADS
+  else
+      echo "Using DNA data"
+      $executable_path -s "$aln_file" $tree_args --prefix output_${UNIQUE_NAME}_${length}_iqtree ${IQTREE_ARGS} -nt $NT_THREADS
+  fi
+
+  if [ $? -ne 0 ]; then
+      echo "run failed for empirical alignment $ALIGN"
+      exit 1
+  fi
+
+  echo "--------------------------------------"
+fi

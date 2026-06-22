@@ -69,54 +69,103 @@ elif [ "$TYPE" == "INTEL_VANILA_CLX" ]; then
 fi
 echo "GPU_TYPE='$GPU_TYPE' TYPE='$TYPE' -> executable_path='$executable_path'"
 
+# Shared dataset-layout helpers (simulated alignment_<length>/ vs empirical single-file).
+source "$WD/test/iqtree/lib_dataset.sh"
 
-for length in "${lengths[@]}"; do
-  TAXA_DIR="${DATASET_DIR}/alignment_${length}"
-  echo "Processing folder: $TAXA_DIR"
-  taxa_size=$(basename "$TAXA_DIR")
+# Run one iqtree invocation from the current working directory.
+#   run_iqtree_cmd <align_file> <tree_args> <prefix>
+run_iqtree_cmd() {
+    local aln=$1 targs=$2 prefix=$3
+    echo "Running: $executable_path -s $aln $targs --prefix $prefix ${IQTREE_ARGS}"
+    $executable_path -s "$aln" $targs --prefix "$prefix" ${IQTREE_ARGS}
+}
 
-  echo "Current directory: $(pwd)"
-
-  cd "$TAXA_DIR" || { echo "Failed to change directory to $TAXA_DIR"; exit 1; }
-
+if dataset_dir_has_glob "$DATASET_DIR" "alignment_*"; then
+  # ── Simulated layout: iterate hardcoded lengths under $DATASET_DIR ─────────
+  for length in "${lengths[@]}"; do
+    TAXA_DIR="${DATASET_DIR}/alignment_${length}"
+    echo "Processing folder: $TAXA_DIR"
+    taxa_size=$(basename "$TAXA_DIR")
 
     echo "Current directory: $(pwd)"
 
-#    for length in "${lengths[@]}"; do
-        echo "Running likelihood for length: $length taxa: $taxa_size"
-
-        #loop through each executable type
-        for type in "${executable_type[@]}"; do
-            echo "Using executable: $executable_path"
-
-            if [ -f "$executable_path" ]; then
-                echo "Running test for length: $length with $type"
-                if [ "$AA_or_DNA" = "AA" ]; then
-                    echo "Using amino acid data"
-                    $executable_path -s alignment_${length}.phy $tree_args --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} ${IQTREE_ARGS}
-
-                elif [ "$AA_or_DNA" = "DNA" ]; then
-                    echo "Using DNA data"
-                    $executable_path -s alignment_${length}.phy $tree_args --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} ${IQTREE_ARGS}
-
-                fi
-
-                if [ $? -ne 0 ]; then
-                    echo "run failed for length: $length with $type for $taxa_size taxa"
-                    exit 1
-                fi
-            else
-                echo "Executable not found: $executable_path"
-            fi
-
-#        done
-
-    done
+    cd "$TAXA_DIR" || { echo "Failed to change directory to $TAXA_DIR"; exit 1; }
 
 
+      echo "Current directory: $(pwd)"
 
-  cd - || { echo "Failed to return to previous directory"; exit 1; }
+  #    for length in "${lengths[@]}"; do
+          echo "Running likelihood for length: $length taxa: $taxa_size"
+
+          #loop through each executable type
+          for type in "${executable_type[@]}"; do
+              echo "Using executable: $executable_path"
+
+              if [ -f "$executable_path" ]; then
+                  echo "Running test for length: $length with $type"
+                  if [ "$AA_or_DNA" = "AA" ]; then
+                      echo "Using amino acid data"
+                      $executable_path -s alignment_${length}.phy $tree_args --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} ${IQTREE_ARGS}
+
+                  elif [ "$AA_or_DNA" = "DNA" ]; then
+                      echo "Using DNA data"
+                      $executable_path -s alignment_${length}.phy $tree_args --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} ${IQTREE_ARGS}
+
+                  fi
+
+                  if [ $? -ne 0 ]; then
+                      echo "run failed for length: $length with $type for $taxa_size taxa"
+                      exit 1
+                  fi
+              else
+                  echo "Executable not found: $executable_path"
+              fi
+
+  #        done
+
+      done
+
+
+
+    cd - || { echo "Failed to return to previous directory"; exit 1; }
+
+    echo "--------------------------------------"
+
+  done
+else
+  # ── Empirical layout: single alignment file, run once (iteration ignored) ──
+  echo "Dataset layout: empirical — single alignment for $DATASET_DIR (iteration ignored)"
+
+  if [ ! -f "$executable_path" ]; then
+    echo "Executable not found: $executable_path"
+    exit 1
+  fi
+
+  ALIGN=$(resolve_empirical_alignment "$DATASET_DIR") || {
+    echo "No alignment file found for dataset '$DATASET_DIR'"
+    exit 1
+  }
+  aln_dir=$(dirname "$ALIGN")
+  aln_file=$(basename "$ALIGN")
+  echo "Empirical alignment: $ALIGN"
+
+  cd "$aln_dir" || { echo "Failed to change directory to $aln_dir"; exit 1; }
+
+  tree_args=$(empirical_tree_args "$TREE_MODE" "$aln_file")
+  echo "Tree mode: $TREE_MODE → tree_args: ${tree_args:-<full search>}"
+
+  if [ "$AA_or_DNA" = "AA" ]; then
+    echo "Using amino acid data"
+    run_iqtree_cmd "$aln_file" "$tree_args" "output_${UNIQUE_NAME}_${length}_aa_iqtree"
+  else
+    echo "Using DNA data"
+    run_iqtree_cmd "$aln_file" "$tree_args" "output_${UNIQUE_NAME}_${length}_iqtree"
+  fi
+
+  if [ $? -ne 0 ]; then
+    echo "run failed for empirical alignment $ALIGN"
+    exit 1
+  fi
 
   echo "--------------------------------------"
-
-done
+fi

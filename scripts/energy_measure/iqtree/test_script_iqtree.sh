@@ -57,8 +57,12 @@ elif [ "$TYPE" == "INTEL_VANILA_CLX" ]; then
 fi
 echo "GPU_TYPE='$GPU_TYPE' TYPE='$TYPE' -> executable_path='$executable_path'"
 
+# Shared dataset-layout helpers (simulated tree_<i>/ vs empirical single-file).
+source "$WD/test/iqtree/lib_dataset.sh"
+
 iter=10
 module load linaro-forge/24.0.2
+if dataset_dir_has_glob "$DATASET_DIR" "tree_*"; then
 for i in $(seq 1 $iter); do
   TAXA_DIR="${DATASET_DIR}/tree_${i}"
   echo "Processing folder: $TAXA_DIR"
@@ -112,3 +116,41 @@ for i in $(seq 1 $iter); do
   echo "--------------------------------------"
 
 done
+else
+  # ── Empirical layout: single alignment file, run once (iter ignored) ──
+  echo "Dataset layout: empirical — single alignment for $DATASET_DIR (iter ignored)"
+
+  if [ ! -f "$executable_path" ]; then
+    echo "Executable not found: $executable_path"
+    exit 1
+  fi
+
+  ALIGN=$(resolve_empirical_alignment "$DATASET_DIR") || { echo "No alignment file found for dataset '$DATASET_DIR'"; exit 1; }
+  aln_dir=$(dirname "$ALIGN")
+  aln_file=$(basename "$ALIGN")
+  echo "Empirical alignment: $ALIGN"
+
+  cd "$aln_dir" || { echo "Failed to change directory to $aln_dir"; exit 1; }
+
+  tree_args=$(empirical_tree_args "$TREE_MODE" "$aln_file")
+  echo "Tree mode: $TREE_MODE → tree_args: ${tree_args:-<full search>}"
+
+  echo "Using executable: $executable_path"
+
+  if [ "$AA_or_DNA" = "AA" ]; then
+      echo "Using amino acid data"
+      perf-report --no-mpi --output=perf_report_${UNIQUE_NAME}_${length}_aa $executable_path -s "$aln_file" $tree_args --prefix output_${UNIQUE_NAME}_${length}_aa_iqtree ${IQTREE_ARGS}
+
+  elif [ "$AA_or_DNA" = "DNA" ]; then
+      echo "Using DNA data"
+      perf-report --no-mpi --output=perf_report_${UNIQUE_NAME}_${length}_dna $executable_path -s "$aln_file" $tree_args --prefix output_${UNIQUE_NAME}_${length}_iqtree ${IQTREE_ARGS}
+
+  fi
+
+  if [ $? -ne 0 ]; then
+      echo "run failed for empirical alignment $ALIGN"
+      exit 1
+  fi
+
+  echo "--------------------------------------"
+fi

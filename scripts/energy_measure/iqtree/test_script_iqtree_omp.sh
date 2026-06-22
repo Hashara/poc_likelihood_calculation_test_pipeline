@@ -44,59 +44,102 @@ elif [ "$TYPE" == "INTEL_VANILA_CLX" ]; then
   executable_path="$WD/builds/build-intel-vanila-clx/iqtree3"
 fi
 
+# Shared dataset-layout helpers (simulated tree_<i>/ vs empirical single-file).
+source "$WD/test/iqtree/lib_dataset.sh"
+
 iter=10
 module load linaro-forge/24.0.2
 
-for i in $(seq 1 $iter); do
-  TAXA_DIR="${DATASET_DIR}/tree_${i}"
-  echo "Processing folder: $TAXA_DIR"
-  taxa_size=$(basename "$TAXA_DIR")
-
-  echo "Current directory: $(pwd)"
-
-  cd "$TAXA_DIR" || { echo "Failed to change directory to $TAXA_DIR"; exit 1; }
-
-    # Build tree args based on TREE_MODE
-    tree_file="tree_${i}.full.treefile"
-    case "$TREE_MODE" in
-      te)   tree_args="-te $tree_file" ;;
-      t)    tree_args="-t $tree_file" ;;
-      none) tree_args="" ;;
-    esac
+if dataset_dir_has_glob "$DATASET_DIR" "tree_*"; then
+  for i in $(seq 1 $iter); do
+    TAXA_DIR="${DATASET_DIR}/tree_${i}"
+    echo "Processing folder: $TAXA_DIR"
+    taxa_size=$(basename "$TAXA_DIR")
 
     echo "Current directory: $(pwd)"
-    echo "Tree mode: $TREE_MODE → tree_args: $tree_args"
 
-        echo "Running likelihood for length: $length taxa: $taxa_size"
+    cd "$TAXA_DIR" || { echo "Failed to change directory to $TAXA_DIR"; exit 1; }
 
-        #loop through each executable type
-        for type in "${executable_type[@]}"; do
-            echo "Using executable: $executable_path"
+      # Build tree args based on TREE_MODE
+      tree_file="tree_${i}.full.treefile"
+      case "$TREE_MODE" in
+        te)   tree_args="-te $tree_file" ;;
+        t)    tree_args="-t $tree_file" ;;
+        none) tree_args="" ;;
+      esac
 
-            if [ -f "$executable_path" ]; then
-                echo "Running energy measurement for tree: $i length: $length with $type ($TYPE) ncpus: $IQTREE_THREADS -nt: $NT_THREADS"
-                if [ "$AA_or_DNA" = "AA" ]; then
-                    echo "Using amino acid data"
-                    perf-report --no-mpi --output=perf_report_${UNIQUE_NAME}_tree${i}_aa $executable_path -s alignment_${length}.phy $tree_args --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} ${IQTREE_ARGS} -nt $NT_THREADS
+      echo "Current directory: $(pwd)"
+      echo "Tree mode: $TREE_MODE → tree_args: $tree_args"
 
-                elif [ "$AA_or_DNA" = "DNA" ]; then
-                    echo "Using DNA data"
-                    perf-report --no-mpi --output=perf_report_${UNIQUE_NAME}_tree${i}_dna $executable_path -s alignment_${length}.phy $tree_args --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} ${IQTREE_ARGS} -nt $NT_THREADS
+          echo "Running likelihood for length: $length taxa: $taxa_size"
 
-                fi
+          #loop through each executable type
+          for type in "${executable_type[@]}"; do
+              echo "Using executable: $executable_path"
 
-                if [ $? -ne 0 ]; then
-                    echo "run failed for length: $length with $type for $taxa_size taxa"
-                    exit 1
-                fi
-            else
-                echo "Executable not found: $executable_path"
-            fi
+              if [ -f "$executable_path" ]; then
+                  echo "Running energy measurement for tree: $i length: $length with $type ($TYPE) ncpus: $IQTREE_THREADS -nt: $NT_THREADS"
+                  if [ "$AA_or_DNA" = "AA" ]; then
+                      echo "Using amino acid data"
+                      perf-report --no-mpi --output=perf_report_${UNIQUE_NAME}_tree${i}_aa $executable_path -s alignment_${length}.phy $tree_args --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} ${IQTREE_ARGS} -nt $NT_THREADS
 
-    done
+                  elif [ "$AA_or_DNA" = "DNA" ]; then
+                      echo "Using DNA data"
+                      perf-report --no-mpi --output=perf_report_${UNIQUE_NAME}_tree${i}_dna $executable_path -s alignment_${length}.phy $tree_args --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} ${IQTREE_ARGS} -nt $NT_THREADS
 
-  cd - || { echo "Failed to return to previous directory"; exit 1; }
+                  fi
+
+                  if [ $? -ne 0 ]; then
+                      echo "run failed for length: $length with $type for $taxa_size taxa"
+                      exit 1
+                  fi
+              else
+                  echo "Executable not found: $executable_path"
+              fi
+
+      done
+
+    cd - || { echo "Failed to return to previous directory"; exit 1; }
+
+    echo "--------------------------------------"
+
+  done
+else
+  # ── Empirical layout: single alignment file, run once (iter ignored) ──
+  echo "Dataset layout: empirical — single alignment for $DATASET_DIR (iter ignored)"
+
+  if [ ! -f "$executable_path" ]; then
+    echo "Executable not found: $executable_path"
+    exit 1
+  fi
+
+  ALIGN=$(resolve_empirical_alignment "$DATASET_DIR") || {
+    echo "No alignment file found for dataset '$DATASET_DIR'"
+    exit 1
+  }
+  aln_dir=$(dirname "$ALIGN")
+  aln_file=$(basename "$ALIGN")
+  echo "Empirical alignment: $ALIGN"
+
+  cd "$aln_dir" || { echo "Failed to change directory to $aln_dir"; exit 1; }
+
+  tree_args=$(empirical_tree_args "$TREE_MODE" "$aln_file")
+  echo "Tree mode: $TREE_MODE → tree_args: ${tree_args:-<full search>}"
+
+  echo "Using executable: $executable_path"
+  echo "Running energy measurement for empirical alignment $aln_file length: $length ($TYPE) ncpus: $IQTREE_THREADS -nt: $NT_THREADS"
+  if [ "$AA_or_DNA" = "AA" ]; then
+      echo "Using amino acid data"
+      perf-report --no-mpi --output=perf_report_${UNIQUE_NAME}_${length}_aa $executable_path -s "$aln_file" $tree_args --prefix output_${UNIQUE_NAME}_${length}_aa_iqtree ${IQTREE_ARGS} -nt $NT_THREADS
+  else
+      echo "Using DNA data"
+      perf-report --no-mpi --output=perf_report_${UNIQUE_NAME}_${length}_dna $executable_path -s "$aln_file" $tree_args --prefix output_${UNIQUE_NAME}_${length}_iqtree ${IQTREE_ARGS} -nt $NT_THREADS
+  fi
+
+  if [ $? -ne 0 ]; then
+      echo "run failed for empirical alignment $ALIGN"
+      exit 1
+  fi
 
   echo "--------------------------------------"
-
-done
+fi
