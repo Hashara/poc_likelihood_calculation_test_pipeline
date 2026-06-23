@@ -20,6 +20,7 @@ pipeline {
         booleanParam(name: 'VANILA', defaultValue: false, description: 'VANILA?')
         booleanParam(name: 'CUDA', defaultValue: true, description: 'CUDA integration?')
         booleanParam(name: 'IQTREE_GPU', defaultValue: false, description: 'IQTREE_GPU (in-tree CUDA ModelFinder kernels)?')
+        booleanParam(name: 'IQTREE_GPU_SHARED', defaultValue: false, description: 'IQTREE_GPU using the shared external JOLT build (no in-tree build)?')
         booleanParam(name: 'OPENACC', defaultValue: true, description: 'OPENACC integration?')
         booleanParam(name: 'OPENACC_PROFILE', defaultValue: false, description: 'OpenACC with profiling instrumentation?')
         booleanParam(name: 'OPENACC_DEBUG', defaultValue: false, description: 'OpenACC with debug build?')
@@ -82,6 +83,7 @@ pipeline {
         VANILA="${params.VANILA}"
         CUDA="${params.CUDA}"
         IQTREE_GPU="${params.IQTREE_GPU}"
+        IQTREE_GPU_SHARED="${params.IQTREE_GPU_SHARED}"
         OPENACC="${params.OPENACC}"
         OPENACC_PROFILE="${params.OPENACC_PROFILE}"
         OPENACC_DEBUG="${params.OPENACC_DEBUG}"
@@ -204,6 +206,7 @@ pipeline {
                     if (params.VANILA) backends << "VANILA"
                     if (params.CUDA)    backends << "CUDA"
                     if (params.IQTREE_GPU) backends << "IQTREE_GPU"
+                    if (params.IQTREE_GPU_SHARED) backends << "IQTREE_GPU_SHARED"
                     if (params.OPENACC) backends << "OPENACC"
                     if (params.OPENACC_PROFILE) backends << "OPENACC_PROFILE"
                     if (params.OPENACC_DEBUG) backends << "OPENACC_DEBUG"
@@ -257,6 +260,7 @@ pipeline {
                     if (params.VANILA) backends << "VANILA"
                     if (params.CUDA)    backends << "CUDA"
                     if (params.IQTREE_GPU) backends << "IQTREE_GPU"
+                    if (params.IQTREE_GPU_SHARED) backends << "IQTREE_GPU_SHARED"
                     if (params.OPENACC) backends << "OPENACC"
                     if (params.OPENACC_PROFILE) backends << "OPENACC_PROFILE"
                     if (params.OPENACC_DEBUG) backends << "OPENACC_DEBUG"
@@ -311,6 +315,7 @@ pipeline {
                     if (params.VANILA) backends << "VANILA"
                     if (params.CUDA)    backends << "CUDA"
                     if (params.IQTREE_GPU) backends << "IQTREE_GPU"
+                    if (params.IQTREE_GPU_SHARED) backends << "IQTREE_GPU_SHARED"
                     if (params.OPENACC) backends << "OPENACC"
                     if (params.OPENACC_PROFILE) backends << "OPENACC_PROFILE"
                     if (params.OPENACC_DEBUG) backends << "OPENACC_DEBUG"
@@ -420,6 +425,7 @@ pipeline {
                     if (params.VANILA) backends << "VANILA"
                     if (params.CUDA)    backends << "CUDA"
                     if (params.IQTREE_GPU) backends << "IQTREE_GPU"
+                    if (params.IQTREE_GPU_SHARED) backends << "IQTREE_GPU_SHARED"
                     if (params.OPENACC) backends << "OPENACC"
                     if (params.OPENACC_PROFILE) backends << "OPENACC_PROFILE"
                     if (params.OPENACC_DEBUG) backends << "OPENACC_DEBUG"

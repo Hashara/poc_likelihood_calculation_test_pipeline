@@ -47,6 +47,15 @@ dataset_is_simulated() {
 #   1. DATASET_DIR itself, if it is a file.
 #   2. DATASET_DIR.<ext> for each known extension.
 #   3. The first matching alignment file inside DATASET_DIR, if it is a directory.
+#   4. FLAT-DIR FALLBACK: the orchestrator may build DATASET_DIR from the nested
+#      simulated/complex pattern ({data_type}/{model}/taxa_{taxa}/len_{len}[/tree_1])
+#      even though the empirical data is staged FLAT as <root>/<Name>.<ext>
+#      (e.g. the server's Empirical_datasets/Lassa_Virus.fas). So walk up to the
+#      nearest existing ancestor directory and look for an alignment named after
+#      one of the path components below it (the {model} component matches the
+#      flat file). This only runs in the empirical branch (callers reach this
+#      function only when DATASET_DIR has no tree_*/ subdirs), so it can NOT
+#      affect simulated-data analysis.
 resolve_empirical_alignment() {
     local base=$1 ext f
     if [ -f "$base" ]; then
@@ -63,6 +72,24 @@ resolve_empirical_alignment() {
             if [ -n "$f" ]; then
                 echo "$f"; return 0
             fi
+        done
+    fi
+    # 4. Flat-dir fallback (see header comment).
+    local root=$base
+    while [ -n "$root" ] && [ "$root" != "/" ] && [ "$root" != "." ] && [ ! -d "$root" ]; do
+        root=$(dirname "$root")
+    done
+    if [ -d "$root" ] && [ "$root" != "$base" ]; then
+        local rel=${base#"$root"/}
+        local oldifs=$IFS; IFS='/'; local comps=($rel); IFS=$oldifs
+        local i c
+        for ((i=${#comps[@]}-1; i>=0; i--)); do
+            c=${comps[i]}
+            [ -z "$c" ] && continue
+            if [ -f "$root/$c" ]; then echo "$root/$c"; return 0; fi
+            for ext in "${DATASET_ALN_EXTS[@]}"; do
+                if [ -f "$root/$c.$ext" ]; then echo "$root/$c.$ext"; return 0; fi
+            done
         done
     fi
     return 1

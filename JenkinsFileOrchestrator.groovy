@@ -362,6 +362,7 @@ pipeline {
                                     booleanParam(name: 'VANILA',                value: cExecType == 'VANILA'),
                                     booleanParam(name: 'CUDA',                  value: cExecType == 'CUDA'),
                                     booleanParam(name: 'IQTREE_GPU',            value: cExecType == 'IQTREE_GPU'),
+                                    booleanParam(name: 'IQTREE_GPU_SHARED',     value: cExecType == 'IQTREE_GPU_SHARED'),
                                     booleanParam(name: 'OPENACC',               value: cExecType == 'OPENACC'),
                                     booleanParam(name: 'OPENACC_PROFILE',       value: cExecType == 'OPENACC_PROFILE'),
                                     booleanParam(name: 'OPENACC_DEBUG',         value: cExecType == 'OPENACC_DEBUG'),
