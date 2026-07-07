@@ -25,7 +25,7 @@ elif [ "$TYPE" == "CUDA" ]; then
 elif [ "$TYPE" == "IQTREE_GPU" ]; then
   executable_path="$WD/builds/build-nvhpc-iqtree-gpu/iqtree3"
 elif [ "$TYPE" == "IQTREE_GPU_SHARED" ]; then
-  executable_path="${IQTREE_GPU_SHARED_BIN:-/scratch/dx61/as1708/shared-jolt/iqtree3-gpu-cca7dbc1}"  # shared external JOLT build (override via IQTREE_GPU_SHARED_BIN)
+  executable_path="${IQTREE_GPU_SHARED_BIN:-/scratch/dx61/as1708/shared-jolt/iqtree3-gpu-latest}"  # shared external JOLT build (override via IQTREE_GPU_SHARED_BIN)
 elif [ "$TYPE" == "OPENACC_PROFILE" ]; then
   executable_path="$WD/builds/build-nvhpc-prof-openacc/iqtree3"
 elif [ "$TYPE" == "OPENACC" ]; then
