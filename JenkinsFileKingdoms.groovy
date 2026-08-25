@@ -212,6 +212,10 @@ pipeline {
                     def cfg      = readYaml file: "config_repo/${params.CONFIG_YAML_PATH?.trim()}"
                     def nciAlias = cfg.general?.nci_alias ?: ''
                     def parent   = cfg.general?.parent_dataset_path ?: ''
+                    // Declared here, not inherited: each stage has its own script{} block,
+                    // so locals from 'Copy Scripts' are not in scope (which is why
+                    // nciAlias and parent are redeclared above too).
+                    def workdir  = params.WORKDIR?.trim() ?: ''
                     if (!nciAlias || !parent) {
                         error('YAML must define general.nci_alias and general.parent_dataset_path')
                     }
@@ -266,9 +270,20 @@ while read -r p; do
 done
 exit $BAD
 '''
-                    sh "scp -q preflight_check.sh preflight_paths.txt ${nciAlias}:/tmp/"
+                    // Stage under WORKDIR (/scratch), NOT /tmp. Gadi has several login
+                    // nodes behind one alias: the scp lands on whichever it connects to,
+                    // and the following ssh is a separate connection that may land on a
+                    // DIFFERENT node, where /tmp is local and the file does not exist:
+                    //   /bin/bash: /tmp/preflight_paths.txt: No such file or directory
+                    // Verified: wrote on gadi-login-01, read on gadi-login-06 -> missing.
+                    // /scratch is shared across login nodes, so staging there is stable.
+                    // The per-run subdir keeps concurrent builds from clobbering each other.
+                    def pfDir = "${workdir}/.preflight/${env.BUILD_NUMBER ?: 'manual'}"
+                    sh "ssh ${nciAlias} 'mkdir -p ${pfDir}'"
+                    sh "scp -q preflight_check.sh preflight_paths.txt ${nciAlias}:${pfDir}/"
                     def rc = sh(returnStatus: true,
-                                script: "ssh ${nciAlias} 'bash /tmp/preflight_check.sh \"${parent}\" < /tmp/preflight_paths.txt'")
+                                script: "ssh ${nciAlias} 'bash ${pfDir}/preflight_check.sh \"${parent}\" < ${pfDir}/preflight_paths.txt'")
+                    sh "ssh ${nciAlias} 'rm -rf ${pfDir}' || true"
                     if (rc != 0) {
                         error('Pre-flight FAILED — one or more dataset paths are missing, empty, or ambiguous ' +
                               '(see the list above). Fix the staging or the CSV before dispatching; ' +
