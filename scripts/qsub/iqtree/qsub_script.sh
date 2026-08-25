@@ -30,6 +30,9 @@ TREE_MODE=${22:-te}
 NORMALSR=${23:-false}
 # ${24} is ENV_VARS (passed through by Jenkins but consumed by profile_*_qsub_script.sh, not here)
 RESERVE_FULL_NODE=${25:-false}
+# Codon rows. Added as a TRAILING positional with a false default so every existing
+# 25-argument caller keeps working untouched.
+CODON=${26:-false}
 
 # Determine CPU queue name and per-CPU memory ratio
 # normal: 190 GB / 48 CPUs = ~3.96 GB/CPU → 4 GB
@@ -42,6 +45,17 @@ else
     MEM_PER_CPU=4
 fi
 
+# ---------------------------------------------------------------------------------
+# Which data types to submit.
+#
+# THE BUG THIS FIXES. This array used to be built from $AA and $DNA only. The
+# kingdoms orchestrator validates data_type against AA|DNA|Codon but passes only the
+# DNA and AA booleans downstream, so a Codon row arrived with BOTH false, the array
+# came out empty, the submission loop below iterated zero times, no qsub was ever
+# issued -- and the script still exited 0, so Jenkins reported the stage GREEN. Four
+# Codon rows of the 2026-08-25 dryrun_all sweep vanished exactly this way: no job, no
+# output directory, no log, no error.
+# ---------------------------------------------------------------------------------
 data_types=()
 if [ "$AA" == true ]; then
     data_types+=("AA")
@@ -49,6 +63,33 @@ fi
 if [ "$DNA" == true ]; then
     data_types+=("DNA")
 fi
+if [ "$CODON" == true ]; then
+    data_types+=("Codon")
+fi
+
+# Fallback for callers that do not pass ${26} yet. The kingdoms collection is laid out
+# <root>/<kingdom>/<data_type>/<dataset>, so the data type is the parent directory of
+# DATASET_DIR. Only the three known values are accepted; anything else is ignored and
+# falls through to the hard error below, so a differently-shaped collection (the
+# simulated layout ends in taxa_N/len_M) cannot inject a bogus value here.
+if [ ${#data_types[@]} -eq 0 ]; then
+    derived_type=$(basename "$(dirname "$DATASET_DIR")")
+    case "$derived_type" in
+        AA|DNA|Codon)
+            data_types+=("$derived_type")
+            echo "[qsub] no data-type flag set; derived '$derived_type' from DATASET_DIR"
+            ;;
+    esac
+fi
+
+# Hard stop. An empty array must never again mean "submit nothing and report success".
+if [ ${#data_types[@]} -eq 0 ]; then
+    echo "[qsub] ERROR: no data type selected (AA=$AA DNA=$DNA CODON=$CODON) and none could" >&2
+    echo "[qsub]        be derived from DATASET_DIR='$DATASET_DIR'." >&2
+    echo "[qsub]        No job would be submitted, so failing loudly instead of exiting 0." >&2
+    exit 1
+fi
+echo "[qsub] data types to submit: ${data_types[*]}"
 
 # wall_time_factor=1 → 10 minutes (600 seconds)
 scaled_seconds=$((wall_time_factor * 600))
