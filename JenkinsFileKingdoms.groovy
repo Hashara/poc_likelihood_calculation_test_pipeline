@@ -497,6 +497,7 @@ exit $BAD
                                     // ── From CSV (per row) ──────────────────
                                     booleanParam(name: 'DNA',    value: cDataType == 'DNA'),
                                     booleanParam(name: 'AA',     value: cDataType == 'AA'),
+                                    booleanParam(name: 'CODON',  value: cDataType == 'Codon'),
                                     string(name: 'LENGTH',       value: cAlignLen),
                                     booleanParam(name: 'VANILA',                value: cExecType == 'VANILA'),
                                     booleanParam(name: 'CUDA',                  value: cExecType == 'CUDA'),

@@ -4,6 +4,7 @@ pipeline {
     parameters {
         booleanParam(name: 'DNA', defaultValue: true, description: 'Include DNA analysis')
         booleanParam(name: 'AA', defaultValue: true, description: 'Include AA analysis')
+        booleanParam(name: 'CODON', defaultValue: false, description: 'Include Codon analysis. Defaults to FALSE, unlike DNA/AA, so that callers which do not set it keep their existing behaviour.')
 
         string(name: 'WORKDIR', defaultValue: '/path/to/workdir', description: 'Working directory')
         string(name: 'PROJECT_NAME', defaultValue: 'dx61', description: 'Project name')
@@ -110,6 +111,7 @@ pipeline {
         BUILD = "${params.BUILD}"
         DNA = "${params.DNA}"
         AA = "${params.AA}"
+        CODON = "${params.CODON}"
         IQTREE = "${params.IQTREE}"
 
         IQTREE_OPENMP = "${params.IQTREE_OPENMP}"
@@ -504,7 +506,7 @@ pipeline {
                             ${IQTREE_OPENMP} ${IQTREE_THREADS} ${AUTO} \
                             ${PROJECT_NAME} ${backend} ${H200} ${ALL_NODE} \
                             "${IQTREE_ARGS}" ${NUM_TREES} ${WALL_TIME_FACTOR} ${TREE_MODE} ${effectiveNormalsr} \
-                            "${params.ENV_VARS}" ${RESERVE_FULL_NODE}
+                            "${params.ENV_VARS}" ${RESERVE_FULL_NODE} ${CODON}
 
                         """
                         }
