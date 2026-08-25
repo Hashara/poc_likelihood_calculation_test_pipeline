@@ -219,12 +219,21 @@ pipeline {
                     // Collect the unique <kingdom>/<data_type>/<model> triples from the CSV.
                     def csvText = readFile("config_repo/${params.CONFIG_CSV_PATH?.trim()}")
                     def seen = [] as Set
-                    csvText.split('\n').drop(1).each { line ->
-                        if (!line?.trim()) return
+                    // NB: no .drop()/.tail() and no '<<' here. Both are
+                    // DefaultGroovyMethods and the Jenkins Groovy sandbox rejects them
+                    // unless an admin approves each signature:
+                    //   RejectedAccessException: Scripts not permitted to use staticMethod
+                    //   org.codehaus.groovy.runtime.DefaultGroovyMethods drop java.lang.Object[] int
+                    // An indexed loop over the array plus Collection.add() uses only
+                    // plain java.util methods, which need no approval.
+                    def csvLines = csvText.split('\n')
+                    for (int li = 1; li < csvLines.length; li++) {   // skip the header row
+                        def line = csvLines[li]
+                        if (!line?.trim()) continue
                         def f = line.split(',')
-                        if (f.size() < 17) return
+                        if (f.size() < 17) continue
                         def dt = f[0].trim(), mdl = f[5].trim(), kg = f[16].trim()
-                        if (dt && mdl && kg) seen << "${kg}/${dt}/${mdl}"
+                        if (dt && mdl && kg) seen.add("${kg}/${dt}/${mdl}".toString())
                     }
                     if (!seen) {
                         error('Pre-flight: no valid rows found — check the CSV has the 17-column kingdom format.')
@@ -354,13 +363,13 @@ exit $BAD
                             if (ch == '"' as char) {
                                 inQuotes = !inQuotes
                             } else if (ch == ',' as char && !inQuotes) {
-                                parts << current.toString()
+                                parts.add(current.toString())
                                 current = new StringBuilder()
                             } else {
                                 current.append(ch)
                             }
                         }
-                        parts << current.toString()  // last field
+                        parts.add(current.toString())  // last field
                         if (parts.size() < 11) {
                             echo "WARNING: skipping malformed row ${idx + 2}: '${line}'"
                             return
