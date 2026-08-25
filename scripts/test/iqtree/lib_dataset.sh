@@ -114,3 +114,43 @@ empirical_tree_args() {
         *) : ;;  # none (or anything else) → full search, no tree flag
     esac
 }
+
+# ─── Output relocation ────────────────────────────────────────────────────────
+# By default IQ-TREE writes its outputs into the directory it is invoked from,
+# which is the DATASET tree -- results end up interleaved with the input data,
+# and a second run over the same dataset overwrites or collides with the first.
+#
+# Setting OUTPUT_DIR redirects them to a separate root that MIRRORS the dataset
+# layout, so the output tree has the same shape as the input tree:
+#
+#   DATASET_ROOT = /scratch/.../empirical_kingdoms
+#   alignment    = /scratch/.../empirical_kingdoms/Animalia/AA/Birds_Jarvis2014/Exon.AminoAcid.aln.phy
+#   OUTPUT_DIR   = /scratch/.../results/run42
+#   -> outputs land in  /scratch/.../results/run42/Animalia/AA/Birds_Jarvis2014/
+#
+# OUTPUT_DIR empty   -> unchanged behaviour (outputs beside the alignment), so
+#                       existing callers that do not set it are unaffected.
+# DATASET_ROOT empty -> falls back to the leaf directory name. The outputs are
+#                       still separated from the data, just flatter.
+#
+# Usage:  run_iqtree_cmd "$aln" "$targs" "$(resolve_out_prefix "$dir" "output_x")"
+resolve_out_prefix() {   # <dir_containing_alignment> <prefix_basename>
+    local src_dir=$1 base=$2 rel out root
+    if [ -z "${OUTPUT_DIR:-}" ]; then
+        echo "$base"          # legacy: relative prefix, written into CWD
+        return 0
+    fi
+    # Canonicalise so the ${src#root/} strip below is not defeated by symlinks
+    # or trailing slashes -- the empirical data is staged behind symlinks.
+    src_dir=$(cd "$src_dir" 2>/dev/null && pwd) || src_dir=$1
+    if [ -n "${DATASET_ROOT:-}" ]; then
+        root=$(cd "$DATASET_ROOT" 2>/dev/null && pwd) || root=$DATASET_ROOT
+        rel=${src_dir#"$root"/}
+        [ "$rel" = "$src_dir" ] && rel=$(basename "$src_dir")   # not under root
+    else
+        rel=$(basename "$src_dir")
+    fi
+    out="$OUTPUT_DIR/$rel"
+    mkdir -p "$out" || { echo "Failed to create output dir: $out" >&2; return 1; }
+    echo "$out/$base"
+}

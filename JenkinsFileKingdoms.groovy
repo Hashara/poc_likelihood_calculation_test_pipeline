@@ -63,6 +63,15 @@ pipeline {
                           'Scripts are copied here and child builds use it as their workdir.'
         )
         string(
+            name:         'OUTPUT_DIR',
+            defaultValue: '',
+            description:  'Root directory for run outputs (e.g. /scratch/dx61/sa0557/results/run42). ' +
+                          'Results are written under <OUTPUT_DIR>/<kingdom>/<data_type>/<model>/, ' +
+                          'mirroring the dataset hierarchy under general.parent_dataset_path. ' +
+                          'Leave empty to keep the legacy behaviour of writing beside the alignment, ' +
+                          'inside the dataset tree.'
+        )
+        string(
             name:         'REPETITIONS',
             defaultValue: '',
             description:  'Number of times each test row is repeated on the cluster. ' +
@@ -432,10 +441,15 @@ exit $BAD
                         def cTreeMode        = treeMode
                         def cUniqueName      = uniqueName
                         def cNormalsr        = normalsr
+                        // Output relocation. Both are loop-invariant, but capture them
+                        // alongside the rest so the closure has no free variables.
+                        def cOutputDir       = params.OUTPUT_DIR ?: ''
+                        def cDatasetRoot     = parentDatasetPath ?: ''
 
                         parallelStages[stageName] = {
                             echo "▶ ${stageName}"
                             echo "  DATASET_PATH : ${cDatasetPath}"
+                            echo "  OUTPUT       : ${cOutputDir ? cOutputDir + '/' + cDatasetPath.replace(cDatasetRoot + '/', '') : '(beside the alignment)'}"
                             echo "  IQTREE_ARGS  : ${cFullArgs}"
                             echo "  RUN_ALIASES  : ${cRunAlias}"
                             if (cUniqueName) echo "  UNIQUE_NAME  : ${cUniqueName}"
@@ -477,6 +491,11 @@ exit $BAD
                                     booleanParam(name: 'INTEL_VANILA_CLX',      value: cExecType == 'INTEL_VANILA_CLX'),
                                     string(name: 'IQTREE_ARGS',  value: cFullArgs),
                                     string(name: 'DATASET_PATH', value: cDatasetPath),
+                                    // Output relocation: DATASET_ROOT is the collection root, so the
+                                    // child can strip it off DATASET_PATH and rebuild the same
+                                    // <kingdom>/<data_type>/<model> path beneath OUTPUT_DIR.
+                                    string(name: 'OUTPUT_DIR',   value: cOutputDir),
+                                    string(name: 'DATASET_ROOT', value: cDatasetRoot),
                                     string(name: 'RUN_ALIASES',  value: cRunAlias),
 
                                     // ── Fixed defaults ──────────────────────

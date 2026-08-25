@@ -71,11 +71,11 @@ for length in "${lengths[@]}"; do
                 echo "Running test for length: $length with $type"
                 if [ "$AA_or_DNA" = "AA" ]; then
                     echo "Using amino acid data"
-                    $executable_path -s alignment_${length}.phy $tree_args --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type} ${IQTREE_ARGS} -nt $NT_THREADS
+                    $executable_path -s alignment_${length}.phy $tree_args --prefix "$(resolve_out_prefix "$TAXA_DIR" "output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type}")" ${IQTREE_ARGS} -nt $NT_THREADS
 
                 elif [ "$AA_or_DNA" = "DNA" ]; then
                     echo "Using DNA data"
-                    $executable_path -s alignment_${length}.phy $tree_args --prefix output_${UNIQUE_NAME}_${taxa_size}_${length}_${type} ${IQTREE_ARGS} -nt $NT_THREADS
+                    $executable_path -s alignment_${length}.phy $tree_args --prefix "$(resolve_out_prefix "$TAXA_DIR" "output_${UNIQUE_NAME}_${taxa_size}_${length}_${type}")" ${IQTREE_ARGS} -nt $NT_THREADS
 
                 fi
 
@@ -133,10 +133,10 @@ else
 
   if [ "$AA_or_DNA" = "AA" ]; then
       echo "Using amino acid data"
-      $executable_path -s "$aln_file" $tree_args --prefix output_${UNIQUE_NAME}_${length}_aa_iqtree ${IQTREE_ARGS} -nt $NT_THREADS
+      $executable_path -s "$aln_file" $tree_args --prefix "$(resolve_out_prefix "$aln_dir" "output_${UNIQUE_NAME}_${length}_aa_iqtree")" ${IQTREE_ARGS} -nt $NT_THREADS
   else
       echo "Using DNA data"
-      $executable_path -s "$aln_file" $tree_args --prefix output_${UNIQUE_NAME}_${length}_iqtree ${IQTREE_ARGS} -nt $NT_THREADS
+      $executable_path -s "$aln_file" $tree_args --prefix "$(resolve_out_prefix "$aln_dir" "output_${UNIQUE_NAME}_${length}_iqtree")" ${IQTREE_ARGS} -nt $NT_THREADS
   fi
 
   if [ $? -ne 0 ]; then

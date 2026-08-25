@@ -112,11 +112,11 @@ if dataset_is_simulated "$DATASET_DIR"; then
                   echo "Running test for length: $length with $type"
                   if [ "$AA_or_DNA" = "AA" ]; then
                       echo "Using amino acid data"
-                      run_iqtree_cmd "alignment_${length}.phy" "$tree_args" "output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type}"
+                      run_iqtree_cmd "alignment_${length}.phy" "$tree_args" "$(resolve_out_prefix "$TAXA_DIR" "output_${UNIQUE_NAME}_${taxa_size}_${length}_aa_${type}")"
 
                   elif [ "$AA_or_DNA" = "DNA" ]; then
                       echo "Using DNA data"
-                      run_iqtree_cmd "alignment_${length}.phy" "$tree_args" "output_${UNIQUE_NAME}_${taxa_size}_${length}_${type}"
+                      run_iqtree_cmd "alignment_${length}.phy" "$tree_args" "$(resolve_out_prefix "$TAXA_DIR" "output_${UNIQUE_NAME}_${taxa_size}_${length}_${type}")"
 
                   fi
 
@@ -163,10 +163,10 @@ else
 
   if [ "$AA_or_DNA" = "AA" ]; then
     echo "Using amino acid data"
-    run_iqtree_cmd "$aln_file" "$tree_args" "output_${UNIQUE_NAME}_${length}_aa_iqtree"
+    run_iqtree_cmd "$aln_file" "$tree_args" "$(resolve_out_prefix "$aln_dir" "output_${UNIQUE_NAME}_${length}_aa_iqtree")"
   else
     echo "Using DNA data"
-    run_iqtree_cmd "$aln_file" "$tree_args" "output_${UNIQUE_NAME}_${length}_iqtree"
+    run_iqtree_cmd "$aln_file" "$tree_args" "$(resolve_out_prefix "$aln_dir" "output_${UNIQUE_NAME}_${length}_iqtree")"
   fi
 
   if [ $? -ne 0 ]; then

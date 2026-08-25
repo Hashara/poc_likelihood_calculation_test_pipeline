@@ -85,11 +85,11 @@ if dataset_is_simulated "$DATASET_DIR"; then
                   omp_prefix="${UNIQUE_NAME/tree_1/tree_${i}}"
                   if [ "$AA_or_DNA" = "AA" ]; then
                       echo "Using amino acid data"
-                      run_iqtree_omp_cmd "alignment_${length}.phy" "$tree_args" "output_${omp_prefix}_aa"
+                      run_iqtree_omp_cmd "alignment_${length}.phy" "$tree_args" "$(resolve_out_prefix "$TAXA_DIR" "output_${omp_prefix}_aa")"
 
                   elif [ "$AA_or_DNA" = "DNA" ]; then
                       echo "Using DNA data"
-                      run_iqtree_omp_cmd "alignment_${length}.phy" "$tree_args" "output_${omp_prefix}"
+                      run_iqtree_omp_cmd "alignment_${length}.phy" "$tree_args" "$(resolve_out_prefix "$TAXA_DIR" "output_${omp_prefix}")"
 
                   fi
 
@@ -138,10 +138,10 @@ else
   omp_prefix="$UNIQUE_NAME"
   if [ "$AA_or_DNA" = "AA" ]; then
     echo "Using amino acid data"
-    run_iqtree_omp_cmd "$aln_file" "$tree_args" "output_${omp_prefix}_${length}_aa"
+    run_iqtree_omp_cmd "$aln_file" "$tree_args" "$(resolve_out_prefix "$aln_dir" "output_${omp_prefix}_${length}_aa")"
   else
     echo "Using DNA data"
-    run_iqtree_omp_cmd "$aln_file" "$tree_args" "output_${omp_prefix}_${length}"
+    run_iqtree_omp_cmd "$aln_file" "$tree_args" "$(resolve_out_prefix "$aln_dir" "output_${omp_prefix}_${length}")"
   fi
 
   if [ $? -ne 0 ]; then

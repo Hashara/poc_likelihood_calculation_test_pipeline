@@ -38,6 +38,13 @@ pipeline {
         // dataset path
         string(name: 'DATASET_PATH', defaultValue: '/path/to/dataset', description: 'Path to the dataset')
 
+        // Where IQ-TREE writes its results. Empty = legacy behaviour, i.e. outputs
+        // land inside the dataset directory next to the alignment. When set, the
+        // output tree MIRRORS the dataset layout beneath this root:
+        //   <OUTPUT_DIR>/<path of the dataset dir relative to DATASET_ROOT>/
+        string(name: 'OUTPUT_DIR', defaultValue: '', description: 'Root dir for run outputs. Empty = write beside the alignment (legacy). Output tree mirrors the dataset layout.')
+        string(name: 'DATASET_ROOT', defaultValue: '', description: 'Dataset collection root, used only to compute the mirrored sub-path under OUTPUT_DIR. Usually general.parent_dataset_path.')
+
         booleanParam(name: 'BUILD', defaultValue: false, description: 'Build if not present')
 
         booleanParam(name: 'IQTREE', defaultValue: true, description: 'Run IQ-TREE')
@@ -72,6 +79,8 @@ pipeline {
 
     environment {
         DATASET_PATH = "${params.DATASET_PATH}"
+        OUTPUT_DIR = "${params.OUTPUT_DIR}"
+        DATASET_ROOT = "${params.DATASET_ROOT}"
         RUN_ALIASES = "${params.RUN_ALIASES}"
 
         WORKDIR = "${params.WORKDIR}"
@@ -465,6 +474,7 @@ pipeline {
                             ssh ${NCI_ALIAS} << EOF
                             cd ${WORKDIR}
                             echo "Running..."
+                            export OUTPUT_DIR="${OUTPUT_DIR}" DATASET_ROOT="${DATASET_ROOT}"
                             sh ${WORKDIR}/qsub/iqtree/qsub_script_lenbased.sh \
                             ${IQTREE} ${V100} ${A100} ${WORKDIR} ${DATASET_PATH} \
                             ${RUN_ALIASES} ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} \
@@ -486,6 +496,7 @@ pipeline {
                         ssh ${NCI_ALIAS} << EOF
                         cd ${WORKDIR}
                         echo "Running ${backend}..."
+                        export OUTPUT_DIR="${OUTPUT_DIR}" DATASET_ROOT="${DATASET_ROOT}"
                         sh ${WORKDIR}/qsub/iqtree/qsub_script.sh \
                             ${IQTREE} ${V100} ${A100} ${WORKDIR} \
                             ${DATASET_PATH} ${RUN_ALIASES}_${backend} \
@@ -518,7 +529,8 @@ pipeline {
 //                        ssh ${NCI_ALIAS} << EOF
 //                        cd ${WORKDIR}
 //                        echo "Running ${backend}..."
-//                        sh ${WORKDIR}/qsub/iqtree/qsub_script.sh \
+//                        export OUTPUT_DIR="${OUTPUT_DIR}" DATASET_ROOT="${DATASET_ROOT}"
+//                      sh ${WORKDIR}/qsub/iqtree/qsub_script.sh \
 //                            ${IQTREE} ${V100} ${A100} ${WORKDIR} \
 //                            ${DATASET_PATH} ${RUN_ALIASES}_${backend} \
 //                            ${AA} ${DNA} ${LENGTH} ${MEM_FACTOR} ${REPETITIONS} \
