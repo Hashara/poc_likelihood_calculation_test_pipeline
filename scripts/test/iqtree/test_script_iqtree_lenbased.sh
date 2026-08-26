@@ -79,7 +79,23 @@ source "$WD/test/iqtree/lib_dataset.sh"
 run_iqtree_cmd() {
     local aln=$1 targs=$2 prefix=$3
     echo "Running: $executable_path -s $aln $targs --prefix $prefix ${IQTREE_ARGS}"
-    $executable_path -s "$aln" $targs --prefix "$prefix" ${IQTREE_ARGS}
+    # stdout -> /dev/null. IQ-TREE mirrors everything it prints on stdout into
+    # <prefix>.log, so the PBS stdout copy is pure duplication -- verified by diffing a
+    # completed run's PBS .o against its .log: ZERO lines exist only in the .log, and
+    # the .log plus .iqtree/.treefile/.ckp.gz are all still written with stdout closed.
+    #
+    # Birds_Jarvis2014 Codon emits 15M warning lines (9.6M "stop codon at site" + 5.4M
+    # "ambiguous character at site"), 1.09 GB per stream. PBS killed job 177462811 after
+    # 3m07s: "exceeded size limit of stdout and stderr ... Limit: 1.0GB, Used: 1.09G".
+    #
+    # stderr is deliberately NOT redirected: outError() and the crash-signal handler
+    # write there, so real failures still reach the PBS .e file.
+    # Set IQTREE_KEEP_STDOUT=1 to restore the previous behaviour.
+    if [ "${IQTREE_KEEP_STDOUT:-0}" = "1" ]; then
+        $executable_path -s "$aln" $targs --prefix "$prefix" ${IQTREE_ARGS}
+    else
+        $executable_path -s "$aln" $targs --prefix "$prefix" ${IQTREE_ARGS} > /dev/null
+    fi
 }
 
 if dataset_dir_has_glob "$DATASET_DIR" "alignment_*"; then

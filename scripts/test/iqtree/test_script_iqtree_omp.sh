@@ -45,7 +45,28 @@ source "$WD/test/iqtree/lib_dataset.sh"
 run_iqtree_omp_cmd() {
     local aln=$1 targs=$2 prefix=$3
     echo "Running: $executable_path -s $aln $targs --prefix $prefix ${IQTREE_ARGS} -nt $NT_THREADS"
-    $executable_path -s "$aln" $targs --prefix "$prefix" ${IQTREE_ARGS} -nt $NT_THREADS
+    # stdout -> /dev/null. IQ-TREE mirrors everything it prints on stdout into
+    # <prefix>.log, so the PBS stdout copy is pure duplication: diffing a completed
+    # run's PBS .o against its .log gives ZERO lines present only in the .log. The 17
+    # lines unique to the .o are this script's own echoes plus PBS's resource trailer,
+    # neither of which comes from iqtree.
+    #
+    # This is not cosmetic. Birds_Jarvis2014 Codon emits 15M warning lines -- 9.6M
+    # "stop codon at site" plus 5.4M "ambiguous character at site" -- at 1.09 GB per
+    # stream. PBS killed job 177462811 after 3m07s with "exceeded size limit of stdout
+    # and stderr on node ... Limit: 1.0GB, Used: 1.09G". Its alignment construction
+    # ran at 74% CPU on a 104-core node, serialised on the log write, against 506-582%
+    # for the warning-free codon datasets -- so dropping the duplicate stream is also
+    # a genuine speedup on warning-heavy alignments, not just a size guard.
+    #
+    # stderr is deliberately NOT redirected: outError() and the crash-signal handler
+    # write there, so real failures still reach the PBS .e file.
+    # Set IQTREE_KEEP_STDOUT=1 to restore the previous behaviour.
+    if [ "${IQTREE_KEEP_STDOUT:-0}" = "1" ]; then
+        $executable_path -s "$aln" $targs --prefix "$prefix" ${IQTREE_ARGS} -nt $NT_THREADS
+    else
+        $executable_path -s "$aln" $targs --prefix "$prefix" ${IQTREE_ARGS} -nt $NT_THREADS > /dev/null
+    fi
 }
 
 if dataset_is_simulated "$DATASET_DIR"; then
